@@ -46,7 +46,7 @@ flex-shrink:0;
 .logo-text{
 font-size:16px;
 font-weight:700;
-color:white;
+color:#0f172a;
 line-height:1.4;
 display:block;
 }
@@ -282,13 +282,15 @@ margin-bottom:20px;
 }
 
 .search-main{
-width:100%;
-height:54px;
-padding:0 18px;
-font-size:15px;
-border:2px solid #e2e8f0;
-border-radius:14px;
-margin-bottom:18px;
+height:42px;
+
+padding:0 12px;
+
+font-size:14px;
+
+border:1px solid #d1d5db;
+
+border-radius:4px;
 }
 
 .search-main:focus{
@@ -341,18 +343,12 @@ margin-bottom:2px;
 
 .filter-chip{
 height:42px;
-padding:0 18px;
-border-radius:999px;
-background:#f1f5f9;
-display:flex;
-align-items:center;
-justify-content:center;
-cursor:pointer;
-font-size:14px;
-font-weight:600;
-color:#0f172a;
-transition:.2s;
-min-width:120px;
+
+border:1px solid #d1d5db;
+
+border-radius:4px;
+
+background:#fff;
 }
 
 .filter-chip:hover{
@@ -361,14 +357,12 @@ background:#e2e8f0;
 
 .search-chip select{
 height:42px;
-padding:0 18px;
-border:none;
-border-radius:999px;
-background:#f1f5f9;
-font-size:14px;
-font-weight:600;
-cursor:pointer;
-transition:.2s;
+
+border:1px solid #d1d5db;
+
+border-radius:4px;
+
+background:#fff;
 }
 
 .search-chip select:hover{
@@ -383,7 +377,7 @@ box-shadow:none;
 
 .search-toolbar .btn-gray{
 height:42px;
-border-radius:999px;
+border-radius:4px;
 background:#f1f5f9;
 color:#475569;
 font-weight:600;
@@ -396,14 +390,65 @@ background:#e2e8f0;
 
 .search-toolbar .btn-primary{
 height:42px;
-border-radius:999px;
+border-radius:4px;
 padding:0 20px;
 }
 
 .search-toolbar .btn-green{
 height:42px;
-border-radius:999px;
+border-radius:4px;
 padding:0 20px;
+}
+
+.search-toolbar .btn{
+
+height:42px;
+
+border:1px solid #d1d5db;
+
+background:#fff;
+
+color:#334155;
+
+border-radius:4px;
+
+font-weight:600;
+
+box-shadow:none;
+
+}
+
+.search-toolbar .btn{
+
+height:42px;
+
+border:1px solid #d1d5db;
+
+background:#fff;
+
+color:#334155;
+
+border-radius:4px;
+
+font-weight:600;
+
+box-shadow:none;
+
+}
+
+.search-toolbar .btn:hover{
+
+background:#f8fafc;
+
+}
+
+.search-toolbar .btn-primary,
+.search-toolbar .btn-green,
+.search-toolbar .btn-gray{
+
+background:#fff;
+color:#334155;
+
 }
 
 .search-chip select:focus{
@@ -536,7 +581,7 @@ gap:8px;
 
 .badge{
 padding:5px 10px;
-border-radius:999px;
+border-radius:4px;
 font-size:12px;
 font-weight:bold;
 }
@@ -3121,10 +3166,8 @@ sealList.forEach(seal=>{
 
 const active =
 records.find(r=>
-
 r.seal===seal.name &&
 !r.returnTime
-
 );
 
 const card =
@@ -3133,7 +3176,14 @@ document.createElement("div");
 card.className =
 active ? "card borrowed" : "card available";
 
-card.setAttribute('data-seal',seal.name); card.onclick=()=>showSealDetail(seal.name);
+card.setAttribute(
+'data-seal',
+seal.name
+);
+
+card.onclick = () =>
+showSealDetail(seal.name);
+
 card.innerHTML = `
 
 <div style="
@@ -3148,11 +3198,9 @@ ${seal.name}
 </div>
 
 <div>
-
 ${active
 ? "🔴 借出中"
 : "🟢 可借用"}
-
 </div>
 
 </div>
@@ -3161,8 +3209,12 @@ ${active
 
 grid.appendChild(card);
 
+});
+
 if(sealList.length){
-showSealDetail(sealList[0].name);
+showSealDetail(
+sealList[0].name
+);
 }
 
 }
