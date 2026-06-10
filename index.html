@@ -1730,8 +1730,6 @@ document
 window.toggleUserMenu =
 toggleUserMenu;
 
-function gotoLoginLog(e){
-
 document.addEventListener(
 "click",
 function(){
@@ -1742,6 +1740,8 @@ document
 
 }
 );
+
+function gotoLoginLog(e){
 
 e.stopPropagation();
 
@@ -1762,6 +1762,9 @@ loadLoginLogs();
 }
 
 }
+
+window.gotoLoginLog =
+gotoLoginLog;
 
 function restoreLastPage(){
 
