@@ -1007,6 +1007,85 @@ background:#ef4444;
 color:white;
 }
 
+.action-btn{
+
+width:42px;
+
+height:42px;
+
+border:none;
+
+border-radius:12px;
+
+cursor:pointer;
+
+display:inline-flex;
+
+align-items:center;
+
+justify-content:center;
+
+transition:.2s;
+
+margin:0 3px;
+
+}
+
+.action-btn svg{
+
+width:18px;
+
+height:18px;
+
+stroke-width:2.3;
+
+}
+
+.edit-btn{
+
+background:#64748b;
+color:white;
+
+}
+
+.edit-btn:hover{
+
+background:#475569;
+
+transform:translateY(-2px);
+
+}
+
+.delete-btn{
+
+background:#dc2626;
+color:white;
+
+}
+
+.delete-btn:hover{
+
+background:#b91c1c;
+
+transform:translateY(-2px);
+
+}
+
+.convert-btn{
+
+background:#16a34a;
+color:white;
+
+}
+
+.convert-btn:hover{
+
+background:#15803d;
+
+transform:translateY(-2px);
+
+}
+
 .tooltip{
 position:relative;
 }
@@ -1391,7 +1470,16 @@ class="detail-title-icon">
 
 <div class="panel">
 
-<h2>🕒 待借用管理</h2>
+<h2 class="detail-title">
+
+<i
+data-lucide="clock-3"
+class="detail-title-icon">
+</i>
+
+待借用管理
+
+</h2>
 
 <p style="margin-bottom:20px;color:#64748b;">
 提前建檔，待實際借用時再轉正式借用
@@ -1400,7 +1488,11 @@ class="detail-title-icon">
 <button
 class="btn btn-green"
 onclick="openPendingModal()">
-➕ 新增待借用案件
+
+<i data-lucide="plus"></i>
+
+新增待借用案件
+
 </button>
 
 <br><br>
@@ -2708,29 +2800,28 @@ ${item.status==="已轉正式借用"
 <td>
 
 <button
-class="btn btn-gray tooltip"
-data-tip="修改"
-onclick="editPending('${item.id}')">
+class="action-btn edit-btn tooltip"
+data-tip="修改">
 
-✏
+<i data-lucide="pencil"></i>
+
+</button>
+
+<i data-lucide="pencil"></i>
 
 </button>
 
 <button
-class="btn btn-red tooltip"
-data-tip="刪除"
-onclick="deletePending('${item.id}')">
+class="action-btn delete-btn tooltip"
+data-tip="刪除">
 
-🗑
-
-</button>
+<i data-lucide="trash-2"></i>
 
 <button
-class="btn btn-green tooltip"
-data-tip="轉正式借用"
-onclick="convertPending('${item.id}')">
+class="action-btn convert-btn tooltip"
+data-tip="轉正式借用">
 
-🔄
+<i data-lucide="arrow-right-circle"></i>
 
 </button>
 
