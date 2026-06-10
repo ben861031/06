@@ -3933,11 +3933,40 @@ ${r.returnTime
 </td>
 
 <td>
+
 ${r.returnTime
-? '<span style="color:#64748b;">🔒 已封存</span>'
-: `<button class="btn btn-gray" onclick="editRecord('${r.id}')">✏編輯</button>
-<button class="btn btn-red" onclick="deleteRecord('${r.id}')">🗑刪除</button>`
+
+? `
+<span
+class="badge badge-green">
+已封存
+</span>
+`
+
+: `
+
+<button
+class="action-btn edit-btn tooltip"
+data-tip="修改"
+onclick="editRecord('${r.id}')">
+
+<i data-lucide="pencil"></i>
+
+</button>
+
+<button
+class="action-btn delete-btn tooltip"
+data-tip="刪除"
+onclick="deleteRecord('${r.id}')">
+
+<i data-lucide="trash-2"></i>
+
+</button>
+
+`
+
 }
+
 </td>
 
 `;
@@ -3947,6 +3976,8 @@ table.appendChild(tr);
 });
 
 renderPagination(totalPages);
+
+lucide.createIcons();
 
 }
 
