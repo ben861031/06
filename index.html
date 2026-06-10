@@ -4305,8 +4305,7 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', function(e){
     const k = (e.key || '').toLowerCase();
 
-    if(e.key === 'F12') { e.preventDefault(); return false; }
-
+ 
     if(e.ctrlKey && k === 'u') { e.preventDefault(); return false; }
     if(e.ctrlKey && k === 's') { e.preventDefault(); return false; }
 
