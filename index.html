@@ -299,6 +299,65 @@ background:#64748b;
 color:white;
 }
 
+.kpi-grid{
+
+display:grid;
+
+grid-template-columns:
+repeat(4,1fr);
+
+gap:18px;
+
+margin-bottom:20px;
+
+}
+
+.kpi-card{
+
+background:white;
+
+border-radius:20px;
+
+padding:22px;
+
+border:1px solid #e5e7eb;
+
+box-shadow:
+0 8px 20px
+rgba(15,23,42,.05);
+
+}
+
+.kpi-title{
+
+font-size:13px;
+
+color:#64748b;
+
+margin-bottom:10px;
+
+}
+
+.kpi-value{
+
+font-size:32px;
+
+font-weight:800;
+
+color:#0f172a;
+
+}
+
+.kpi-sub{
+
+margin-top:8px;
+
+font-size:12px;
+
+color:#94a3b8;
+
+}
+
 .status-grid{
 
 display:grid;
@@ -999,6 +1058,34 @@ loadLoginLogs();
 <!-- 借用頁 -->
 
 <div id="borrowPage" class="hidden">
+
+<div class="kpi-grid">
+
+<div class="kpi-card">
+<div class="kpi-title">借出中</div>
+<div class="kpi-value" id="kpiBorrowed">0</div>
+<div class="kpi-sub">目前借出的印鑑</div>
+</div>
+
+<div class="kpi-card">
+<div class="kpi-title">可借用</div>
+<div class="kpi-value" id="kpiAvailable">0</div>
+<div class="kpi-sub">目前可借用數量</div>
+</div>
+
+<div class="kpi-card">
+<div class="kpi-title">今日借用</div>
+<div class="kpi-value" id="kpiTodayBorrow">0</div>
+<div class="kpi-sub">今日新增借用</div>
+</div>
+
+<div class="kpi-card">
+<div class="kpi-title">今日歸還</div>
+<div class="kpi-value" id="kpiTodayReturn">0</div>
+<div class="kpi-sub">今日完成歸還</div>
+</div>
+
+</div>
 
 <div class="grid">
 
@@ -3071,10 +3158,68 @@ renderTable();
 renderReturnTable();
 renderStatus();
 renderSealAlert();
+updateKPI();
 
 }
 
+function updateKPI(){
 
+const borrowed =
+records.filter(
+r=>!r.returnTime
+).length;
+
+const available =
+sealList.length - borrowed;
+
+const today =
+new Date();
+
+const todayBorrow =
+records.filter(r=>{
+
+const d =
+r.borrowTime?.seconds
+? new Date(r.borrowTime.seconds*1000)
+: new Date(r.borrowTime);
+
+return d.toDateString()
+=== today.toDateString();
+
+}).length;
+
+const todayReturn =
+records.filter(r=>{
+
+if(!r.returnTime) return false;
+
+const d =
+r.returnTime?.seconds
+? new Date(r.returnTime.seconds*1000)
+: new Date(r.returnTime);
+
+return d.toDateString()
+=== today.toDateString();
+
+}).length;
+
+document.getElementById(
+'kpiBorrowed'
+).innerText = borrowed;
+
+document.getElementById(
+'kpiAvailable'
+).innerText = available;
+
+document.getElementById(
+'kpiTodayBorrow'
+).innerText = todayBorrow;
+
+document.getElementById(
+'kpiTodayReturn'
+).innerText = todayReturn;
+
+}
 
 function renderSealAlert(){
 
