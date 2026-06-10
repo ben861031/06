@@ -207,29 +207,61 @@ color:white;
 }
 
 .status-grid{
+
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:15px;
+
+grid-template-columns:
+repeat(auto-fit,minmax(240px,1fr));
+
+gap:18px;
 
 margin-top:20px;
+
 }
 
 .card{
-border-radius:16px;
-padding:18px;
-color:white;
+
+background:white;
+
+border:1px solid #e5e7eb;
+
+border-radius:18px;
+
+padding:22px;
+
 cursor:pointer;
+
+transition:.25s;
+
+color:#0f172a;
+
+position:relative;
+
+overflow:hidden;
+
 }
 .card.selected{
-outline:4px solid #2563eb;
+
+border-color:#2563eb;
+
+box-shadow:
+0 10px 30px
+rgba(37,99,235,.15);
+
+transform:translateY(-2px);
+
 }
 
 .available{
-background:linear-gradient(135deg,#16a34a,#22c55e);
+
+border-left:5px solid #22c55e;
+
 }
 
 .borrowed{
-background:linear-gradient(135deg,#dc2626,#ef4444);
+
+border-left:5px solid #ef4444;
+
 }
 
 .search-toolbar{
@@ -895,7 +927,17 @@ font-weight:bold;
 ">
 </div>
 
-<h2>📦 即時狀態</h2>
+<h2>
+印鑑即時狀態
+</h2>
+
+<div style="
+color:#64748b;
+margin-top:6px;
+margin-bottom:15px;
+">
+點選卡片可查看借用明細
+</div>
 
 
 <div class="status-grid" id="statusGrid"></div>
@@ -3011,12 +3053,33 @@ active ? "card borrowed" : "card available";
 
 card.setAttribute('data-seal',seal.name); card.onclick=()=>showSealDetail(seal.name);
 card.innerHTML = `
-<h3>${seal.name}</h3>
-<p>
+
+<div style="
+font-size:13px;
+color:#64748b;
+margin-bottom:8px;
+">
+印鑑
+</div>
+
+<div style="
+font-size:20px;
+font-weight:700;
+margin-bottom:12px;
+">
+${seal.name}
+</div>
+
+<div style="
+font-size:14px;
+font-weight:600;
+color:${active ? '#dc2626' : '#16a34a'};
+">
 ${active
-? `🔴 借出中（${active.borrower}）`
-: "🟢 可借用"}
-</p>
+? `借出中｜${active.borrower}`
+: '目前可借用'}
+</div>
+
 `;
 
 grid.appendChild(card);
