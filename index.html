@@ -47,7 +47,20 @@ border-bottom:1px solid #e5e7eb;
 }
 
 .logo-icon{
-font-size:32px;
+
+width:48px;
+height:48px;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+background:#eff6ff;
+
+border-radius:14px;
+
+color:#2563eb;
+
 }
 
 .logo-title{
@@ -87,27 +100,34 @@ display:flex;
 
 align-items:center;
 
-gap:12px;
+gap:18px;
 
-padding:14px 16px;
+height:60px;
 
-border-radius:12px;
+padding:0 18px;
+
+border-radius:16px;
 
 cursor:pointer;
 
-margin-bottom:6px;
+margin-bottom:8px;
 
-font-weight:600;
+font-weight:700;
 
-color:#475569;
+font-size:16px;
 
-transition:.2s;
+color:#334155;
+
+transition:.25s;
 
 }
 
 .menu-item:hover{
-background:#eff6ff;
-color:#2563eb;
+
+background:#f8fbff;
+
+transform:translateX(4px);
+
 }
 
 .menu-item.active{
@@ -115,16 +135,44 @@ color:#2563eb;
 background:linear-gradient(
 135deg,
 #2563eb,
-#3b82f6
+#4f8cff
 );
 
 color:white;
 
 box-shadow:
-0 8px 20px
+0 12px 30px
 rgba(37,99,235,.25);
 
 }
+
+.menu-icon{
+
+width:34px;
+
+height:34px;
+
+color:#64748b;
+
+stroke-width:2.2;
+
+flex-shrink:0;
+
+}
+
+.menu-item span{
+
+display:flex;
+align-items:center;
+
+}
+
+.menu-item.active .menu-icon{
+
+color:white;
+
+}
+
 
 .main{
 flex:1;
@@ -908,6 +956,9 @@ z-index:9999;
 }
 
 </style>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+
 </head>
 
 
@@ -963,7 +1014,7 @@ transition:.15s;
 <div class="logo">
 
 <div class="logo-icon">
-📅
+<i data-lucide="building-2"></i>
 </div>
 
 <div>
@@ -986,22 +1037,38 @@ Seal Management System
 
 <div class="menu-item active"
 onclick="showPage('borrowPage',this)">
-📋 借用登記
+
+<i data-lucide="clipboard-list" class="menu-icon"></i>
+
+<span>借用登記</span>
+
 </div>
 
 <div class="menu-item"
 onclick="showPage('pendingPage',this)">
-🕒 待借用管理
+
+<i data-lucide="clock-3" class="menu-icon"></i>
+
+<span>待借用管理</span>
+
 </div>
 
 <div class="menu-item"
 onclick="showPage('returnPage',this)">
-↩ 歸還作業
+
+<i data-lucide="rotate-ccw" class="menu-icon"></i>
+
+<span>歸還作業</span>
+
 </div>
 
 <div class="menu-item"
 onclick="showPage('historyPage',this)">
-📑 借用紀錄
+
+<i data-lucide="file-text" class="menu-icon"></i>
+
+<span>借用紀錄</span>
+
 </div>
 
 <div class="menu-title">
@@ -1010,18 +1077,30 @@ onclick="showPage('historyPage',this)">
 
 <div class="menu-item"
 onclick="showPage('sealPage',this)">
-🛠 印鑑維護
+
+<i data-lucide="badge-check" class="menu-icon"></i>
+
+<span>印鑑維護</span>
+
 </div>
 
 <div class="menu-item"
 onclick="showPage('deptPage',this)">
-🏢 部門維護
+
+<i data-lucide="building-2" class="menu-icon"></i>
+
+<span>部門維護</span>
+
 </div>
 
 <div class="menu-item"
 id="permissionMenu"
 onclick="showPage('permissionPage',this)">
-🔐 權限管理
+
+<i data-lucide="users" class="menu-icon"></i>
+
+<span>權限管理</span>
+
 </div>
 
 <div class="menu-item"
@@ -1030,7 +1109,11 @@ onclick="
 showPage('loginLogPage',this);
 loadLoginLogs();
 ">
-📜 登入紀錄
+
+<i data-lucide="log-in" class="menu-icon"></i>
+
+<span>登入紀錄</span>
+
 </div>
 
 <div class="sidebar-user">
@@ -4094,6 +4177,10 @@ setInterval(function(){
         '<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-size:28px;font-weight:bold;">已偵測開發人員工具</div>';
     }
 },1000);
+</script>
+
+<script>
+lucide.createIcons();
 </script>
 
 </body>
