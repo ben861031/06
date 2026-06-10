@@ -934,6 +934,38 @@ line-height:1.7;
 word-break:break-word;
 }
 
+.detail-title{
+
+display:flex;
+
+align-items:center;
+
+gap:10px;
+
+font-size:22px;
+
+font-weight:800;
+
+color:#0f172a;
+
+margin-bottom:12px;
+
+}
+
+.detail-title-icon{
+
+width:24px;
+
+height:24px;
+
+stroke-width:2.2;
+
+color:#2563eb;
+
+flex-shrink:0;
+
+}
+
 .sidebar-user{
 
 margin-top:auto;
@@ -1328,7 +1360,16 @@ margin-bottom:15px;
 <div class="status-grid" id="statusGrid"></div>
 
 <div id="sealDetailPanel" style="margin-top:20px;padding-top:15px;border-top:1px solid #e2e8f0;">
-<h3>📋 借用資訊</h3>
+<h3 class="detail-title">
+
+<i
+data-lucide="clipboard-check"
+class="detail-title-icon">
+</i>
+
+借用資訊
+
+</h3>
 <div id="sealDetailContent" style="margin-top:12px;color:#475569;">
 請點選上方印鑑查看詳細資訊
 </div>
