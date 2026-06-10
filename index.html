@@ -405,8 +405,24 @@ transform:translateY(1px);
 }
 
 .btn-green{
+
 background:#16a34a;
 color:white;
+
+display:inline-flex;
+align-items:center;
+justify-content:center;
+
+gap:10px;
+
+height:58px;
+
+padding:0 24px;
+
+border-radius:16px;
+
+font-weight:700;
+
 }
 
 .btn-red{
@@ -1041,6 +1057,17 @@ stroke-width:2.3;
 
 }
 
+.btn-green svg{
+
+width:20px;
+height:20px;
+
+stroke-width:2.5;
+
+flex-shrink:0;
+
+}
+
 .edit-btn{
 
 background:#64748b;
@@ -1489,9 +1516,13 @@ class="detail-title-icon">
 class="btn btn-green"
 onclick="openPendingModal()">
 
-<i data-lucide="plus"></i>
+<i
+data-lucide="circle-plus">
+</i>
 
+<span>
 新增待借用案件
+</span>
 
 </button>
 
