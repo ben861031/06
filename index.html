@@ -2801,11 +2801,8 @@ ${item.status==="已轉正式借用"
 
 <button
 class="action-btn edit-btn tooltip"
-data-tip="修改">
-
-<i data-lucide="pencil"></i>
-
-</button>
+data-tip="修改"
+onclick="editPending('${item.id}')">
 
 <i data-lucide="pencil"></i>
 
@@ -2813,13 +2810,17 @@ data-tip="修改">
 
 <button
 class="action-btn delete-btn tooltip"
-data-tip="刪除">
+data-tip="刪除"
+onclick="deletePending('${item.id}')">
 
 <i data-lucide="trash-2"></i>
 
+</button>
+
 <button
 class="action-btn convert-btn tooltip"
-data-tip="轉正式借用">
+data-tip="轉正式借用"
+onclick="convertPending('${item.id}')">
 
 <i data-lucide="arrow-right-circle"></i>
 
@@ -2830,6 +2831,8 @@ data-tip="轉正式借用">
 `;
 
 });
+
+lucide.createIcons();
 
 }
 
