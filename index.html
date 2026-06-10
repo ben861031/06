@@ -27,158 +27,124 @@ display:flex;
 min-height:100vh;
 }
 
+.sidebar{
+width:280px;
+background:#ffffff;
+border-right:1px solid #e5e7eb;
+color:#334155;
+padding:20px;
+display:flex;
+flex-direction:column;
+}
+
 .logo{
 display:flex;
-align-items:flex-start;
-gap:12px;
-
-padding-bottom:16px;
+align-items:center;
+gap:14px;
+padding-bottom:20px;
 margin-bottom:20px;
-
 border-bottom:1px solid #e5e7eb;
 }
 
 .logo-icon{
-font-size:24px;
-flex-shrink:0;
+font-size:32px;
 }
 
-.logo-text{
-font-size:16px;
+.logo-title{
+font-size:24px;
 font-weight:700;
 color:#0f172a;
-line-height:1.4;
-display:block;
 }
+
+.logo-sub{
+font-size:12px;
+color:#94a3b8;
+margin-top:2px;
+}
+
 
 .menu-title{
-font-size:13px;
-opacity:0.6;
-margin:20px 0 10px;
+
+font-size:12px;
+
+font-weight:700;
+
+color:#94a3b8;
+
+letter-spacing:1px;
+
+text-transform:uppercase;
+
+margin-top:24px;
+
+margin-bottom:12px;
+
 }
 
 .menu-item{
-padding:14px;
-border-radius:4px;
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+padding:14px 16px;
+
+border-radius:12px;
+
 cursor:pointer;
-margin-bottom:8px;
+
+margin-bottom:6px;
+
+font-weight:600;
+
+color:#475569;
+
+transition:.2s;
+
 }
 
 .menu-item:hover{
-background:#1e293b;
-}
-
-.menu-item{
-padding:12px 16px;
-margin:2px 0;
-
-border-left:3px solid transparent;
-
-border-radius:0;
-
-background:none;
-
-color:#334155;
-}
-
-.menu-item:hover{
-background:#f8fafc;
+background:#eff6ff;
+color:#2563eb;
 }
 
 .menu-item.active{
-background:none;
 
-color:#2563eb;
+background:linear-gradient(
+135deg,
+#2563eb,
+#3b82f6
+);
 
-font-weight:700;
+color:white;
 
-border-left:3px solid #2563eb;
+box-shadow:
+0 8px 20px
+rgba(37,99,235,.25);
+
 }
 
 .main{
 flex:1;
 padding:20px;
 }
+
 .header{
-background:#fff;
-color:#0f172a;
-
-padding:20px 24px;
-
-border:1px solid #e5e7eb;
-border-radius:8px;
-
-display:flex;
-justify-content:space-between;
-align-items:center;
-
+background:linear-gradient(135deg,#1d4ed8,#2563eb);
+color:white;
+padding:25px;
+border-radius:18px;
 margin-bottom:20px;
-}
-
-.user-menu{
-position:relative;
-
-display:flex;
-align-items:center;
-gap:8px;
-
-padding:10px 14px;
-
-border:1px solid #e5e7eb;
-border-radius:8px;
-
-cursor:pointer;
-
-font-size:14px;
-font-weight:600;
-
-background:#fff;
-}
-
-.user-dropdown{
-position:absolute;
-top:100%;
-right:0;
-
-width:180px;
-
-background:white;
-border:1px solid #e5e7eb;
-border-radius:4px;
-
-box-shadow:none;
-
-display:none;
-
-overflow:hidden;
-z-index:999;
-}
-
-.user-dropdown.show{
-display:block;
-}
-
-.user-item{
-padding:12px 16px;
-cursor:pointer;
-font-size:14px;
-}
-
-.user-item:hover{
-background:#f8fafc;
-}
-
-.user-menu:hover{
-background:#f8fafc;
 }
 
 .panel{
-background:#fff;
-border:1px solid #e5e7eb;
-border-radius:8px;
-padding:24px;
+background:white;
+border-radius:18px;
+padding:20px;
 margin-bottom:20px;
-box-shadow:none;
+box-shadow:0 5px 15px rgba(0,0,0,0.06);
 }
 
 .grid{
@@ -200,17 +166,11 @@ font-weight:600;
 .form-group input,
 .form-group select,
 .form-group textarea{
-
 width:100%;
-
 padding:12px;
-
-border:1px solid #d1d5db;
-
-background:#fff;
-
-border-radius:4px;
-
+border-radius:10px;
+border:1px solid #dbe4f0;
+background:#f8fafc;
 }
 
 textarea{
@@ -220,7 +180,7 @@ resize:vertical;
 .btn{
 border:none;
 padding:10px 14px;
-border-radius:4px;
+border-radius:10px;
 cursor:pointer;
 font-weight:bold;
 }
@@ -247,56 +207,53 @@ color:white;
 }
 
 .status-grid{
-display:block;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:15px;
+
 margin-top:20px;
 }
 
 .card{
-background:#fff;
-border:1px solid #e5e7eb;
-border-radius:8px;
-padding:16px;
-color:#0f172a;
+border-radius:16px;
+padding:18px;
+color:white;
+cursor:pointer;
 }
-
-.available{
-background:#fff;
-}
-
-.borrowed{
-background:#fff;
-}
-
 .card.selected{
 outline:4px solid #2563eb;
 }
 
+.available{
+background:linear-gradient(135deg,#16a34a,#22c55e);
+}
+
+.borrowed{
+background:linear-gradient(135deg,#dc2626,#ef4444);
+}
 
 .search-toolbar{
 background:#fff;
 padding:24px;
-border:1px solid #e5e7eb;
-border-radius:8px;
-box-shadow:none;
+border-radius:20px;
+box-shadow:0 8px 24px rgba(15,23,42,.06);
 margin-bottom:20px;
 }
 
 .search-main{
-height:42px;
-
-padding:0 12px;
-
-font-size:14px;
-
-border:1px solid #d1d5db;
-
-border-radius:4px;
+width:100%;
+height:54px;
+padding:0 18px;
+font-size:15px;
+border:2px solid #e2e8f0;
+border-radius:14px;
+margin-bottom:18px;
 }
 
 .search-main:focus{
 outline:none;
 border-color:#2563eb;
-box-shadow:none;
+box-shadow:0 0 0 4px rgba(37,99,235,.12);
 }
 
 .search-row{
@@ -343,12 +300,18 @@ margin-bottom:2px;
 
 .filter-chip{
 height:42px;
-
-border:1px solid #d1d5db;
-
-border-radius:4px;
-
-background:#fff;
+padding:0 18px;
+border-radius:999px;
+background:#f1f5f9;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+font-size:14px;
+font-weight:600;
+color:#0f172a;
+transition:.2s;
+min-width:120px;
 }
 
 .filter-chip:hover{
@@ -357,12 +320,14 @@ background:#e2e8f0;
 
 .search-chip select{
 height:42px;
-
-border:1px solid #d1d5db;
-
-border-radius:4px;
-
-background:#fff;
+padding:0 18px;
+border:none;
+border-radius:999px;
+background:#f1f5f9;
+font-size:14px;
+font-weight:600;
+cursor:pointer;
+transition:.2s;
 }
 
 .search-chip select:hover{
@@ -377,7 +342,7 @@ box-shadow:none;
 
 .search-toolbar .btn-gray{
 height:42px;
-border-radius:4px;
+border-radius:999px;
 background:#f1f5f9;
 color:#475569;
 font-weight:600;
@@ -390,71 +355,20 @@ background:#e2e8f0;
 
 .search-toolbar .btn-primary{
 height:42px;
-border-radius:4px;
+border-radius:999px;
 padding:0 20px;
 }
 
 .search-toolbar .btn-green{
 height:42px;
-border-radius:4px;
+border-radius:999px;
 padding:0 20px;
-}
-
-.search-toolbar .btn{
-
-height:42px;
-
-border:1px solid #d1d5db;
-
-background:#fff;
-
-color:#334155;
-
-border-radius:4px;
-
-font-weight:600;
-
-box-shadow:none;
-
-}
-
-.search-toolbar .btn{
-
-height:42px;
-
-border:1px solid #d1d5db;
-
-background:#fff;
-
-color:#334155;
-
-border-radius:4px;
-
-font-weight:600;
-
-box-shadow:none;
-
-}
-
-.search-toolbar .btn:hover{
-
-background:#f8fafc;
-
-}
-
-.search-toolbar .btn-primary,
-.search-toolbar .btn-green,
-.search-toolbar .btn-gray{
-
-background:#fff;
-color:#334155;
-
 }
 
 .search-chip select:focus{
 outline:none;
 border-color:#2563eb;
-box-shadow:none;
+box-shadow:0 0 0 3px rgba(37,99,235,.12);
 }
 
 #advancedFilter{
@@ -483,7 +397,7 @@ align-items:center;
 height:46px;
 padding:0 14px;
 border:1px solid #dbe4f0;
-border-radius:4px;
+border-radius:12px;
 background:white;
 min-width:220px;
 font-size:14px;
@@ -492,21 +406,20 @@ font-size:14px;
 #advancedFilter input:focus{
 outline:none;
 border-color:#2563eb;
-box-shadow:none;
+box-shadow:0 0 0 3px rgba(37,99,235,.12);
 }
 
 .search-actions .btn{
 height:46px;
 padding:0 18px;
-border-radius:4px;
+border-radius:12px;
 }
 
 .search-toolbar{
-background:#fff;
+background:white;
 padding:24px;
-border:1px solid #e5e7eb;
-border-radius:8px;
-box-shadow:none;
+border-radius:18px;
+box-shadow:0 8px 24px rgba(15,23,42,.06);
 margin-bottom:20px;
 }
 
@@ -516,17 +429,17 @@ height:50px;
 padding:0 24px;
 font-size:15px;
 border:1px solid #dbe4f0;
-border-radius:4px;
+border-radius:16px;
 margin-bottom:18px;
 background:white;
-box-shadow:none;
+box-shadow:0 2px 8px rgba(15,23,42,.04);
 transition:.2s;
 }
 
 .search-main:focus{
 outline:none;
 border-color:#2563eb;
-box-shadow:none;
+box-shadow:0 0 0 4px rgba(37,99,235,.08);
 }
 
 .table-wrap{
@@ -539,11 +452,8 @@ border-collapse:collapse;
 }
 
 th{
-background:#f8fafc;
-color:#334155;
-
-border-bottom:1px solid #e5e7eb;
-
+background:#1e3a8a;
+color:white;
 padding:14px;
 }
 
@@ -581,7 +491,7 @@ gap:8px;
 
 .badge{
 padding:5px 10px;
-border-radius:4px;
+border-radius:999px;
 font-size:12px;
 font-weight:bold;
 }
@@ -618,22 +528,7 @@ position:fixed;inset:0;background:rgba(0,0,0,.45);
 display:none;align-items:center;justify-content:center;z-index:9999;
 }
 .edit-modal{
-background:white;width:90%;max-width:600px;border-radius:4px;padding:20px;
-}
-
-
-.sidebar{
-width:190px;
-
-background:#ffffff;
-
-border-right:1px solid #e5e7eb;
-
-color:#334155;
-
-padding:20px;
-
-overflow:auto;
+background:white;width:90%;max-width:600px;border-radius:16px;padding:20px;
 }
 
 
@@ -641,7 +536,7 @@ overflow:auto;
 margin-top:15px;
 background:linear-gradient(135deg,#f8fafc,#ffffff);
 border:1px solid #e2e8f0;
-border-radius:4px;
+border-radius:18px;
 padding:18px;
 }
 .detail-grid{
@@ -653,7 +548,7 @@ margin-top:12px;
 .detail-item{
 background:#f8fafc;
 padding:12px;
-border-radius:4px;
+border-radius:12px;
 }
 .detail-label{
 font-size:12px;
@@ -694,6 +589,46 @@ line-height:1.7;
 word-break:break-word;
 }
 
+.sidebar-user{
+
+margin-top:auto;
+
+padding-top:20px;
+
+border-top:1px solid #e5e7eb;
+
+}
+
+#sidebarUserName{
+font-size:14px;
+font-weight:700;
+color:#0f172a;
+margin-bottom:4px;
+}
+
+#sidebarUserEmail{
+font-size:12px;
+color:#64748b;
+word-break:break-all;
+margin-bottom:12px;
+}
+
+.logout-menu-btn{
+width:100%;
+border:none;
+padding:12px;
+border-radius:12px;
+background:#f8fafc;
+color:#475569;
+cursor:pointer;
+font-weight:700;
+border:1px solid #e2e8f0;
+}
+
+.logout-menu-btn:hover{
+background:#ef4444;
+color:white;
+}
 
 .tooltip{
 position:relative;
@@ -722,7 +657,7 @@ font-weight:600;
 
 white-space:nowrap;
 
-box-shadow:none;
+box-shadow:0 4px 12px rgba(0,0,0,.25);
 
 z-index:9999;
 
@@ -769,7 +704,7 @@ padding:40px;
 width:420px;
 border-radius:20px;
 text-align:center;
-box-shadow:none;
+box-shadow:0 10px 30px rgba(0,0,0,.08);
 ">
 
 <h1>印鑑借用管理系統</h1>
@@ -802,14 +737,21 @@ transition:.15s;
 
 <div class="logo">
 
-<span class="logo-icon">
-🏢
-</span>
+<div class="logo-icon">
+📅
+</div>
 
-<span class="logo-text">
-環興MIS系統<br>
-Pro Max版
-</span>
+<div>
+
+<div class="logo-title">
+環興MIS系統
+</div>
+
+<div class="logo-sub">
+Seal Management System
+</div>
+
+</div>
 
 </div>
 
@@ -866,56 +808,27 @@ loadLoginLogs();
 📜 登入紀錄
 </div>
 
+<div class="sidebar-user">
 
+    <div id="sidebarUserName">
+        使用者
+    </div>
+
+    <div id="sidebarUserEmail">
+        -
+    </div>
+
+    <button
+        class="logout-menu-btn"
+        onclick="logout()">
+        🚪 登出
+    </button>
+
+</div>
 
 </div>
 
 <div class="main">
-
-<div class="header">
-
-<div>
-<h2 id="pageTitle">
-借用登記
-</h2>
-
-<div
-id="pagePath"
-style="font-size:13px;color:#64748b;">
-首頁 / 印鑑管理 / 借用登記
-</div>
-</div>
-
-<div
-class="user-menu"
-onclick="toggleUserMenu(event)">
-
-<span id="headerUserName">
-使用者
-</span>
-
-▼
-
-<div id="userDropdown"
-class="user-dropdown">
-
-<div
-class="user-item"
-onclick="gotoLoginLog(event)">
-📜 登入紀錄
-</div>
-
-<div
-class="user-item"
-onclick="logout()">
-🚪 登出
-</div>
-
-</div>
-
-</div>
-
-</div>
 
 <!-- 借用頁 -->
 
@@ -927,12 +840,7 @@ onclick="logout()">
 
 <div class="panel">
 
-<h2>借用登記</h2>
-<hr style="
-margin:15px 0;
-border:none;
-border-top:1px solid #e5e7eb;
-">
+<h2>✍️ 借用登記</h2>
 
 <div class="form-group">
 <label>借用人</label>
@@ -982,7 +890,7 @@ onclick="borrowSeal()">
 style="
 margin-bottom:15px;
 padding:14px;
-border-radius:4px;
+border-radius:12px;
 font-weight:bold;
 ">
 </div>
@@ -1441,6 +1349,36 @@ onchange="changeLoginPageSize()">
 
 <script type="module">
 
+const cacheName =
+localStorage.getItem(
+"userName"
+);
+
+const cacheEmail =
+localStorage.getItem(
+"userEmail"
+);
+
+if(cacheName && cacheEmail){
+
+const nameEl =
+document.getElementById(
+"sidebarUserName"
+);
+
+const emailEl =
+document.getElementById(
+"sidebarUserEmail"
+);
+
+if(nameEl)
+nameEl.textContent = cacheName;
+
+if(emailEl)
+emailEl.textContent = cacheEmail;
+
+
+}
 
 import { initializeApp }
 from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1733,116 +1671,9 @@ localStorage.setItem(
     pageId
 );
 
-const pageMap = {
-
-borrowPage:{
-title:"借用登記",
-path:"首頁 / 印鑑管理 / 借用登記"
-},
-
-pendingPage:{
-title:"待借用管理",
-path:"首頁 / 印鑑管理 / 待借用管理"
-},
-
-returnPage:{
-title:"歸還作業",
-path:"首頁 / 印鑑管理 / 歸還作業"
-},
-
-historyPage:{
-title:"借用紀錄",
-path:"首頁 / 印鑑管理 / 借用紀錄"
-},
-
-sealPage:{
-title:"印鑑維護",
-path:"首頁 / 系統管理 / 印鑑維護"
-},
-
-deptPage:{
-title:"部門維護",
-path:"首頁 / 系統管理 / 部門維護"
-},
-
-permissionPage:{
-title:"權限管理",
-path:"首頁 / 系統管理 / 權限管理"
-},
-
-loginLogPage:{
-title:"登入紀錄",
-path:"首頁 / 系統管理 / 登入紀錄"
-}
-
-};
-
-if(pageMap[pageId]){
-
-document.getElementById(
-"pageTitle"
-).textContent =
-pageMap[pageId].title;
-
-document.getElementById(
-"pagePath"
-).textContent =
-pageMap[pageId].path;
-
-}
-
 }
 
 window.showPage = showPage;
-
-function toggleUserMenu(event){
-
-event.stopPropagation();
-
-document
-.getElementById("userDropdown")
-.classList.toggle("show");
-
-}
-
-window.toggleUserMenu =
-toggleUserMenu;
-
-document.addEventListener(
-"click",
-function(){
-
-document
-.getElementById("userDropdown")
-?.classList.remove("show");
-
-}
-);
-
-function gotoLoginLog(e){
-
-e.stopPropagation();
-
-const menu =
-document.getElementById(
-"loginLogMenu"
-);
-
-if(menu){
-
-showPage(
-"loginLogPage",
-menu
-);
-
-loadLoginLogs();
-
-}
-
-}
-
-window.gotoLoginLog =
-gotoLoginLog;
 
 function restoreLastPage(){
 
@@ -3129,7 +2960,7 @@ el.innerHTML=`
 <div class="detail-value status-good">🟢 可借用</div>
 </div>
 </div>
-<div style="margin-top:15px;padding:12px;background:#ecfdf5;border-radius:4px;">
+<div style="margin-top:15px;padding:12px;background:#ecfdf5;border-radius:12px;">
 目前無借用案件
 </div>
 </div>`;
@@ -3166,8 +2997,10 @@ sealList.forEach(seal=>{
 
 const active =
 records.find(r=>
+
 r.seal===seal.name &&
 !r.returnTime
+
 );
 
 const card =
@@ -3176,35 +3009,14 @@ document.createElement("div");
 card.className =
 active ? "card borrowed" : "card available";
 
-card.setAttribute(
-'data-seal',
-seal.name
-);
-
-card.onclick = () =>
-showSealDetail(seal.name);
-
+card.setAttribute('data-seal',seal.name); card.onclick=()=>showSealDetail(seal.name);
 card.innerHTML = `
-
-<div style="
-display:flex;
-justify-content:space-between;
-align-items:center;
-width:100%;
-">
-
-<div>
-${seal.name}
-</div>
-
-<div>
+<h3>${seal.name}</h3>
+<p>
 ${active
-? "🔴 借出中"
+? `🔴 借出中（${active.borrower}）`
 : "🟢 可借用"}
-</div>
-
-</div>
-
+</p>
 `;
 
 grid.appendChild(card);
@@ -3212,9 +3024,7 @@ grid.appendChild(card);
 });
 
 if(sealList.length){
-showSealDetail(
-sealList[0].name
-);
+showSealDetail(sealList[0].name);
 }
 
 }
@@ -3735,11 +3545,6 @@ return;
 currentUser =
 user.displayName;
 
-document.getElementById(
-"headerUserName"
-).textContent =
-user.displayName;
-
 currentUserEmail =
 user.email;
 
@@ -3776,6 +3581,15 @@ sessionStorage.setItem(
 
 }
 
+document.getElementById(
+"sidebarUserName"
+).textContent =
+user.displayName;
+
+document.getElementById(
+"sidebarUserEmail"
+).textContent =
+user.email;
 
 document.getElementById(
 "loginPage"
