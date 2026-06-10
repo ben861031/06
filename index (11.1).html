@@ -1,0 +1,3653 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>印鑑借用管理系統</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Noto Sans TC',sans-serif;
+}
+
+body{
+background:#f1f5f9;
+color:#1e293b;
+}
+
+.app{
+display:flex;
+min-height:100vh;
+}
+
+.logo{
+display:flex;
+align-items:flex-start;
+gap:12px;
+
+padding-bottom:20px;
+margin-bottom:20px;
+
+border-bottom:1px solid rgba(255,255,255,.12);
+}
+
+.logo-icon{
+font-size:24px;
+flex-shrink:0;
+}
+
+.logo-text{
+font-size:16px;
+font-weight:700;
+color:white;
+line-height:1.4;
+display:block;
+}
+
+.menu-title{
+font-size:13px;
+opacity:0.6;
+margin:20px 0 10px;
+}
+
+.menu-item{
+padding:14px;
+border-radius:12px;
+cursor:pointer;
+margin-bottom:8px;
+}
+
+.menu-item:hover{
+background:#1e293b;
+}
+
+.menu-item.active{
+background:#2563eb;
+}
+
+.main{
+flex:1;
+padding:20px;
+}
+.header{
+background:#fff;
+color:#0f172a;
+
+padding:20px 24px;
+
+border:1px solid #e5e7eb;
+border-radius:8px;
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+margin-bottom:20px;
+}
+
+.user-menu{
+display:flex;
+align-items:center;
+gap:8px;
+
+padding:10px 14px;
+
+border:1px solid #e5e7eb;
+border-radius:8px;
+
+cursor:pointer;
+
+font-size:14px;
+font-weight:600;
+
+background:#fff;
+}
+
+.user-menu:hover{
+background:#f8fafc;
+}
+
+.panel{
+background:#fff;
+border:1px solid #e5e7eb;
+border-radius:8px;
+padding:24px;
+margin-bottom:20px;
+box-shadow:none;
+}
+
+.grid{
+display:grid;
+grid-template-columns:350px 1fr;
+gap:20px;
+}
+
+.form-group{
+margin-bottom:15px;
+}
+
+.form-group label{
+display:block;
+margin-bottom:6px;
+font-weight:600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:1px solid #dbe4f0;
+background:#f8fafc;
+}
+
+textarea{
+resize:vertical;
+}
+
+.btn{
+border:none;
+padding:10px 14px;
+border-radius:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.btn-primary{
+background:#2563eb;
+color:white;
+width:100%;
+}
+
+.btn-green{
+background:#16a34a;
+color:white;
+}
+
+.btn-red{
+background:#dc2626;
+color:white;
+}
+
+.btn-gray{
+background:#64748b;
+color:white;
+}
+
+.status-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:15px;
+
+margin-top:20px;
+}
+
+.card{
+background:#fff;
+border:1px solid #e5e7eb;
+border-radius:8px;
+padding:16px;
+color:#0f172a;
+}
+
+.available{
+background:#fff;
+}
+
+.borrowed{
+background:#fff;
+}
+
+.card.selected{
+outline:4px solid #2563eb;
+}
+
+
+.search-toolbar{
+background:#fff;
+padding:24px;
+border:1px solid #e5e7eb;
+border-radius:8px;
+box-shadow:none;
+margin-bottom:20px;
+}
+
+.search-main{
+width:100%;
+height:54px;
+padding:0 18px;
+font-size:15px;
+border:2px solid #e2e8f0;
+border-radius:14px;
+margin-bottom:18px;
+}
+
+.search-main:focus{
+outline:none;
+border-color:#2563eb;
+box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+.search-row{
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+align-items:center;
+}
+
+.search-chip{
+min-width:180px;
+}
+
+.search-actions{
+display:flex;
+gap:18px;
+margin-left:auto;
+align-items:center;
+padding-right:24px;
+}
+
+.search-actions .btn{
+min-width:100px;
+white-space:nowrap;
+}
+
+.search-chip{
+min-width:180px;
+}
+
+.filter-group{
+display:flex;
+flex-direction:column;
+justify-content:flex-start;
+}
+
+.filter-label{
+font-size:14px;
+font-weight:700;
+color:#475569;
+padding-left:4px;
+margin-bottom:2px;
+}
+
+.filter-chip{
+height:42px;
+padding:0 18px;
+border-radius:999px;
+background:#f1f5f9;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+font-size:14px;
+font-weight:600;
+color:#0f172a;
+transition:.2s;
+min-width:120px;
+}
+
+.filter-chip:hover{
+background:#e2e8f0;
+}
+
+.search-chip select{
+height:42px;
+padding:0 18px;
+border:none;
+border-radius:999px;
+background:#f1f5f9;
+font-size:14px;
+font-weight:600;
+cursor:pointer;
+transition:.2s;
+}
+
+.search-chip select:hover{
+background:#e2e8f0;
+}
+
+.search-chip select:focus{
+outline:none;
+background:#dbeafe;
+box-shadow:none;
+}
+
+.search-toolbar .btn-gray{
+height:42px;
+border-radius:999px;
+background:#f1f5f9;
+color:#475569;
+font-weight:600;
+border:none;
+}
+
+.search-toolbar .btn-gray:hover{
+background:#e2e8f0;
+}
+
+.search-toolbar .btn-primary{
+height:42px;
+border-radius:999px;
+padding:0 20px;
+}
+
+.search-toolbar .btn-green{
+height:42px;
+border-radius:999px;
+padding:0 20px;
+}
+
+.search-chip select:focus{
+outline:none;
+border-color:#2563eb;
+box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+#advancedFilter{
+max-height:0;
+overflow:hidden;
+opacity:0;
+margin-top:0;
+padding-top:0;
+border-top:none;
+transition:all .35s ease;
+}
+
+#advancedFilter.show{
+max-height:220px;
+opacity:1;
+margin-top:18px;
+padding-top:18px;
+border-top:1px solid #e2e8f0;
+}
+
+#advancedFilter .search-row{
+align-items:center;
+}
+
+#advancedFilter input{
+height:46px;
+padding:0 14px;
+border:1px solid #dbe4f0;
+border-radius:12px;
+background:white;
+min-width:220px;
+font-size:14px;
+}
+
+#advancedFilter input:focus{
+outline:none;
+border-color:#2563eb;
+box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+.search-actions .btn{
+height:46px;
+padding:0 18px;
+border-radius:12px;
+}
+
+.search-toolbar{
+background:#fff;
+padding:24px;
+border:1px solid #e5e7eb;
+border-radius:8px;
+box-shadow:none;
+margin-bottom:20px;
+}
+
+.search-main{
+width:100%;
+height:50px;
+padding:0 24px;
+font-size:15px;
+border:1px solid #dbe4f0;
+border-radius:16px;
+margin-bottom:18px;
+background:white;
+box-shadow:0 2px 8px rgba(15,23,42,.04);
+transition:.2s;
+}
+
+.search-main:focus{
+outline:none;
+border-color:#2563eb;
+box-shadow:0 0 0 4px rgba(37,99,235,.08);
+}
+
+.table-wrap{
+overflow:auto;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th{
+background:#f8fafc;
+color:#334155;
+
+border-bottom:1px solid #e5e7eb;
+
+padding:14px;
+}
+
+td{
+padding:12px;
+border-bottom:1px solid #e2e8f0;
+text-align:center;
+}
+
+#recordTable tr{
+transition:.15s;
+}
+
+#recordTable tr:hover{
+background:#f8fafc;
+cursor:pointer;
+}
+
+.hidden{
+display:none;
+}
+
+.maintenance-item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px;
+border-bottom:1px solid #e2e8f0;
+}
+
+.maintenance-actions{
+display:flex;
+gap:8px;
+}
+
+.badge{
+padding:5px 10px;
+border-radius:999px;
+font-size:12px;
+font-weight:bold;
+}
+
+.badge-red{
+background:#fee2e2;
+color:#991b1b;
+}
+
+.badge-green{
+background:#dcfce7;
+color:#166534;
+}
+
+@media(max-width:1000px){
+
+.app{
+flex-direction:column;
+}
+
+.sidebar{
+width:100%;
+}
+
+.grid{
+grid-template-columns:1fr;
+}
+
+}
+
+
+.edit-modal-overlay{
+position:fixed;inset:0;background:rgba(0,0,0,.45);
+display:none;align-items:center;justify-content:center;z-index:9999;
+}
+.edit-modal{
+background:white;width:90%;max-width:600px;border-radius:16px;padding:20px;
+}
+
+
+.sidebar{
+width:240px;
+background:#0f172a;
+color:white;
+padding:20px;
+overflow:auto;
+}
+
+.sidebar:hover{
+width:240px;
+}
+
+
+.detail-card{
+margin-top:15px;
+background:linear-gradient(135deg,#f8fafc,#ffffff);
+border:1px solid #e2e8f0;
+border-radius:18px;
+padding:18px;
+}
+.detail-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+margin-top:12px;
+}
+.detail-item{
+background:#f8fafc;
+padding:12px;
+border-radius:12px;
+}
+.detail-label{
+font-size:12px;
+color:#475569;
+font-weight:700;
+margin-bottom:4px;
+}
+.detail-value{
+font-weight:700;
+color:#0f172a;
+}
+.status-good{
+color:#16a34a;
+font-weight:700;
+}
+.status-bad{
+color:#dc2626;
+font-weight:700;
+}
+
+
+.purpose-card{
+margin-top:15px;
+background:#f8fafc;
+border:1px solid #e2e8f0;
+border-radius:14px;
+padding:14px;
+}
+.purpose-title{
+font-size:12px;
+color:#64748b;
+margin-bottom:8px;
+}
+.purpose-content{
+font-weight:700;
+color:#0f172a;
+line-height:1.7;
+word-break:break-word;
+}
+
+
+.tooltip{
+position:relative;
+}
+
+.tooltip:hover::after{
+
+content:attr(data-tip);
+
+position:absolute;
+
+bottom:120%;
+left:50%;
+
+transform:translateX(-50%);
+
+background:#2563eb;
+color:white;
+
+padding:6px 10px;
+
+border-radius:8px;
+
+font-size:12px;
+font-weight:600;
+
+white-space:nowrap;
+
+box-shadow:0 4px 12px rgba(0,0,0,.25);
+
+z-index:9999;
+
+}
+
+.tooltip:hover::before{
+
+content:"";
+
+position:absolute;
+
+bottom:105%;
+left:50%;
+
+transform:translateX(-50%);
+
+border-left:6px solid transparent;
+border-right:6px solid transparent;
+border-top:6px solid #2563eb;
+
+z-index:9999;
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div id="loginPage"
+style="
+height:100vh;
+display:none;
+justify-content:center;
+align-items:center;
+background:#f1f5f9;
+">
+
+<div
+style="
+background:white;
+padding:40px;
+width:420px;
+border-radius:20px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,.08);
+">
+
+<h1>印鑑借用管理系統</h1>
+
+<br>
+
+<button
+class="btn btn-primary"
+onclick="googleLogin()">
+
+Google 登入
+
+</button>
+
+</div>
+
+</div>
+
+<div id="systemArea"
+style="
+display:none;
+opacity:0;
+transition:.15s;
+">
+
+
+<div class="app">
+
+<div class="sidebar">
+
+<div class="logo">
+
+<span class="logo-icon">
+🏢
+</span>
+
+<span class="logo-text">
+環興MIS系統<br>
+Pro Max版
+</span>
+
+</div>
+
+<div class="menu-title">
+印鑑作業
+</div>
+
+<div class="menu-item active"
+onclick="showPage('borrowPage',this)">
+📋 借用登記
+</div>
+
+<div class="menu-item"
+onclick="showPage('pendingPage',this)">
+🕒 待借用管理
+</div>
+
+<div class="menu-item"
+onclick="showPage('returnPage',this)">
+↩ 歸還作業
+</div>
+
+<div class="menu-item"
+onclick="showPage('historyPage',this)">
+📑 借用紀錄
+</div>
+
+<div class="menu-title">
+系統管理
+</div>
+
+<div class="menu-item"
+onclick="showPage('sealPage',this)">
+🛠 印鑑維護
+</div>
+
+<div class="menu-item"
+onclick="showPage('deptPage',this)">
+🏢 部門維護
+</div>
+
+<div class="menu-item"
+id="permissionMenu"
+onclick="showPage('permissionPage',this)">
+🔐 權限管理
+</div>
+
+<div class="menu-item"
+id="loginLogMenu"
+onclick="
+showPage('loginLogPage',this);
+loadLoginLogs();
+">
+📜 登入紀錄
+</div>
+
+
+
+</div>
+
+<div class="main">
+
+<div class="header">
+
+<div>
+<h2>借用登記</h2>
+<div style="font-size:13px;color:#64748b;">
+首頁 / 印鑑管理 / 借用登記
+</div>
+</div>
+
+<div class="user-menu">
+
+<span id="headerUserName">
+使用者
+</span>
+
+▼
+
+</div>
+
+</div>
+
+<!-- 借用頁 -->
+
+<div id="borrowPage" class="hidden">
+
+<div class="grid">
+
+<div>
+
+<div class="panel">
+
+<h2>✍️ 借用登記</h2>
+
+<div class="form-group">
+<label>借用人</label>
+<input type="text" id="borrower">
+</div>
+
+<div class="form-group">
+<label>部門</label>
+<select id="department"></select>
+</div>
+
+<div class="form-group">
+<label>印鑑編號</label>
+<select id="seal"></select>
+</div>
+
+<div class="form-group">
+<label>計畫編號</label>
+<input type="text" id="projectNo">
+</div>
+
+<div class="form-group">
+<label>表單編號</label>
+<input type="text" id="formNo">
+</div>
+
+<div class="form-group">
+<label>用途</label>
+<textarea id="purpose" rows="4"></textarea>
+</div>
+
+<button class="btn btn-primary"
+onclick="borrowSeal()">
+確認借用
+</button>
+
+</div>
+
+</div>
+
+<div>
+
+<div class="panel">
+
+
+<div id="sealAlert"
+style="
+margin-bottom:15px;
+padding:14px;
+border-radius:12px;
+font-weight:bold;
+">
+</div>
+
+<h2>📦 即時狀態</h2>
+
+
+<div class="status-grid" id="statusGrid"></div>
+
+<div id="sealDetailPanel" style="margin-top:20px;padding-top:15px;border-top:1px solid #e2e8f0;">
+<h3>📋 借用資訊</h3>
+<div id="sealDetailContent" style="margin-top:12px;color:#475569;">
+請點選上方印鑑查看詳細資訊
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- 歸還作業 -->
+
+<!-- 待借用管理 -->
+
+<div id="pendingPage" class="hidden">
+
+<div class="panel">
+
+<h2>🕒 待借用管理</h2>
+
+<p style="margin-bottom:20px;color:#64748b;">
+提前建檔，待實際借用時再轉正式借用
+</p>
+
+<button
+class="btn btn-green"
+onclick="openPendingModal()">
+➕ 新增待借用案件
+</button>
+
+<br><br>
+
+<table>
+
+<thead>
+<tr>
+<th>承辦人</th>
+<th>部門</th>
+<th>計畫編號</th>
+<th>表單編號</th>
+<th>用途</th>
+<th>狀態</th>
+<th>操作</th>
+</tr>
+</thead>
+
+<tbody id="pendingTable">
+
+<tr>
+<td colspan="7">
+目前尚無待借用案件
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- 歸還作業 -->
+
+<div id="returnPage" class="hidden">
+
+<div class="panel">
+
+<h2>↩ 歸還作業</h2>
+
+<p style="margin:10px 0 20px;color:#64748b;">
+目前尚未歸還之印鑑借用案件
+</p>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>印鑑</th>
+<th>借用人</th>
+<th>部門</th>
+<th>借用時間</th>
+<th>計畫編號</th>
+<th>表單編號</th>
+<th>用途</th>
+<th>操作</th>
+</tr>
+</thead>
+
+<tbody id="returnTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- 借用紀錄 -->
+
+<div id="historyPage" class="hidden">
+
+<div class="panel">
+
+<h2>📋 借用紀錄</h2>
+
+<div class="search-toolbar">
+
+<input
+type="text"
+id="searchInput"
+class="search-main"
+placeholder="🔍 搜尋借用人、部門、用途、計畫編號、表單編號">
+
+<div class="search-row">
+
+    <div class="filter-group">
+
+        <div class="filter-label">
+            🏷 印鑑
+        </div>
+
+        <div class="search-chip">
+            <select id="sealFilter">
+                <option value="">全部印鑑</option>
+            </select>
+        </div>
+
+    </div>
+
+    <div class="filter-group">
+
+        <div class="filter-label">
+            📋 狀態
+        </div>
+
+        <div class="search-chip">
+            <select id="statusFilter">
+                <option value="">全部狀態</option>
+                <option value="borrowed">借出中</option>
+                <option value="returned">已歸還</option>
+            </select>
+        </div>
+
+    </div>
+
+<div class="filter-group">
+
+    <div class="filter-label">
+        ⚙ 進階篩選
+    </div>
+
+    <div
+        class="search-chip filter-chip"
+        onclick="toggleAdvancedFilter()">
+
+<span id="filterToggleText">
+更多篩選
+</span>
+
+    </div>
+
+</div>
+
+    <div class="search-actions">
+        <button
+            type="button"
+            class="btn btn-gray"
+            onclick="resetHistoryFilter()">
+            ↻ 重設
+        </button>
+
+        <button
+            type="button"
+            class="btn btn-green"
+            onclick="exportExcel()">
+            📊 Excel
+        </button>
+
+    </div>
+
+</div>
+
+<div id="advancedFilter">
+
+    <div class="search-row">
+
+        <input
+            type="text"
+            id="projectFilter"
+            placeholder="📂 計畫編號">
+
+        <input
+            type="text"
+            id="formFilter"
+            placeholder="📄 表單編號">
+
+        <input
+            type="date"
+            id="borrowDate">
+
+        <input
+            type="date"
+            id="returnDate">
+
+    </div>
+
+</div>
+
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>印鑑</th>
+<th>借用人</th>
+<th>部門</th>
+<th>借用時間</th>
+<th>歸還時間</th>
+<th>計畫編號</th>
+<th>表單編號</th>
+<th>用途</th>
+<th>狀態</th><th>操作</th>
+</tr>
+
+</thead>
+
+<tbody id="recordTable"></tbody>
+
+
+</table>
+
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:15px;flex-wrap:wrap;gap:10px;">
+
+<div>
+<label>每頁顯示：</label>
+
+<select id="pageSizeSelect" onchange="changePageSize()"
+style="padding:8px;border-radius:8px;">
+
+<option value="10">10 筆</option>
+<option value="25">25 筆</option>
+<option value="50">50 筆</option>
+
+</select>
+</div>
+
+<div id="paginationArea"
+style="display:flex;gap:8px;flex-wrap:wrap;">
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+<!-- 印鑑維護 -->
+
+<div id="sealPage" class="hidden">
+
+<div class="panel">
+
+<h2>🛠 印鑑維護</h2>
+
+<div class="form-group">
+<label>印鑑名稱</label>
+<input type="text" id="newSeal">
+</div>
+
+<div class="form-group">
+<label>顯示順序</label>
+<input type="number" id="newOrder">
+</div>
+
+<button class="btn btn-green"
+onclick="addSeal()">
+➕ 新增印鑑
+</button>
+
+<br><br>
+
+<div id="sealListArea"></div>
+
+</div>
+
+</div>
+
+<!-- 部門維護 -->
+
+<div id="deptPage" class="hidden">
+
+<div class="panel">
+
+<h2>🏢 部門維護</h2>
+
+<div class="form-group">
+<label>部門名稱</label>
+<input type="text" id="newDept">
+</div>
+
+<div class="form-group">
+<label>顯示順序</label>
+<input type="number" id="newDeptOrder">
+</div>
+
+<button class="btn btn-green"
+onclick="addDepartment()">
+➕ 新增部門
+</button>
+
+<br><br>
+
+<div id="deptListArea"></div>
+
+</div>
+
+</div>
+
+<!-- 權限管理 -->
+
+<div id="permissionPage" class="hidden">
+
+<div class="panel">
+
+<h2>🔐 權限管理</h2>
+
+<div class="form-group">
+
+<label>Email</label>
+
+<input
+type="email"
+id="newUserEmail">
+
+</div>
+
+<button
+class="btn btn-green"
+onclick="addWhitelistUser()">
+
+➕ 新增白名單
+
+</button>
+
+<br><br>
+
+<div id="userListArea"></div>
+
+</div>
+
+</div>
+
+<div id="loginLogPage"
+class="hidden">
+
+<div class="panel">
+
+<h2>
+📜 登入紀錄
+<span id="loginCount">(0筆)</span>
+</h2>
+
+<table>
+
+<thead>
+
+<tr>
+<th>登入時間</th>
+<th>姓名</th>
+<th>Email</th>
+<th>角色</th>
+</tr>
+
+</thead>
+
+<tbody id="loginLogTable">
+
+</tbody>
+
+</table>
+
+<br>
+
+<div
+style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+">
+
+<div>
+
+每頁顯示：
+
+<select
+id="loginPageSize"
+onchange="changeLoginPageSize()">
+
+<option value="10" selected>
+10
+</option>
+
+<option value="20">
+20
+</option>
+
+<option value="50">
+50
+</option>
+
+<option value="100">
+100
+</option>
+
+</select>
+
+</div>
+
+<div id="loginPagination"></div>
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+<script type="module">
+
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+addDoc,
+getDocs,
+getDoc,
+updateDoc,
+deleteDoc,
+doc,
+query,
+where
+}
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+import {
+getAuth,
+GoogleAuthProvider,
+signInWithPopup,
+signOut,
+onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyCzvPwTbxc_Lg7peKRgP0zUrlmI6kkE0b4",
+authDomain: "seal-management-68465.firebaseapp.com",
+projectId: "seal-management-68465",
+storageBucket: "seal-management-68465.firebasestorage.app",
+messagingSenderId: "933578260928",
+appId: "1:933578260928:web:4c5f41252fd786e1bf0825",
+measurementId: "G-7RKPNF7BK9"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+let currentRole = "";
+let currentUserEmail = "";
+
+let currentUser = "系統使用者";
+let isAdmin = true;
+
+let records = [];
+let sealList = [];
+let departmentList = [];
+let pendingRecords = [];
+let userList = [];
+let currentPendingIndex = null;
+let editingPendingId = null;
+
+let loginLogs = [];
+
+let loginCurrentPage = 1;
+let loginPageSize = 10;
+
+async function loadLoginLogs(){
+
+const snapshot =
+await getDocs(
+collection(db,"loginLogs")
+);
+
+loginLogs = [];
+
+snapshot.forEach(docSnap=>{
+
+loginLogs.push(
+docSnap.data()
+);
+
+});
+
+renderLoginLogs();
+
+}
+
+function renderLoginLogs(){
+
+const table =
+document.getElementById(
+"loginLogTable"
+);
+
+if(!table) return;
+
+table.innerHTML = "";
+
+const sortedLogs =
+[...loginLogs]
+.sort((a,b)=>{
+
+const t1 =
+a.loginTime?.seconds || 0;
+
+const t2 =
+b.loginTime?.seconds || 0;
+
+return t2 - t1;
+
+});
+
+document.getElementById(
+"loginCount"
+).innerText =
+`(${sortedLogs.length}筆)`;
+
+const totalPages =
+Math.ceil(
+sortedLogs.length /
+loginPageSize
+);
+
+const start =
+(loginCurrentPage - 1)
+* loginPageSize;
+
+const pageLogs =
+sortedLogs.slice(
+start,
+start + loginPageSize
+);
+
+pageLogs.forEach(log=>{
+
+table.innerHTML += `
+
+<tr>
+
+<td>${formatDate(log.loginTime)}</td>
+
+<td>${log.name}</td>
+
+<td>${log.email}</td>
+
+<td>${log.role}</td>
+
+</tr>
+
+`;
+
+});
+
+renderLoginPagination(
+totalPages
+);
+
+}
+
+function changeLoginPageSize(){
+
+loginPageSize =
+parseInt(
+document.getElementById(
+"loginPageSize"
+).value
+);
+
+loginCurrentPage = 1;
+
+renderLoginLogs();
+
+}
+
+window.changeLoginPageSize =
+changeLoginPageSize;
+
+function renderLoginPagination(
+totalPages
+){
+
+const area =
+document.getElementById(
+"loginPagination"
+);
+
+if(!area) return;
+
+area.innerHTML = "";
+
+if(totalPages <= 1) return;
+
+for(
+let i=1;
+i<=totalPages;
+i++
+){
+
+const btn =
+document.createElement(
+"button"
+);
+
+btn.className = "btn";
+
+btn.innerText = i;
+
+btn.style.marginLeft = "5px";
+
+btn.onclick = ()=>{
+
+loginCurrentPage = i;
+
+renderLoginLogs();
+
+};
+
+area.appendChild(btn);
+
+}
+
+}
+
+async function loadUsers(){
+
+const snapshot =
+await getDocs(
+collection(db,"users")
+);
+
+userList = [];
+
+snapshot.forEach(docSnap=>{
+
+userList.push({
+
+id:docSnap.id,
+...docSnap.data()
+
+});
+
+});
+
+renderUserList();
+
+}
+async function loadPendingRecords(){
+
+const querySnapshot =
+await getDocs(collection(db,"pendingRecords"));
+
+pendingRecords = [];
+
+querySnapshot.forEach((docSnap)=>{
+
+pendingRecords.push({
+
+id:docSnap.id,
+...docSnap.data()
+
+});
+
+});
+
+renderPendingTable();
+
+}
+
+let currentPage = 1;
+let pageSize = 10;
+
+function showPage(pageId,el){
+
+document
+.querySelectorAll(
+"#borrowPage,#pendingPage,#returnPage,#historyPage,#sealPage,#deptPage,#permissionPage,#loginLogPage"
+)
+.forEach(page=>page.classList.add("hidden"));
+
+document
+.getElementById(pageId)
+.classList.remove("hidden");
+
+document
+.querySelectorAll(".menu-item")
+.forEach(item=>item.classList.remove("active"));
+
+el.classList.add("active");
+
+localStorage.setItem(
+    "lastPage",
+    pageId
+);
+
+}
+
+window.showPage = showPage;
+
+function restoreLastPage(){
+
+    const lastPage =
+    localStorage.getItem(
+        "lastPage"
+    );
+
+    if(!lastPage){
+
+    showPage(
+        "borrowPage",
+        document.querySelector(".menu-item")
+    );
+
+    return;
+
+}
+
+    const targetMenu =
+    document.querySelector(
+        `[onclick*="${lastPage}"]`
+    );
+
+    if(targetMenu){
+
+        showPage(
+            lastPage,
+            targetMenu
+        );
+
+    }
+
+}
+
+function toggleAdvancedFilter(){
+
+const panel =
+document.getElementById("advancedFilter");
+
+const text =
+document.getElementById("filterToggleText");
+
+panel.classList.toggle("show");
+
+if(panel.classList.contains("show")){
+
+text.innerHTML = "收合篩選";
+
+}else{
+
+text.innerHTML = "更多篩選";
+
+}
+
+}
+
+window.toggleAdvancedFilter =
+toggleAdvancedFilter;
+
+function resetHistoryFilter(){
+
+document.getElementById("searchInput").value = "";
+document.getElementById("sealFilter").value = "";
+document.getElementById("statusFilter").value = "";
+
+document.getElementById("projectFilter").value = "";
+document.getElementById("formFilter").value = "";
+
+document.getElementById("borrowDate").value = "";
+document.getElementById("returnDate").value = "";
+
+currentPage = 1;
+
+renderTable();
+
+}
+
+window.resetHistoryFilter =
+resetHistoryFilter;
+
+async function deletePending(id){
+
+if(!confirm("確定刪除？"))
+return;
+
+await deleteDoc(
+doc(
+db,
+"pendingRecords",
+id
+)
+);
+
+await loadPendingRecords();
+
+}
+
+window.deletePending = deletePending;
+
+function openPendingModal(){
+
+const deptSelect =
+document.getElementById("pendingDepartment");
+
+deptSelect.innerHTML =
+'<option value="">請選擇</option>';
+
+departmentList.forEach(dept=>{
+
+deptSelect.innerHTML += `
+<option value="${dept.name}">
+${dept.name}
+</option>
+`;
+
+});
+
+document.getElementById("pendingBorrower").value = "";
+document.getElementById("pendingDepartment").value = "";
+document.getElementById("pendingProjectNo").value = "";
+document.getElementById("pendingFormNo").value = "";
+document.getElementById("pendingPurpose").value = "";
+editingPendingId = null;
+
+document.querySelector(
+"#pendingOverlay h2"
+).innerText = "🕒 新增待借用案件";
+
+document.getElementById("pendingOverlay").style.display =
+"flex";
+
+}
+
+function closePendingModal(){
+
+document.getElementById("pendingOverlay").style.display =
+"none";
+
+}
+
+window.openPendingModal = openPendingModal;
+window.closePendingModal = closePendingModal;
+
+async function savePendingRecord(){
+
+const borrower =
+document.getElementById("pendingBorrower")
+.value.trim();
+
+const department =
+document.getElementById("pendingDepartment")
+.value;
+
+const projectNo =
+document.getElementById("pendingProjectNo")
+.value.trim();
+
+const formNo =
+document.getElementById("pendingFormNo")
+.value.trim();
+
+const purpose =
+document.getElementById("pendingPurpose")
+.value.trim();
+
+if(
+!borrower ||
+!department ||
+!projectNo ||
+!formNo ||
+!purpose
+){
+
+alert("請完整填寫資料");
+return;
+
+}
+
+if(editingPendingId){
+
+await updateDoc(
+doc(
+db,
+"pendingRecords",
+editingPendingId
+),
+{
+
+borrower,
+department,
+projectNo,
+formNo,
+purpose
+
+}
+);
+
+}else{
+
+await addDoc(
+collection(db,"pendingRecords"),
+{
+
+borrower,
+department,
+projectNo,
+formNo,
+purpose,
+status:"待借用",
+createTime:new Date()
+
+}
+);
+
+}
+
+closePendingModal();
+
+await loadPendingRecords();
+
+alert("新增成功");
+
+}
+
+window.savePendingRecord =
+savePendingRecord;
+
+async function addWhitelistUser(){
+
+const email =
+document.getElementById(
+"newUserEmail"
+).value.trim();
+
+if(!email){
+
+alert("請輸入Email");
+return;
+
+}
+
+await addDoc(
+collection(db,"users"),
+{
+
+email,
+role:"user",
+enabled:true
+
+});
+
+document.getElementById(
+"newUserEmail"
+).value = "";
+
+alert("新增成功");
+
+loadUsers();
+
+}
+
+window.addWhitelistUser =
+addWhitelistUser;
+
+async function deleteUser(id){
+
+const user =
+userList.find(u=>u.id===id);
+
+if(user?.role === "admin"){
+
+alert("管理員不可刪除");
+return;
+
+}
+
+if(!confirm("確定刪除？"))
+return;
+
+await deleteDoc(
+doc(db,"users",id)
+);
+
+loadUsers();
+
+}
+
+window.deleteUser =
+deleteUser;
+
+async function toggleUser(
+id,
+enabled
+){
+
+await updateDoc(
+doc(db,"users",id),
+{
+enabled:!enabled
+}
+);
+
+loadUsers();
+
+}
+
+window.toggleUser =
+toggleUser;
+
+async function changeRole(
+id,
+role
+){
+
+await updateDoc(
+doc(db,"users",id),
+{
+role
+}
+);
+
+loadUsers();
+
+}
+
+window.changeRole =
+changeRole;
+
+async function editPending(id){
+
+const item =
+pendingRecords.find(
+x => x.id === id
+);
+
+const deptSelect =
+document.getElementById(
+"pendingDepartment"
+);
+
+deptSelect.innerHTML =
+'<option value="">請選擇</option>';
+
+departmentList.forEach(dept=>{
+
+deptSelect.innerHTML += `
+<option value="${dept.name}">
+${dept.name}
+</option>
+`;
+
+});
+
+editingPendingId = item.id;
+
+document.getElementById("pendingBorrower").value =
+item.borrower || "";
+
+document.getElementById("pendingDepartment").value =
+item.department || "";
+
+document.getElementById("pendingProjectNo").value =
+item.projectNo || "";
+
+document.getElementById("pendingFormNo").value =
+item.formNo || "";
+
+document.getElementById("pendingPurpose").value =
+item.purpose || "";
+
+document.querySelector(
+"#pendingOverlay h2"
+).innerText = "✏ 編輯待借用案件";
+
+document.getElementById("pendingOverlay").style.display =
+"flex";
+
+}
+
+window.editPending = editPending;
+
+function convertPending(id){
+
+const item =
+pendingRecords.find(
+x => x.id === id
+);
+
+currentPendingIndex = id;
+
+item.status = "已轉正式借用";
+
+document.getElementById("borrower").value =
+item.borrower || "";
+
+document.getElementById("projectNo").value =
+item.projectNo || "";
+
+document.getElementById("formNo").value =
+item.formNo || "";
+
+document.getElementById("purpose").value =
+item.purpose || "";
+
+document.getElementById("department").value =
+item.department || "";
+
+const borrowMenu =
+document.querySelectorAll(".menu-item")[0];
+
+showPage(
+"borrowPage",
+borrowMenu
+);
+
+renderPendingTable();
+
+alert("資料已帶入借用管理，請選擇印鑑後完成借用。");
+
+}
+
+window.convertPending = convertPending;
+
+function renderUserList(){
+
+const area =
+document.getElementById(
+"userListArea"
+);
+
+if(!area) return;
+
+area.innerHTML = "";
+
+userList.forEach(user=>{
+
+area.innerHTML += `
+
+<div class="maintenance-item">
+
+<div>
+
+<strong>
+${user.email}
+</strong>
+
+<br>
+
+角色：
+
+<select
+onchange="
+changeRole(
+'${user.id}',
+this.value
+)">
+
+<option
+value="admin"
+${user.role==="admin"?"selected":""}>
+Admin
+</option>
+
+<option
+value="user"
+${user.role==="user"?"selected":""}>
+User
+</option>
+
+</select>
+
+<br>
+
+狀態：
+
+${user.enabled
+? '🟢 啟用'
+: '🔴 停用'}
+
+</div>
+
+<div>
+
+<button
+class="btn btn-gray"
+onclick="toggleUser('${user.id}',${user.enabled})">
+
+${user.enabled ? "停用" : "啟用"}
+
+</button>
+
+<button
+class="btn btn-red"
+onclick="deleteUser('${user.id}')">
+
+刪除
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+function renderPendingTable(){
+
+const table =
+document.getElementById("pendingTable");
+
+table.innerHTML = "";
+
+if(pendingRecords.length===0){
+
+table.innerHTML=`
+<tr>
+<td colspan="7">
+目前尚無待借用案件
+</td>
+</tr>
+`;
+
+return;
+
+}
+
+pendingRecords
+.filter(item=>item.status!=="已借出")
+.forEach(item=>{
+
+table.innerHTML += `
+<tr>
+<td>${item.borrower}</td>
+<td>${item.department}</td>
+<td>${item.projectNo}</td>
+<td>${item.formNo}</td>
+<td>${item.purpose}</td>
+<td>
+
+${item.status==="已轉正式借用"
+? "🟢 已轉正式借用"
+: "🟡 待借用"}
+
+</td>
+
+<td>
+
+<button
+class="btn btn-gray tooltip"
+data-tip="修改"
+onclick="editPending('${item.id}')">
+
+✏
+
+</button>
+
+<button
+class="btn btn-red tooltip"
+data-tip="刪除"
+onclick="deletePending('${item.id}')">
+
+🗑
+
+</button>
+
+<button
+class="btn btn-green tooltip"
+data-tip="轉正式借用"
+onclick="convertPending('${item.id}')">
+
+🔄
+
+</button>
+
+</td>
+</tr>
+`;
+
+});
+
+}
+
+function formatDate(date){
+
+if(!date) return "-";
+
+if(date.seconds){
+
+return new Date(date.seconds * 1000)
+.toLocaleString("zh-TW");
+
+}
+
+return new Date(date)
+.toLocaleString("zh-TW");
+
+}
+
+function sameDate(firebaseDate,selectedDate){
+
+if(!firebaseDate || !selectedDate)
+return false;
+
+const d1 = firebaseDate.seconds
+? new Date(firebaseDate.seconds * 1000)
+: new Date(firebaseDate);
+
+const d2 = new Date(selectedDate);
+
+return (
+
+d1.getFullYear() === d2.getFullYear() &&
+d1.getMonth() === d2.getMonth() &&
+d1.getDate() === d2.getDate()
+
+);
+
+}
+
+/* 部門 */
+
+async function loadDepartments(){
+
+const querySnapshot =
+await getDocs(collection(db,"departments"));
+
+departmentList = [];
+
+querySnapshot.forEach((docSnap)=>{
+
+const data = docSnap.data();
+
+departmentList.push({
+
+id:docSnap.id,
+name:data.name,
+sortOrder:Number(data.sortOrder || 999)
+
+});
+
+});
+
+departmentList.sort((a,b)=>
+a.sortOrder - b.sortOrder
+);
+
+renderDepartmentDropdown();
+renderDepartmentMaintenance();
+
+}
+
+function renderDepartmentDropdown(){
+
+const select =
+document.getElementById("department");
+
+select.innerHTML =
+`<option value="">請選擇</option>`;
+
+departmentList.forEach(dept=>{
+
+select.innerHTML += `
+<option value="${dept.name}">
+${dept.name}
+</option>
+`;
+
+});
+
+}
+
+function renderDepartmentMaintenance(){
+
+const area =
+document.getElementById("deptListArea");
+
+area.innerHTML = "";
+
+departmentList.forEach(dept=>{
+
+const div =
+document.createElement("div");
+
+div.className =
+"maintenance-item";
+
+div.innerHTML = `
+
+<div>
+<strong>${dept.name}</strong>
+<br>
+排序：${dept.sortOrder}
+</div>
+
+<div class="maintenance-actions">
+
+<button class="btn btn-gray"
+onclick="moveDeptUp('${dept.id}')">
+⬆
+</button>
+
+<button class="btn btn-gray"
+onclick="moveDeptDown('${dept.id}')">
+⬇
+</button>
+
+<button class="btn btn-red"
+onclick="deleteDepartment('${dept.id}')">
+刪除
+</button>
+
+</div>
+`;
+
+area.appendChild(div);
+
+});
+
+}
+
+async function moveDeptUp(id){
+
+const index =
+departmentList.findIndex(d=>d.id===id);
+
+if(index <= 0) return;
+
+[departmentList[index - 1],
+departmentList[index]] =
+
+[departmentList[index],
+departmentList[index - 1]];
+
+for(let i=0;i<departmentList.length;i++){
+
+await updateDoc(
+doc(db,"departments",departmentList[i].id),
+{
+sortOrder:i + 1
+}
+);
+
+}
+
+await loadDepartments();
+
+}
+
+async function moveDeptDown(id){
+
+const index =
+departmentList.findIndex(d=>d.id===id);
+
+if(index >= departmentList.length - 1)
+return;
+
+[departmentList[index],
+departmentList[index + 1]] =
+
+[departmentList[index + 1],
+departmentList[index]];
+
+for(let i=0;i<departmentList.length;i++){
+
+await updateDoc(
+doc(db,"departments",departmentList[i].id),
+{
+sortOrder:i + 1
+}
+);
+
+}
+
+await loadDepartments();
+
+}
+
+async function addDepartment(){
+
+const name =
+document.getElementById("newDept")
+.value.trim();
+
+const order =
+parseInt(
+document.getElementById("newDeptOrder").value
+);
+
+if(!name || isNaN(order)){
+
+alert("請完整填寫");
+return;
+
+}
+
+await addDoc(collection(db,"departments"),{
+
+name:name,
+sortOrder:order
+
+});
+
+document.getElementById("newDept").value = "";
+document.getElementById("newDeptOrder").value = "";
+
+alert("新增成功");
+
+await loadDepartments();
+
+}
+
+async function deleteDepartment(id){
+
+await deleteDoc(doc(db,"departments",id));
+
+alert("已刪除");
+
+await loadDepartments();
+
+}
+
+/* 印鑑 */
+
+async function loadSeals(){
+
+const querySnapshot =
+await getDocs(collection(db,"seals"));
+
+sealList = [];
+
+querySnapshot.forEach((docSnap)=>{
+
+const data = docSnap.data();
+
+sealList.push({
+
+id:docSnap.id,
+name:data.name,
+sortOrder:Number(data.sortOrder || 999)
+
+});
+
+});
+
+sealList.sort((a,b)=>
+a.sortOrder - b.sortOrder
+);
+
+renderSealDropdown();
+renderSealFilter();
+renderSealMaintenance();
+renderStatus();
+renderSealAlert();
+
+}
+
+function renderSealDropdown(){
+
+const select =
+document.getElementById("seal");
+
+select.innerHTML =
+`<option value="">請選擇</option>`;
+
+sealList.forEach(seal=>{
+
+select.innerHTML += `
+<option value="${seal.name}">
+${seal.name}
+</option>
+`;
+
+});
+
+}
+
+function renderSealFilter(){
+
+const select =
+document.getElementById("sealFilter");
+
+select.innerHTML =
+`<option value="">全部印鑑</option>`;
+
+sealList.forEach(seal=>{
+
+select.innerHTML += `
+<option value="${seal.name}">
+${seal.name}
+</option>
+`;
+
+});
+
+}
+
+function renderSealMaintenance(){
+
+const area =
+document.getElementById("sealListArea");
+
+area.innerHTML = "";
+
+sealList.forEach(seal=>{
+
+const div =
+document.createElement("div");
+
+div.className =
+"maintenance-item";
+
+div.innerHTML = `
+
+<div>
+<strong>${seal.name}</strong>
+<br>
+排序：${seal.sortOrder}
+</div>
+
+<div class="maintenance-actions">
+
+<button class="btn btn-gray"
+onclick="moveUp('${seal.id}')">
+⬆
+</button>
+
+<button class="btn btn-gray"
+onclick="moveDown('${seal.id}')">
+⬇
+</button>
+
+<button class="btn btn-red"
+onclick="deleteSeal('${seal.id}')">
+刪除
+</button>
+
+</div>
+`;
+
+area.appendChild(div);
+
+});
+
+}
+
+async function moveUp(id){
+
+const index =
+sealList.findIndex(s=>s.id===id);
+
+if(index <= 0) return;
+
+[sealList[index - 1],
+sealList[index]] =
+
+[sealList[index],
+sealList[index - 1]];
+
+for(let i=0;i<sealList.length;i++){
+
+await updateDoc(
+doc(db,"seals",sealList[i].id),
+{
+sortOrder:i + 1
+}
+);
+
+}
+
+await loadSeals();
+
+}
+
+async function moveDown(id){
+
+const index =
+sealList.findIndex(s=>s.id===id);
+
+if(index >= sealList.length - 1)
+return;
+
+[sealList[index],
+sealList[index + 1]] =
+
+[sealList[index + 1],
+sealList[index]];
+
+for(let i=0;i<sealList.length;i++){
+
+await updateDoc(
+doc(db,"seals",sealList[i].id),
+{
+sortOrder:i + 1
+}
+);
+
+}
+
+await loadSeals();
+
+}
+
+async function addSeal(){
+
+const name =
+document.getElementById("newSeal")
+.value.trim();
+
+const order =
+parseInt(
+document.getElementById("newOrder").value
+);
+
+if(!name || isNaN(order)){
+
+alert("請完整填寫");
+return;
+
+}
+
+await addDoc(collection(db,"seals"),{
+
+name:name,
+sortOrder:order
+
+});
+
+document.getElementById("newSeal").value = "";
+document.getElementById("newOrder").value = "";
+
+alert("新增成功");
+
+await loadSeals();
+
+}
+
+async function deleteSeal(id){
+
+await deleteDoc(doc(db,"seals",id));
+
+alert("已刪除");
+
+await loadSeals();
+
+}
+
+/* 借用 */
+
+async function borrowSeal(){
+
+const borrower =
+document.getElementById("borrower")
+.value.trim();
+
+const department =
+document.getElementById("department")
+.value;
+
+const seal =
+document.getElementById("seal")
+.value;
+
+const purpose =
+document.getElementById("purpose")
+.value.trim();
+
+const projectNo =
+document.getElementById("projectNo")
+.value.trim();
+
+const formNo =
+document.getElementById("formNo")
+.value.trim();
+
+if(!borrower || !department || !seal || !projectNo || !formNo || !purpose){
+
+alert("請填寫必要欄位");
+return;
+
+}
+
+/* 防止重複借用 */
+
+const exists =
+records.find(r=>
+
+r.seal === seal &&
+!r.returnTime
+
+);
+
+if(exists){
+
+alert(`印鑑 ${seal} 目前借出中，無法重複借用`);
+
+return;
+
+}
+
+/* 新增借用 */
+
+await addDoc(collection(db,"sealRecords"),{
+
+seal,
+
+borrower:
+document.getElementById("borrower").value
+|| currentUser,
+
+department,
+
+projectNo,
+formNo,
+
+purpose,
+borrowTime:new Date(),
+returnTime:null
+
+});
+if(currentPendingIndex){
+
+const pendingItem =
+pendingRecords.find(
+x => x.id === currentPendingIndex
+);
+
+if(pendingItem){
+
+await updateDoc(
+doc(
+db,
+"pendingRecords",
+pendingItem.id
+),
+{
+status:"已借出"
+}
+);
+
+await loadPendingRecords();
+
+currentPendingIndex = null;
+
+}
+
+}
+
+alert("借用成功");
+
+loadRecords();
+
+}
+
+async function returnSeal(id){
+
+await updateDoc(
+doc(db,"sealRecords",id),
+{
+returnTime:new Date()
+}
+);
+
+alert("已歸還");
+
+loadRecords();
+
+}
+
+async function loadRecords(){
+
+const querySnapshot =
+await getDocs(collection(db,"sealRecords"));
+
+records = [];
+
+querySnapshot.forEach((docSnap)=>{
+
+records.push({
+
+id:docSnap.id,
+...docSnap.data()
+
+});
+
+});
+
+renderTable();
+renderReturnTable();
+renderStatus();
+renderSealAlert();
+
+}
+
+
+
+function renderSealAlert(){
+
+const alertBox =
+document.getElementById("sealAlert");
+
+if(!alertBox) return;
+
+const total =
+sealList.length;
+
+const borrowed =
+records.filter(r=>!r.returnTime).length;
+
+const available =
+total - borrowed;
+
+let text = "";
+let bg = "";
+let color = "";
+
+if(available <= 0){
+
+text = "❌ 目前所有印鑑皆已借出";
+bg = "#fee2e2";
+color = "#991b1b";
+
+}else if(available === 1){
+
+text = "🔴 注意：目前僅剩最後 1 套印鑑";
+bg = "#fecaca";
+color = "#7f1d1d";
+
+}else if(available === 2){
+
+text = "⚠ 目前僅剩 2 套印鑑可借用";
+bg = "#fef9c3";
+color = "#854d0e";
+
+}else{
+
+text = `🟢 目前尚有 ${available} 套印鑑可借用`;
+bg = "#dcfce7";
+color = "#166534";
+
+}
+
+alertBox.innerHTML = text;
+
+alertBox.style.background = bg;
+alertBox.style.color = color;
+
+}
+
+
+
+function getBorrowDuration(borrowTime){
+if(!borrowTime) return "-";
+const start = borrowTime.seconds ? borrowTime.seconds*1000 : new Date(borrowTime).getTime();
+const diff = Date.now() - start;
+const days = Math.floor(diff/86400000);
+const hours = Math.floor((diff%86400000)/3600000);
+const mins = Math.floor((diff%3600000)/60000);
+return `${days}天${hours}小時${mins}分`;
+}
+
+function showSealDetail(sealName){
+document.querySelectorAll('#statusGrid .card').forEach(c=>c.classList.remove('selected'));
+const target=document.querySelector(`[data-seal="${sealName}"]`);
+if(target) target.classList.add('selected');
+
+const active = records.find(r=>r.seal===sealName && !r.returnTime);
+const el=document.getElementById('sealDetailContent');
+
+if(!active){
+el.innerHTML=`
+<div class="detail-card">
+<div class="detail-grid">
+<div class="detail-item">
+<div class="detail-label">印鑑名稱</div>
+<div class="detail-value">${sealName}</div>
+</div>
+<div class="detail-item">
+<div class="detail-label">狀態</div>
+<div class="detail-value status-good">🟢 可借用</div>
+</div>
+</div>
+<div style="margin-top:15px;padding:12px;background:#ecfdf5;border-radius:12px;">
+目前無借用案件
+</div>
+</div>`;
+return;
+}
+
+el.innerHTML=`
+<div class="detail-card">
+<div class="detail-grid">
+<div class="detail-item"><div class="detail-label">印鑑名稱</div><div class="detail-value">${sealName}</div></div>
+<div class="detail-item"><div class="detail-label">狀態</div><div class="detail-value status-bad">🔴 借出中</div></div>
+<div class="detail-item"><div class="detail-label">借用人</div><div class="detail-value">${active.borrower}</div></div>
+<div class="detail-item"><div class="detail-label">部門</div><div class="detail-value">${active.department}</div></div>
+<div class="detail-item"><div class="detail-label">計畫編號</div><div class="detail-value">${active.projectNo||''}</div></div>
+<div class="detail-item"><div class="detail-label">表單編號</div><div class="detail-value">${active.formNo||''}</div></div>
+<div class="detail-item"><div class="detail-label">借用時間</div><div class="detail-value">${formatDate(active.borrowTime)}</div></div>
+<div class="detail-item"><div class="detail-label">已借用時間</div><div class="detail-value">${getBorrowDuration(active.borrowTime)}</div></div>
+</div>
+<div class="purpose-card">
+<div class="purpose-title">用途</div>
+<div class="purpose-content">${active.purpose||''}</div>
+</div>
+</div>`;
+}
+
+function renderStatus(){
+
+const grid =
+document.getElementById("statusGrid");
+
+grid.innerHTML = "";
+
+sealList.forEach(seal=>{
+
+const active =
+records.find(r=>
+
+r.seal===seal.name &&
+!r.returnTime
+
+);
+
+const card =
+document.createElement("div");
+
+card.className =
+active ? "card borrowed" : "card available";
+
+card.setAttribute('data-seal',seal.name); card.onclick=()=>showSealDetail(seal.name);
+card.innerHTML = `
+<h3>${seal.name}</h3>
+<p>
+${active
+? `🔴 借出中（${active.borrower}）`
+: "🟢 可借用"}
+</p>
+`;
+
+grid.appendChild(card);
+
+});
+
+if(sealList.length){
+showSealDetail(sealList[0].name);
+}
+
+}
+
+
+
+function renderReturnTable(){
+
+const table =
+document.getElementById("returnTable");
+
+if(!table) return;
+
+table.innerHTML = "";
+
+records
+.filter(r=>!r.returnTime)
+.forEach(r=>{
+
+const tr =
+document.createElement("tr");
+
+tr.innerHTML = `
+
+<td>${r.seal}</td>
+<td>${r.borrower}</td>
+<td>${r.department}</td>
+<td>${formatDate(r.borrowTime)}</td>
+<td>${r.projectNo || ""}</td>
+<td>${r.formNo || ""}</td>
+<td>${r.purpose}</td>
+
+<td>
+<button class="btn btn-green"
+onclick="returnSeal('${r.id}')">
+歸還
+</button>
+</td>
+`;
+
+table.appendChild(tr);
+
+});
+
+}
+
+
+function renderTable(){
+
+const keyword =
+document.getElementById("searchInput")
+.value.toLowerCase();
+
+const sealFilter =
+document.getElementById("sealFilter")
+.value;
+
+const statusFilter =
+document.getElementById("statusFilter")
+?.value || "";
+
+const projectFilter =
+(document.getElementById("projectFilter")?.value || "").toLowerCase();
+
+const formFilter =
+(document.getElementById("formFilter")?.value || "").toLowerCase();
+
+const borrowDate =
+document.getElementById("borrowDate")
+.value;
+
+const returnDate =
+document.getElementById("returnDate")
+.value;
+
+const table =
+document.getElementById("recordTable");
+
+table.innerHTML = "";
+
+const filteredRecords = records
+.filter(r=>{
+
+const keywordMatch =
+
+(r.borrower || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(r.department || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(r.purpose || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(r.projectNo || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(r.formNo || "")
+.toLowerCase()
+.includes(keyword);
+
+const sealMatch =
+
+!sealFilter ||
+
+r.seal === sealFilter;
+
+const projectMatch =
+!projectFilter ||
+((r.projectNo || "").toLowerCase().includes(projectFilter));
+
+const formMatch =
+!formFilter ||
+((r.formNo || "").toLowerCase().includes(formFilter));
+
+const borrowMatch =
+
+!borrowDate ||
+
+sameDate(r.borrowTime,borrowDate);
+
+const returnMatch =
+
+!returnDate ||
+
+sameDate(r.returnTime,returnDate);
+
+const statusMatch =
+
+!statusFilter ||
+
+(statusFilter==="borrowed" && !r.returnTime) ||
+
+(statusFilter==="returned" && r.returnTime);
+
+return (
+
+keywordMatch &&
+sealMatch &&
+projectMatch &&
+formMatch &&
+borrowMatch &&
+returnMatch &&
+statusMatch
+
+);
+
+})
+.sort((a,b)=>{
+
+const t1 =
+a.borrowTime?.seconds
+? a.borrowTime.seconds
+: 0;
+
+const t2 =
+b.borrowTime?.seconds
+? b.borrowTime.seconds
+: 0;
+
+return t2 - t1;
+
+});
+
+const totalPages =
+Math.ceil(filteredRecords.length / pageSize);
+
+if(currentPage > totalPages){
+currentPage = 1;
+}
+
+const start =
+(currentPage - 1) * pageSize;
+
+const end =
+start + pageSize;
+
+const pageRecords =
+filteredRecords.slice(start,end);
+
+pageRecords.forEach(r=>{
+
+const tr =
+document.createElement("tr");
+
+tr.innerHTML = `
+
+<td>${r.seal}</td>
+
+<td>${r.borrower}</td>
+
+<td>${r.department}</td>
+
+<td>${formatDate(r.borrowTime)}</td>
+
+<td>${formatDate(r.returnTime)}</td>
+
+<td>${r.projectNo || ""}</td>
+
+<td>${r.formNo || ""}</td>
+
+<td>${r.purpose}</td>
+
+<td>
+
+${r.returnTime
+
+? '<span class="badge badge-green">已歸還</span>'
+
+: '<span class="badge badge-red">借出中</span>'
+
+}
+
+</td>
+
+<td>
+${r.returnTime
+? '<span style="color:#64748b;">🔒 已封存</span>'
+: `<button class="btn btn-gray" onclick="editRecord('${r.id}')">✏編輯</button>
+<button class="btn btn-red" onclick="deleteRecord('${r.id}')">🗑刪除</button>`
+}
+</td>
+
+`;
+
+table.appendChild(tr);
+
+});
+
+renderPagination(totalPages);
+
+}
+
+
+function renderPagination(totalPages){
+
+const area =
+document.getElementById("paginationArea");
+
+area.innerHTML = "";
+
+if(totalPages <= 1) return;
+
+for(let i=1;i<=totalPages;i++){
+
+const btn =
+document.createElement("button");
+
+btn.className = "btn";
+
+btn.innerText = i;
+
+btn.style.background =
+i === currentPage
+? "#2563eb"
+: "#e2e8f0";
+
+btn.style.color =
+i === currentPage
+? "white"
+: "black";
+
+btn.onclick = ()=>{
+
+currentPage = i;
+renderTable();
+
+};
+
+area.appendChild(btn);
+
+}
+
+}
+
+function changePageSize(){
+
+pageSize = parseInt(
+document.getElementById("pageSizeSelect").value
+);
+
+currentPage = 1;
+
+renderTable();
+
+}
+
+
+
+
+function closeEditModal(){
+document.getElementById('editOverlay').style.display='none';
+}
+
+async function editRecord(id){
+const r = records.find(x=>x.id===id);
+if(!r || r.returnTime){ alert('已歸還資料不可編輯'); return; }
+
+document.getElementById('editId').value=id;
+document.getElementById('editBorrower').value=r.borrower||'';
+document.getElementById('editDepartment').value=r.department||'';
+document.getElementById('editProjectNo').value=r.projectNo||'';
+document.getElementById('editFormNo').value=r.formNo||'';
+document.getElementById('editPurpose').value=r.purpose||'';
+
+document.getElementById('editOverlay').style.display='flex';
+}
+
+async function saveEditRecord(){
+const id=document.getElementById('editId').value;
+
+await updateDoc(doc(db,"sealRecords",id),{
+borrower:document.getElementById('editBorrower').value,
+department:document.getElementById('editDepartment').value,
+projectNo:document.getElementById('editProjectNo').value,
+formNo:document.getElementById('editFormNo').value,
+purpose:document.getElementById('editPurpose').value
+});
+
+closeEditModal();
+alert('修改成功');
+loadRecords();
+}
+
+async function deleteRecord(id){
+
+const r = records.find(x=>x.id===id);
+
+if(r && r.returnTime){
+alert("已歸還資料不可刪除");
+return;
+}
+
+if(!confirm("確定刪除此借用紀錄？")) return;
+
+await deleteDoc(doc(db,"sealRecords",id));
+
+alert("刪除成功");
+loadRecords();
+}
+
+
+function exportExcel(){
+
+const data =
+records.map(r=>({
+
+印鑑:r.seal,
+借用人:r.borrower,
+部門:r.department,
+計畫編號:r.projectNo || "",
+表單編號:r.formNo || "",
+借用時間:formatDate(r.borrowTime),
+歸還時間:formatDate(r.returnTime),
+用途:r.purpose,
+狀態:r.returnTime ? "已歸還" : "借出中"
+
+}));
+
+const ws =
+XLSX.utils.json_to_sheet(data);
+
+const wb =
+XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(
+wb,
+ws,
+"印鑑借用紀錄"
+);
+
+XLSX.writeFile(
+wb,
+"印鑑借用紀錄.xlsx"
+);
+
+}
+
+window.borrowSeal = borrowSeal;
+window.returnSeal = returnSeal;
+window.exportExcel = exportExcel;
+window.editRecord = editRecord;
+window.deleteRecord = deleteRecord;
+window.closeEditModal=closeEditModal;
+window.saveEditRecord=saveEditRecord;
+
+window.addSeal = addSeal;
+window.deleteSeal = deleteSeal;
+window.moveUp = moveUp;
+window.moveDown = moveDown;
+
+window.addDepartment = addDepartment;
+window.deleteDepartment = deleteDepartment;
+window.moveDeptUp = moveDeptUp;
+window.moveDeptDown = moveDeptDown;
+
+document.getElementById("searchInput")
+.addEventListener("input",renderTable);
+
+document.getElementById("sealFilter")
+.addEventListener("change",renderTable);
+
+document.getElementById("statusFilter")
+.addEventListener("change",renderTable);
+
+document.getElementById("projectFilter")
+.addEventListener("input",renderTable);
+
+document.getElementById("formFilter")
+.addEventListener("input",renderTable);
+
+document.getElementById("borrowDate")
+.addEventListener("change",renderTable);
+
+document.getElementById("returnDate")
+.addEventListener("change",renderTable);
+
+async function googleLogin(){
+
+try{
+
+await signInWithPopup(
+auth,
+provider
+);
+
+}catch(error){
+
+alert(error.message);
+
+}
+
+}
+
+window.googleLogin = googleLogin;
+
+async function logout(){
+
+sessionStorage.removeItem(
+"loginLogged"
+);
+
+localStorage.removeItem(
+"userRole"
+);
+
+localStorage.removeItem(
+"userEmail"
+);
+
+localStorage.removeItem(
+"userName"
+);
+
+await signOut(auth);
+
+}
+
+
+window.logout = logout;
+
+onAuthStateChanged(auth, async(user)=>{
+
+
+if(!user){
+
+document.getElementById("loginPage").style.display="flex";
+document.getElementById("systemArea").style.display="none";
+
+return;
+
+}
+
+const snapshot =
+await getDocs(collection(db,"users"));
+
+let allow = false;
+
+snapshot.forEach(docSnap=>{
+
+const data = docSnap.data();
+
+if(
+data.email === user.email &&
+data.enabled === true
+){
+
+allow = true;
+
+currentRole = data.role;
+
+}
+
+});
+
+if(!allow){
+
+alert("此帳號未開通");
+
+await signOut(auth);
+
+return;
+
+}
+
+currentUser =
+user.displayName;
+
+document.getElementById(
+"headerUserName"
+).textContent =
+user.displayName;
+
+currentUserEmail =
+user.email;
+
+localStorage.setItem(
+"userRole",
+currentRole
+);
+
+localStorage.setItem(
+"userEmail",
+user.email
+);
+
+localStorage.setItem(
+"userName",
+user.displayName
+);
+
+if(!sessionStorage.getItem("loginLogged")){
+
+await addDoc(
+collection(db,"loginLogs"),
+{
+name:user.displayName,
+email:user.email,
+role:currentRole,
+loginTime:new Date()
+});
+
+sessionStorage.setItem(
+"loginLogged",
+"true"
+);
+
+}
+
+
+document.getElementById(
+"loginPage"
+).style.display="none";
+
+restoreLastPage();
+
+await Promise.all([
+    loadDepartments(),
+    loadSeals(),
+    loadRecords(),
+    loadPendingRecords(),
+    loadUsers(),
+    loadLoginLogs()
+]);
+
+document.getElementById(
+"systemArea"
+).style.display="block";
+
+requestAnimationFrame(()=>{
+
+document.getElementById(
+"systemArea"
+).style.opacity="1";
+
+});
+
+if(currentRole !== "admin"){
+
+document.getElementById(
+"permissionMenu"
+).style.display = "none";
+
+document.getElementById(
+"loginLogMenu"
+).style.display = "none";
+
+}
+
+
+});
+
+
+</script>
+
+</div>
+<div id="editOverlay" class="edit-modal-overlay">
+<div class="edit-modal">
+<h2>✏️ 編輯借用資料</h2><br>
+<input type="hidden" id="editId">
+<div class="form-group"><label>借用人</label><input id="editBorrower"></div>
+<div class="form-group"><label>部門</label><input id="editDepartment"></div>
+<div class="form-group"><label>計畫編號</label><input id="editProjectNo"></div>
+<div class="form-group"><label>表單編號</label><input id="editFormNo"></div>
+<div class="form-group"><label>用途</label><textarea id="editPurpose"></textarea></div>
+<button class="btn btn-gray" onclick="closeEditModal()">取消</button>
+<button class="btn btn-green" onclick="saveEditRecord()">儲存</button>
+</div></div>
+
+<div id="pendingOverlay" class="edit-modal-overlay">
+
+<div class="edit-modal">
+
+<h2>🕒 新增待借用案件</h2>
+
+<br>
+
+<div class="form-group">
+<label>承辦人</label>
+<input id="pendingBorrower">
+</div>
+
+<div class="form-group">
+<label>部門</label>
+<select id="pendingDepartment"></select>
+</div>
+
+<div class="form-group">
+<label>計畫編號</label>
+<input id="pendingProjectNo">
+</div>
+
+<div class="form-group">
+<label>表單編號</label>
+<input id="pendingFormNo">
+</div>
+
+<div class="form-group">
+<label>用途</label>
+<textarea id="pendingPurpose" rows="4"></textarea>
+</div>
+
+<button
+class="btn btn-gray"
+onclick="closePendingModal()">
+取消
+</button>
+
+<button
+class="btn btn-green"
+onclick="savePendingRecord()">
+儲存
+</button>
+
+</div>
+
+</div>
+
+<script>
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+document.addEventListener('keydown', function(e){
+    const k = (e.key || '').toLowerCase();
+
+    if(e.key === 'F12') { e.preventDefault(); return false; }
+
+    if(e.ctrlKey && k === 'u') { e.preventDefault(); return false; }
+    if(e.ctrlKey && k === 's') { e.preventDefault(); return false; }
+
+    if(e.ctrlKey && e.shiftKey &&
+       (k === 'i' || k === 'j' || k === 'c')) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+setInterval(function(){
+    if(
+        window.outerWidth - window.innerWidth > 160 ||
+        window.outerHeight - window.innerHeight > 160
+    ){
+        document.body.innerHTML =
+        '<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-size:28px;font-weight:bold;">已偵測開發人員工具</div>';
+    }
+},1000);
+</script>
+
+</body>
+</html>
