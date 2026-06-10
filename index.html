@@ -200,11 +200,17 @@ font-weight:600;
 .form-group input,
 .form-group select,
 .form-group textarea{
+
 width:100%;
+
 padding:12px;
-border-radius:10px;
-border:1px solid #dbe4f0;
-background:#f8fafc;
+
+border:1px solid #d1d5db;
+
+background:#fff;
+
+border-radius:4px;
+
 }
 
 textarea{
@@ -214,7 +220,7 @@ resize:vertical;
 .btn{
 border:none;
 padding:10px 14px;
-border-radius:10px;
+border-radius:4px;
 cursor:pointer;
 font-weight:bold;
 }
@@ -241,10 +247,7 @@ color:white;
 }
 
 .status-grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:15px;
-
+display:block;
 margin-top:20px;
 }
 
@@ -588,10 +591,6 @@ padding:20px;
 overflow:auto;
 }
 
-.sidebar:hover{
-width:240px;
-}
-
 
 .detail-card{
 margin-top:15px;
@@ -883,7 +882,12 @@ onclick="logout()">
 
 <div class="panel">
 
-<h2>✍️ 借用登記</h2>
+<h2>借用登記</h2>
+<hr style="
+margin:15px 0;
+border:none;
+border-top:1px solid #e5e7eb;
+">
 
 <div class="form-group">
 <label>借用人</label>
@@ -3131,17 +3135,29 @@ active ? "card borrowed" : "card available";
 
 card.setAttribute('data-seal',seal.name); card.onclick=()=>showSealDetail(seal.name);
 card.innerHTML = `
-<h3>${seal.name}</h3>
-<p>
+
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+width:100%;
+">
+
+<div>
+${seal.name}
+</div>
+
+<div>
+
 ${active
-? `🔴 借出中（${active.borrower}）`
+? "🔴 借出中"
 : "🟢 可借用"}
-</p>
+
+</div>
+
+</div>
+
 `;
-
-grid.appendChild(card);
-
-});
 
 if(sealList.length){
 showSealDetail(sealList[0].name);
