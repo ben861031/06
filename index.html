@@ -37,6 +37,15 @@ display:flex;
 flex-direction:column;
 }
 
+.sidebar{
+transition:all .3s ease;
+}
+
+.sidebar.collapsed{
+width:72px;
+padding:20px 10px;
+}
+
 .logo{
 display:flex;
 align-items:center;
@@ -44,6 +53,35 @@ gap:14px;
 padding-bottom:20px;
 margin-bottom:20px;
 border-bottom:1px solid #e5e7eb;
+}
+
+.logo{
+display:flex;
+align-items:center;
+gap:14px;
+}
+
+.sidebar-toggle{
+
+width:42px;
+height:42px;
+
+border:none;
+
+border-radius:12px;
+
+background:#eff6ff;
+
+cursor:pointer;
+
+font-size:22px;
+
+font-weight:700;
+
+color:#2563eb;
+
+flex-shrink:0;
+
 }
 
 .logo-icon{
@@ -157,6 +195,37 @@ color:#64748b;
 stroke-width:2.2;
 
 flex-shrink:0;
+
+}
+
+.sidebar.collapsed .logo-content,
+.sidebar.collapsed .menu-title,
+.sidebar.collapsed .menu-item span,
+.sidebar.collapsed .sidebar-user{
+
+display:none;
+
+}
+
+.sidebar.collapsed .logo{
+
+justify-content:center;
+
+}
+
+.sidebar.collapsed .menu-item{
+
+justify-content:center;
+
+padding:0;
+
+gap:0;
+
+}
+
+.sidebar.collapsed .menu-icon{
+
+margin:0;
 
 }
 
@@ -1013,11 +1082,15 @@ transition:.15s;
 
 <div class="logo">
 
-<div class="logo-icon">
-<i data-lucide="building-2"></i>
-</div>
+<button
+id="sidebarToggle"
+class="sidebar-toggle">
 
-<div>
+☰
+
+</button>
+
+<div class="logo-content">
 
 <div class="logo-title">
 環興MIS系統
@@ -4181,6 +4254,22 @@ setInterval(function(){
 
 <script>
 lucide.createIcons();
+</script>
+
+<script>
+
+const sidebar =
+document.querySelector(".sidebar");
+
+const toggle =
+document.getElementById("sidebarToggle");
+
+toggle.addEventListener("click",()=>{
+
+sidebar.classList.toggle("collapsed");
+
+});
+
 </script>
 
 </body>
