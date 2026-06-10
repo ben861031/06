@@ -425,6 +425,32 @@ font-weight:700;
 
 }
 
+.btn-modal-cancel{
+
+height:44px !important;
+
+padding:0 16px !important;
+
+border-radius:12px !important;
+
+font-size:14px;
+
+}
+
+.btn-modal-save{
+
+height:44px !important;
+
+padding:0 18px !important;
+
+border-radius:12px !important;
+
+min-width:90px;
+
+font-size:14px;
+
+}
+
 .btn-red{
 background:#dc2626;
 color:white;
@@ -4315,15 +4341,21 @@ document.getElementById(
 </div>
 
 <button
-class="btn btn-gray"
+class="btn btn-gray btn-modal-cancel"
 onclick="closePendingModal()">
+
 取消
+
 </button>
 
 <button
-class="btn btn-green"
+class="btn btn-green btn-modal-save"
 onclick="savePendingRecord()">
+
+<i data-lucide="save"></i>
+
 儲存
+
 </button>
 
 </div>
