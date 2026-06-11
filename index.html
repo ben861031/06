@@ -3738,9 +3738,13 @@ tr.innerHTML = `
 <td>${r.purpose}</td>
 
 <td>
-<button class="btn btn-green"
+<button
+class="action-btn convert-btn tooltip"
+data-tip="歸還"
 onclick="returnSeal('${r.id}')">
-歸還
+
+<i data-lucide="rotate-ccw"></i>
+
 </button>
 </td>
 `;
@@ -3748,6 +3752,8 @@ onclick="returnSeal('${r.id}')">
 table.appendChild(tr);
 
 });
+
+lucide.createIcons();
 
 }
 
