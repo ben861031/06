@@ -2870,42 +2870,45 @@ area.innerHTML += `
 
 <div>
 
-<strong>
-${user.email}
-</strong>
+<strong>${user.email}</strong>
 
-<br>
+<div
+style="
+display:flex;
+align-items:center;
+gap:12px;
+margin-top:8px;
+">
+
+<div>
 
 角色：
 
-<select
-onchange="
-changeRole(
-'${user.id}',
-this.value
-)">
+<select onchange="changeRole('${user.id}',this.value)">
 
-<option
-value="admin"
+<option value="admin"
 ${user.role==="admin"?"selected":""}>
 Admin
 </option>
 
-<option
-value="user"
+<option value="user"
 ${user.role==="user"?"selected":""}>
 User
 </option>
 
 </select>
 
-<br>
-
-狀態：
+</div>
 
 ${user.enabled
-? '🟢 啟用'
-: '🔴 停用'}
+
+? '<span class="badge badge-green">啟用</span>'
+
+: '<span class="badge badge-red">停用</span>'
+
+}
+
+</div>
 
 </div>
 
