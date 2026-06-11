@@ -608,11 +608,19 @@ min-width:180px;
 }
 
 .search-actions{
+
 display:flex;
-gap:18px;
+
+gap:12px;
+
 margin-left:auto;
+
 align-items:center;
-padding-right:24px;
+
+padding-left:20px;
+
+border-left:1px solid #e5e7eb;
+
 }
 
 .record-count{
@@ -670,27 +678,101 @@ min-width:120px;
 background:#e2e8f0;
 }
 
-.search-chip select{
-height:42px;
-padding:0 18px;
+.filter-card{
+
+display:flex;
+align-items:center;
+
+gap:10px;
+
+height:54px;
+
+padding:0 16px;
+
+border:1px solid #dbe4f0;
+
+border-radius:14px;
+
+background:#fff;
+
+min-width:180px;
+
+}
+
+.filter-card i{
+
+width:18px;
+height:18px;
+
+color:#64748b;
+
+}
+
+.filter-card select{
+
 border:none;
-border-radius:999px;
-background:#f1f5f9;
+
+background:transparent;
+
+width:100%;
+
+height:100%;
+
 font-size:14px;
-font-weight:600;
+
+font-weight:700;
+
 cursor:pointer;
-transition:.2s;
+
 }
 
-.search-chip select:hover{
-background:#e2e8f0;
-}
+.filter-card select:focus{
 
-.search-chip select:focus{
 outline:none;
-background:#dbeafe;
-box-shadow:none;
+
 }
+
+.filter-advanced-btn{
+
+height:54px;
+
+padding:0 22px;
+
+display:flex;
+
+align-items:center;
+
+gap:10px;
+
+border:1px solid #2563eb;
+
+background:#fff;
+
+color:#2563eb;
+
+border-radius:14px;
+
+font-weight:700;
+
+cursor:pointer;
+
+transition:.2s;
+
+}
+
+.filter-advanced-btn:hover{
+
+background:#eff6ff;
+
+}
+
+.filter-advanced-btn i{
+
+width:18px;
+height:18px;
+
+}
+
 
 .search-toolbar .btn-gray{
 height:42px;
@@ -1715,39 +1797,51 @@ placeholder="🔍 搜尋借用人、部門、用途、計畫編號、表單編�
     <div class="filter-group">
 
 
-        <div class="search-chip">
-            <select id="sealFilter">
-                <option value="">全部印鑑</option>
-            </select>
-        </div>
+<div class="search-chip filter-card">
+
+    <i data-lucide="stamp"></i>
+
+    <select id="sealFilter">
+        <option value="">全部印鑑</option>
+    </select>
+
+</div>
 
     </div>
 
     <div class="filter-group">
 
 
-        <div class="search-chip">
-            <select id="statusFilter">
-                <option value="">全部狀態</option>
-                <option value="borrowed">借出中</option>
-                <option value="returned">已歸還</option>
-            </select>
-        </div>
+<div class="search-chip filter-card">
+
+    <i data-lucide="clipboard-list"></i>
+
+    <select id="statusFilter">
+
+        <option value="">全部狀態</option>
+        <option value="borrowed">借出中</option>
+        <option value="returned">已歸還</option>
+
+    </select>
+
+</div>
 
     </div>
 
 <div class="filter-group">
 
-
-    <div
-        class="search-chip filter-chip"
+    <button
+        type="button"
+        class="filter-advanced-btn"
         onclick="toggleAdvancedFilter()">
 
-<span id="filterToggleText">
-⚙ 進階篩選
-</span>
+        <i data-lucide="sliders-horizontal"></i>
 
-    </div>
+        <span id="filterToggleText">
+            進階篩選
+        </span>
+
+    </button>
 
 </div>
 <div class="search-actions">
