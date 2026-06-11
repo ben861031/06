@@ -407,6 +407,7 @@ transform:translateY(1px);
 .btn-green{
 
 background:#16a34a;
+
 color:white;
 
 display:inline-flex;
@@ -422,6 +423,9 @@ padding:0 24px;
 border-radius:16px;
 
 font-weight:700;
+
+box-shadow:
+0 8px 20px rgba(22,163,74,.22);
 
 }
 
@@ -446,9 +450,16 @@ color:white;
 }
 
 .btn-gray{
-background:#f1f5f9;
+
+background:#ffffff;
+
 color:#475569;
+
 border:1px solid #dbe4f0;
+
+box-shadow:
+0 2px 6px rgba(15,23,42,.04);
+
 }
 
 .btn-gray{
@@ -461,7 +472,13 @@ gap:8px;
 }
 
 .btn-gray:hover{
-background:#e2e8f0;
+
+background:#f8fafc;
+
+border-color:#94a3b8;
+
+transform:translateY(-1px);
+
 }
 
 .kpi-grid{
@@ -820,9 +837,15 @@ box-shadow:0 0 0 3px rgba(37,99,235,.12);
 }
 
 .search-actions .btn{
-height:46px;
-padding:0 18px;
-border-radius:12px;
+
+height:50px;
+
+min-width:150px;
+
+padding:0 20px;
+
+border-radius:14px;
+
 }
 
 .search-toolbar{
@@ -1464,7 +1487,7 @@ loadLoginLogs();
     <button
         class="logout-menu-btn"
         onclick="logout()">
-        登出
+        🚪 登出
     </button>
 
 </div>
