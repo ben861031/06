@@ -615,6 +615,26 @@ align-items:center;
 padding-right:24px;
 }
 
+.record-count{
+
+font-size:14px;
+
+font-weight:600;
+
+color:#64748b;
+
+margin-right:10px;
+
+}
+
+.record-count b{
+
+color:#0f172a;
+
+font-size:15px;
+
+}
+
 .search-actions .btn{
 min-width:100px;
 white-space:nowrap;
@@ -1741,27 +1761,39 @@ placeholder="🔍 搜尋借用人、部門、用途、計畫編號、表單編�
         onclick="toggleAdvancedFilter()">
 
 <span id="filterToggleText">
-更多篩選
+⚙ 進階篩選
 </span>
 
     </div>
 
 </div>
+<div class="search-actions">
 
-    <div class="search-actions">
-        <button
-            type="button"
-            class="btn btn-gray"
-            onclick="resetHistoryFilter()">
-            ↻ 重設
-        </button>
+<span class="record-count">
 
-        <button
-            type="button"
-            class="btn btn-green"
-            onclick="exportExcel()">
-            📊 Excel
-        </button>
+共
+<b id="recordCount">0</b>
+筆資料
+
+</span>
+
+<button
+type="button"
+class="btn btn-gray"
+onclick="resetHistoryFilter()">
+
+↻ 重設篩選
+
+</button>
+
+<button
+type="button"
+class="btn btn-green"
+onclick="exportExcel()">
+
+📊 匯出 Excel
+
+</button>
 
     </div>
 
@@ -2456,7 +2488,7 @@ text.innerHTML = "收合篩選";
 
 }else{
 
-text.innerHTML = "更多篩選";
+text.innerHTML = "⚙ 進階篩選";
 
 }
 
@@ -4000,6 +4032,16 @@ b.borrowTime?.seconds
 return t2 - t1;
 
 });
+
+const countEl =
+document.getElementById("recordCount");
+
+if(countEl){
+
+countEl.textContent =
+filteredRecords.length;
+
+}
 
 const totalPages =
 Math.ceil(filteredRecords.length / pageSize);
