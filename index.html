@@ -451,6 +451,15 @@ color:#475569;
 border:1px solid #dbe4f0;
 }
 
+.btn-gray{
+
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:8px;
+
+}
+
 .btn-gray:hover{
 background:#e2e8f0;
 }
@@ -1156,12 +1165,12 @@ stroke-width:2.3;
 
 }
 
-.btn-green svg{
+.btn-gray svg{
 
-width:20px;
-height:20px;
+width:18px;
+height:18px;
 
-stroke-width:2.5;
+stroke-width:2.3;
 
 flex-shrink:0;
 
@@ -1826,7 +1835,9 @@ type="button"
 class="btn btn-gray"
 onclick="resetHistoryFilter()">
 
-↻ 重設篩選
+<i data-lucide="rotate-ccw"></i>
+
+重設篩選
 
 </button>
 
@@ -1835,7 +1846,9 @@ type="button"
 class="btn btn-green"
 onclick="exportExcel()">
 
-📊 匯出 Excel
+<i data-lucide="file-spreadsheet"></i>
+
+匯出 Excel
 
 </button>
 
@@ -2532,7 +2545,7 @@ text.innerHTML = "收合篩選";
 
 }else{
 
-text.innerHTML = "⚙ 進階篩選";
+text.innerHTML = "進階篩選";
 
 }
 
