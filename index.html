@@ -925,6 +925,30 @@ vertical-align:middle;
 
 }
 
+.table-date{
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+line-height:1.3;
+
+}
+
+.table-time{
+
+font-size:13px;
+
+color:#64748b;
+
+font-weight:600;
+
+margin-top:2px;
+
+}
+
 #recordTable tr{
 transition:.15s;
 }
@@ -1489,7 +1513,7 @@ loadLoginLogs();
     <button
         class="logout-menu-btn"
         onclick="logout()">
-        🚪 登出
+        登出
     </button>
 
 </div>
@@ -3152,6 +3176,41 @@ return new Date(date)
 
 }
 
+function formatTableDate(date){
+
+if(!date) return "-";
+
+const d = date.seconds
+? new Date(date.seconds * 1000)
+: new Date(date);
+
+const y = d.getFullYear();
+
+const m = String(
+d.getMonth() + 1
+).padStart(2,"0");
+
+const day = String(
+d.getDate()
+).padStart(2,"0");
+
+const hh = String(
+d.getHours()
+).padStart(2,"0");
+
+const mm = String(
+d.getMinutes()
+).padStart(2,"0");
+
+return `
+<div class="table-date">
+    <div>${y}/${m}/${day}</div>
+    <div class="table-time">${hh}:${mm}</div>
+</div>
+`;
+
+}
+
 function sameDate(firebaseDate,selectedDate){
 
 if(!firebaseDate || !selectedDate)
@@ -4154,9 +4213,9 @@ tr.innerHTML = `
 
 <td>${r.department}</td>
 
-<td>${formatDate(r.borrowTime)}</td>
+<td>${formatTableDate(r.borrowTime)}</td>
 
-<td>${formatDate(r.returnTime)}</td>
+<td>${formatTableDate(r.returnTime)}</td>
 
 <td>${r.projectNo || ""}</td>
 
