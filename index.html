@@ -2532,7 +2532,18 @@ editingPendingId = null;
 
 document.querySelector(
 "#pendingOverlay h2"
-).innerText = "🕒 新增待借用案件";
+).innerHTML = `
+
+<i
+data-lucide="clock-3"
+class="detail-title-icon">
+</i>
+
+新增待借用案件
+
+`;
+
+lucide.createIcons();
 
 document.getElementById("pendingOverlay").style.display =
 "flex";
@@ -2778,7 +2789,18 @@ item.purpose || "";
 
 document.querySelector(
 "#pendingOverlay h2"
-).innerText = "✏ 編輯待借用案件";
+).innerHTML = `
+
+<i
+data-lucide="pencil"
+class="detail-title-icon">
+</i>
+
+編輯待借用案件
+
+`;
+
+lucide.createIcons();
 
 document.getElementById("pendingOverlay").style.display =
 "flex";
@@ -4461,15 +4483,41 @@ class="detail-title-icon">
 <div class="form-group"><label>計畫編號</label><input id="editProjectNo"></div>
 <div class="form-group"><label>表單編號</label><input id="editFormNo"></div>
 <div class="form-group"><label>用途</label><textarea id="editPurpose"></textarea></div>
-<button class="btn btn-gray" onclick="closeEditModal()">取消</button>
-<button class="btn btn-green" onclick="saveEditRecord()">儲存</button>
+<div class="modal-footer">
+
+<button
+class="btn btn-gray btn-modal-cancel"
+onclick="closeEditModal()">
+
+取消
+
+</button>
+
+<button
+class="btn btn-green btn-modal-save"
+onclick="saveEditRecord()">
+
+儲存
+
+</button>
+
+</div>
 </div></div>
 
 <div id="pendingOverlay" class="edit-modal-overlay">
 
 <div class="edit-modal">
 
-<h2>🕒 新增待借用案件</h2>
+<h2 class="detail-title">
+
+<i
+data-lucide="clock-3"
+class="detail-title-icon">
+</i>
+
+新增待借用案件
+
+</h2>
 
 <br>
 
