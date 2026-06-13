@@ -3899,6 +3899,24 @@ await loadSeals();
 
 /* 借用 */
 
+function resetBorrowForm(){
+
+document.getElementById("borrower").value = "";
+document.getElementById("department").value = "";
+document.getElementById("seal").value = "";
+document.getElementById("projectNo").value = "";
+document.getElementById("formNo").value = "";
+document.getElementById("purpose").value = "";
+
+document
+.querySelectorAll("#statusGrid .card")
+.forEach(card=>card.classList.remove("selected"));
+
+document.getElementById("sealDetailContent").textContent =
+"請點選上方印鑑查看詳細資訊";
+
+}
+
 async function borrowSeal(){
 
 if(blockViewerAction()) return;
@@ -4002,7 +4020,8 @@ currentPendingIndex = null;
 
 alert("借用成功");
 
-loadRecords();
+await loadRecords();
+resetBorrowForm();
 
 }
 
