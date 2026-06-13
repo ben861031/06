@@ -891,17 +891,14 @@ padding-top:18px;
 border-top:1px solid #e2e8f0;
 }
 
-#advancedFilter .search-row{
-align-items:center;
-}
-
 #advancedFilter input{
 height:46px;
 padding:0 14px;
 border:1px solid #dbe4f0;
 border-radius:12px;
 background:white;
-min-width:220px;
+width:100%;
+min-width:0;
 font-size:14px;
 }
 
@@ -911,18 +908,67 @@ border-color:#2563eb;
 box-shadow:0 0 0 3px rgba(37,99,235,.12);
 }
 
+.advanced-filter-layout{
+display:grid;
+gap:18px;
+}
+
+.advanced-number-row,
+.advanced-date-row{
+display:grid;
+gap:16px;
+}
+
+.advanced-number-row{
+grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
+.advanced-date-row{
+grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
+.advanced-field,
 .date-filter-field{
 display:flex;
 flex-direction:column;
-gap:5px;
-min-width:190px;
+gap:7px;
+min-width:0;
 font-size:12px;
 font-weight:700;
 color:#64748b;
 }
 
-.date-filter-field input{
-min-width:190px !important;
+.date-range-inputs{
+display:grid;
+grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+gap:10px;
+align-items:center;
+}
+
+.date-range-separator{
+font-size:13px;
+font-weight:700;
+color:#64748b;
+}
+
+@media(max-width:900px){
+.advanced-date-row{
+grid-template-columns:1fr;
+}
+}
+
+@media(max-width:600px){
+.advanced-number-row{
+grid-template-columns:1fr;
+}
+
+.date-range-inputs{
+grid-template-columns:1fr;
+}
+
+.date-range-separator{
+text-align:center;
+}
 }
 
 .search-actions .btn{
@@ -2061,45 +2107,61 @@ onclick="exportExcel()">
 
 <div id="advancedFilter">
 
-    <div class="search-row">
+    <div class="advanced-filter-layout">
 
-<input
-type="text"
-id="projectFilter"
-placeholder="計畫編號">
+        <div class="advanced-number-row">
 
-<input
-type="text"
-id="formFilter"
-placeholder="表單編號">
+            <label class="advanced-field">
+                <span>計畫編號</span>
+                <input
+                    type="text"
+                    id="projectFilter"
+                    placeholder="請輸入計畫編號">
+            </label>
 
-        <label class="date-filter-field">
-            <span>借用日期起</span>
-            <input
-                type="date"
-                id="borrowDateStart">
-        </label>
+            <label class="advanced-field">
+                <span>表單編號</span>
+                <input
+                    type="text"
+                    id="formFilter"
+                    placeholder="請輸入表單編號">
+            </label>
 
-        <label class="date-filter-field">
-            <span>借用日期迄</span>
-            <input
-                type="date"
-                id="borrowDateEnd">
-        </label>
+        </div>
 
-        <label class="date-filter-field">
-            <span>歸還日期起</span>
-            <input
-                type="date"
-                id="returnDateStart">
-        </label>
+        <div class="advanced-date-row">
 
-        <label class="date-filter-field">
-            <span>歸還日期迄</span>
-            <input
-                type="date"
-                id="returnDateEnd">
-        </label>
+            <div class="date-filter-field">
+                <span>借用日期</span>
+                <div class="date-range-inputs">
+                    <input
+                        type="date"
+                        id="borrowDateStart"
+                        aria-label="借用日期起">
+                    <span class="date-range-separator">至</span>
+                    <input
+                        type="date"
+                        id="borrowDateEnd"
+                        aria-label="借用日期迄">
+                </div>
+            </div>
+
+            <div class="date-filter-field">
+                <span>歸還日期</span>
+                <div class="date-range-inputs">
+                    <input
+                        type="date"
+                        id="returnDateStart"
+                        aria-label="歸還日期起">
+                    <span class="date-range-separator">至</span>
+                    <input
+                        type="date"
+                        id="returnDateEnd"
+                        aria-label="歸還日期迄">
+                </div>
+            </div>
+
+        </div>
 
     </div>
 
