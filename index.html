@@ -1336,7 +1336,8 @@ margin-top:20px;
 }
 
 
-.viewer-mode .record-action-column{
+.viewer-mode .record-action-column,
+.viewer-mode .pending-action-column{
 display:none;
 }
 
@@ -1697,6 +1698,7 @@ class="detail-title-icon">
 </p>
 
 <button
+id="addPendingButton"
 class="btn btn-green"
 onclick="openPendingModal()">
 
@@ -1722,7 +1724,7 @@ data-lucide="circle-plus">
 <th>表單編號</th>
 <th>用途</th>
 <th>狀態</th>
-<th>操作</th>
+<th class="pending-action-column">操作</th>
 </tr>
 </thead>
 
@@ -2304,7 +2306,7 @@ function blockViewerAction(){
 
 if(currentRole !== "viewer") return false;
 
-alert("查閱者僅能瀏覽借用紀錄");
+alert("Viewer 僅能瀏覽待借用管理與借用紀錄");
 return true;
 
 }
@@ -2328,11 +2330,18 @@ item.style.display = "";
 const exportButton =
 document.querySelector('[onclick="exportExcel()"]');
 
+const addPendingButton =
+document.getElementById("addPendingButton");
+
 const systemMenuTitle =
 document.getElementById("systemMenuTitle");
 
 if(exportButton){
 exportButton.style.display = "";
+}
+
+if(addPendingButton){
+addPendingButton.style.display = "";
 }
 
 if(systemMenuTitle){
@@ -2344,8 +2353,12 @@ if(!isViewer) return;
 document
 .querySelectorAll(".menu-item")
 .forEach(item=>{
+const action =
+item.getAttribute("onclick") || "";
+
 item.style.display =
-item.getAttribute("onclick")?.includes("historyPage")
+action.includes("pendingPage") ||
+action.includes("historyPage")
 ? ""
 : "none";
 });
@@ -2354,12 +2367,18 @@ if(exportButton){
 exportButton.style.display = "none";
 }
 
+if(addPendingButton){
+addPendingButton.style.display = "none";
+}
+
 if(systemMenuTitle){
 systemMenuTitle.style.display = "none";
 }
 
 document
-.querySelectorAll(".record-action-column")
+.querySelectorAll(
+".record-action-column,.pending-action-column"
+)
 .forEach(el=>el.style.display = "none");
 
 }
@@ -2588,7 +2607,11 @@ let pageSize = 10;
 
 function showPage(pageId,el){
 
-if(currentRole === "viewer" && pageId !== "historyPage"){
+if(
+currentRole === "viewer" &&
+pageId !== "pendingPage" &&
+pageId !== "historyPage"
+){
 pageId = "historyPage";
 el = document.querySelector('[onclick*="historyPage"]');
 }
@@ -2622,14 +2645,19 @@ function restoreLastPage(){
 
     if(currentRole === "viewer"){
 
-        const historyMenu =
+        const viewerPage =
+        localStorage.getItem("lastPage") === "pendingPage"
+        ? "pendingPage"
+        : "historyPage";
+
+        const viewerMenu =
         document.querySelector(
-            '[onclick*="historyPage"]'
+            `[onclick*="${viewerPage}"]`
         );
 
         showPage(
-            "historyPage",
-            historyMenu
+            viewerPage,
+            viewerMenu
         );
 
         return;
@@ -3202,7 +3230,7 @@ if(pendingRecords.length===0){
 
 table.innerHTML=`
 <tr>
-<td colspan="7">
+<td colspan="${currentRole === "viewer" ? 6 : 7}">
 目前尚無待借用案件
 </td>
 </tr>
@@ -3234,8 +3262,13 @@ ${item.status==="已轉正式借用"
 
 </td>
 
-<td>
+<td class="pending-action-column">
 
+${currentRole === "viewer"
+
+? ""
+
+: `
 <button
 class="action-btn edit-btn tooltip"
 data-tip="修改"
@@ -3262,6 +3295,8 @@ onclick="convertPending('${item.id}')">
 <i data-lucide="arrow-right-circle"></i>
 
 </button>
+`
+}
 
 </td>
 </tr>
@@ -4764,7 +4799,8 @@ if(currentRole === "viewer"){
 
 await Promise.all([
     loadSeals(),
-    loadRecords()
+    loadRecords(),
+    loadPendingRecords()
 ]);
 
 }else{
