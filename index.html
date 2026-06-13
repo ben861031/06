@@ -139,6 +139,8 @@ display:flex;
 
 align-items:center;
 
+position:relative;
+
 gap:18px;
 
 height:60px;
@@ -225,6 +227,54 @@ gap:0;
 
 transition:.25s;
 
+}
+
+.sidebar.collapsed .menu-item:hover{
+transform:none;
+}
+
+.sidebar.collapsed .menu-item::before,
+.sidebar.collapsed .menu-item::after{
+position:absolute;
+top:50%;
+opacity:0;
+visibility:hidden;
+pointer-events:none;
+transition:opacity .15s ease,transform .15s ease;
+z-index:10000;
+}
+
+.sidebar.collapsed .menu-item::after{
+content:attr(data-tooltip);
+left:calc(100% + 14px);
+transform:translate(6px,-50%);
+padding:9px 12px;
+border-radius:9px;
+background:#0f172a;
+color:white;
+font-size:13px;
+font-weight:600;
+line-height:1;
+white-space:nowrap;
+box-shadow:0 8px 20px rgba(15,23,42,.22);
+}
+
+.sidebar.collapsed .menu-item::before{
+content:"";
+left:calc(100% + 7px);
+transform:translate(6px,-50%);
+border-width:6px 7px 6px 0;
+border-style:solid;
+border-color:transparent #0f172a transparent transparent;
+}
+
+.sidebar.collapsed .menu-item:hover::before,
+.sidebar.collapsed .menu-item:hover::after,
+.sidebar.collapsed .menu-item:focus-visible::before,
+.sidebar.collapsed .menu-item:focus-visible::after{
+opacity:1;
+visibility:visible;
+transform:translate(0,-50%);
 }
 
 .sidebar.collapsed .menu-icon{
@@ -1497,6 +1547,7 @@ Seal Borrowing System
 </div>
 
 <div class="menu-item active"
+data-tooltip="借用登記"
 onclick="showPage('borrowPage',this)">
 
 <i data-lucide="clipboard-list" class="menu-icon"></i>
@@ -1506,6 +1557,7 @@ onclick="showPage('borrowPage',this)">
 </div>
 
 <div class="menu-item"
+data-tooltip="待借用管理"
 onclick="showPage('pendingPage',this)">
 
 <i data-lucide="clock-3" class="menu-icon"></i>
@@ -1515,6 +1567,7 @@ onclick="showPage('pendingPage',this)">
 </div>
 
 <div class="menu-item"
+data-tooltip="歸還作業"
 onclick="showPage('returnPage',this)">
 
 <i data-lucide="rotate-ccw" class="menu-icon"></i>
@@ -1524,6 +1577,7 @@ onclick="showPage('returnPage',this)">
 </div>
 
 <div class="menu-item"
+data-tooltip="借用紀錄"
 onclick="showPage('historyPage',this)">
 
 <i data-lucide="file-text" class="menu-icon"></i>
@@ -1537,6 +1591,7 @@ onclick="showPage('historyPage',this)">
 </div>
 
 <div class="menu-item"
+data-tooltip="印鑑維護"
 onclick="showPage('sealPage',this)">
 
 <i data-lucide="badge-check" class="menu-icon"></i>
@@ -1546,6 +1601,7 @@ onclick="showPage('sealPage',this)">
 </div>
 
 <div class="menu-item"
+data-tooltip="部門維護"
 onclick="showPage('deptPage',this)">
 
 <i data-lucide="building-2" class="menu-icon"></i>
@@ -1556,6 +1612,7 @@ onclick="showPage('deptPage',this)">
 
 <div class="menu-item"
 id="permissionMenu"
+data-tooltip="權限管理"
 onclick="showPage('permissionPage',this)">
 
 <i data-lucide="users" class="menu-icon"></i>
@@ -1566,6 +1623,7 @@ onclick="showPage('permissionPage',this)">
 
 <div class="menu-item"
 id="loginLogMenu"
+data-tooltip="登入紀錄"
 onclick="
 showPage('loginLogPage',this);
 loadLoginLogs();
