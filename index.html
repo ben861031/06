@@ -284,6 +284,28 @@ grid-template-columns:350px 1fr;
 gap:20px;
 }
 
+.borrow-layout{
+grid-template-columns:minmax(480px,520px) minmax(0,1fr);
+}
+
+.borrow-form-grid{
+display:grid;
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:0 14px;
+}
+
+.borrow-form-grid .form-group{
+min-width:0;
+}
+
+.borrow-form-grid .form-group-purpose{
+grid-column:1 / -1;
+}
+
+.borrow-submit{
+width:100%;
+}
+
 .form-group{
 margin-bottom:15px;
 }
@@ -499,9 +521,9 @@ margin-bottom:20px;
 
 background:white;
 
-border-radius:20px;
+border-radius:18px;
 
-padding:22px;
+padding:14px 18px;
 
 border:1px solid #e5e7eb;
 
@@ -517,13 +539,13 @@ font-size:13px;
 
 color:#64748b;
 
-margin-bottom:10px;
+margin-bottom:4px;
 
 }
 
 .kpi-value{
 
-font-size:32px;
+font-size:26px;
 
 font-weight:800;
 
@@ -533,7 +555,7 @@ color:#0f172a;
 
 .kpi-sub{
 
-margin-top:8px;
+margin-top:3px;
 
 font-size:12px;
 
@@ -1037,6 +1059,14 @@ width:100%;
 
 .grid{
 grid-template-columns:1fr;
+}
+
+.borrow-form-grid{
+grid-template-columns:1fr;
+}
+
+.borrow-form-grid .form-group-purpose{
+grid-column:auto;
 }
 
 }
@@ -1560,7 +1590,7 @@ loadLoginLogs();
 
 </div>
 
-<div class="grid">
+<div class="grid borrow-layout">
 
 <div>
 
@@ -1583,6 +1613,8 @@ margin-bottom:24px;
 ">
 請填寫借用資訊後送出申請
 </div>
+
+<div class="borrow-form-grid">
 
 <div class="form-group">
 <label>借用人</label>
@@ -1609,12 +1641,14 @@ margin-bottom:24px;
 <input type="text" id="formNo">
 </div>
 
-<div class="form-group">
+<div class="form-group form-group-purpose">
 <label>用途</label>
-<textarea id="purpose" rows="4"></textarea>
+<textarea id="purpose" rows="3"></textarea>
 </div>
 
-<button class="btn btn-primary"
+</div>
+
+<button class="btn btn-primary borrow-submit"
 onclick="borrowSeal()">
 確認借用
 </button>
@@ -4054,6 +4088,13 @@ const active = records.find(r=>r.seal===sealName && !r.returnTime);
 const el=document.getElementById('sealDetailContent');
 
 if(!active){
+const sealSelect =
+document.getElementById("seal");
+
+if(sealSelect){
+sealSelect.value = sealName;
+}
+
 el.innerHTML=`
 <div class="detail-card">
 <div class="detail-grid">
