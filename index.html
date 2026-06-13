@@ -1459,7 +1459,7 @@ onclick="showPage('historyPage',this)">
 
 </div>
 
-<div class="menu-title">
+<div class="menu-title" id="systemMenuTitle">
 系統管理
 </div>
 
@@ -2327,8 +2327,15 @@ item.style.display = "";
 const exportButton =
 document.querySelector('[onclick="exportExcel()"]');
 
+const systemMenuTitle =
+document.getElementById("systemMenuTitle");
+
 if(exportButton){
 exportButton.style.display = "";
+}
+
+if(systemMenuTitle){
+systemMenuTitle.style.display = "";
 }
 
 if(!isViewer) return;
@@ -2344,6 +2351,10 @@ item.getAttribute("onclick")?.includes("historyPage")
 
 if(exportButton){
 exportButton.style.display = "none";
+}
+
+if(systemMenuTitle){
+systemMenuTitle.style.display = "none";
 }
 
 document
