@@ -1335,6 +1335,10 @@ margin-top:20px;
 }
 
 
+.viewer-mode .record-action-column{
+display:none;
+}
+
 </style>
 
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -1948,7 +1952,7 @@ placeholder="表單編號">
 <th>計畫編號</th>
 <th>表單編號</th>
 <th>用途</th>
-<th>狀態</th><th>操作</th>
+<th>狀態</th><th class="record-action-column">操作</th>
 </tr>
 
 </thead>
@@ -2294,6 +2298,59 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 let currentRole = "";
+
+function blockViewerAction(){
+
+if(currentRole !== "viewer") return false;
+
+alert("查閱者僅能瀏覽借用紀錄");
+return true;
+
+}
+
+function applyRoleAccess(){
+
+const isViewer =
+currentRole === "viewer";
+
+document.body.classList.toggle(
+"viewer-mode",
+isViewer
+);
+
+document
+.querySelectorAll(".menu-item")
+.forEach(item=>{
+item.style.display = "";
+});
+
+const exportButton =
+document.querySelector('[onclick="exportExcel()"]');
+
+if(exportButton){
+exportButton.style.display = "";
+}
+
+if(!isViewer) return;
+
+document
+.querySelectorAll(".menu-item")
+.forEach(item=>{
+item.style.display =
+item.getAttribute("onclick")?.includes("historyPage")
+? ""
+: "none";
+});
+
+if(exportButton){
+exportButton.style.display = "none";
+}
+
+document
+.querySelectorAll(".record-action-column")
+.forEach(el=>el.style.display = "none");
+
+}
 let currentUserEmail = "";
 
 let currentUser = "系統使用者";
@@ -2519,6 +2576,11 @@ let pageSize = 10;
 
 function showPage(pageId,el){
 
+if(currentRole === "viewer" && pageId !== "historyPage"){
+pageId = "historyPage";
+el = document.querySelector('[onclick*="historyPage"]');
+}
+
 document
 .querySelectorAll(
 "#borrowPage,#pendingPage,#returnPage,#historyPage,#sealPage,#deptPage,#permissionPage,#loginLogPage"
@@ -2545,6 +2607,22 @@ localStorage.setItem(
 window.showPage = showPage;
 
 function restoreLastPage(){
+
+    if(currentRole === "viewer"){
+
+        const historyMenu =
+        document.querySelector(
+            '[onclick*="historyPage"]'
+        );
+
+        showPage(
+            "historyPage",
+            historyMenu
+        );
+
+        return;
+
+    }
 
     const lastPage =
     localStorage.getItem(
@@ -2626,6 +2704,8 @@ resetHistoryFilter;
 
 async function deletePending(id){
 
+if(blockViewerAction()) return;
+
 if(!confirm("確定刪除？"))
 return;
 
@@ -2644,6 +2724,8 @@ await loadPendingRecords();
 window.deletePending = deletePending;
 
 function openPendingModal(){
+
+if(blockViewerAction()) return;
 
 const deptSelect =
 document.getElementById("pendingDepartment");
@@ -2699,6 +2781,8 @@ window.openPendingModal = openPendingModal;
 window.closePendingModal = closePendingModal;
 
 async function savePendingRecord(){
+
+if(blockViewerAction()) return;
 
 const borrower =
 document.getElementById("pendingBorrower")
@@ -2784,6 +2868,8 @@ savePendingRecord;
 
 async function addWhitelistUser(){
 
+if(blockViewerAction()) return;
+
 const email =
 document.getElementById(
 "newUserEmail"
@@ -2821,6 +2907,8 @@ addWhitelistUser;
 
 async function deleteUser(id){
 
+if(blockViewerAction()) return;
+
 const user =
 userList.find(u=>u.id===id);
 
@@ -2850,6 +2938,8 @@ id,
 enabled
 ){
 
+if(blockViewerAction()) return;
+
 await updateDoc(
 doc(db,"users",id),
 {
@@ -2869,6 +2959,8 @@ id,
 role
 ){
 
+if(blockViewerAction()) return;
+
 await updateDoc(
 doc(db,"users",id),
 {
@@ -2884,6 +2976,8 @@ window.changeRole =
 changeRole;
 
 async function editPending(id){
+
+if(blockViewerAction()) return;
 
 const item =
 pendingRecords.find(
@@ -2948,6 +3042,8 @@ document.getElementById("pendingOverlay").style.display =
 window.editPending = editPending;
 
 function convertPending(id){
+
+if(blockViewerAction()) return;
 
 const item =
 pendingRecords.find(
@@ -3032,6 +3128,11 @@ Admin
 <option value="user"
 ${user.role==="user"?"selected":""}>
 User
+</option>
+
+<option value="viewer"
+${user.role==="viewer"?"selected":""}>
+查閱者
 </option>
 
 </select>
@@ -3335,6 +3436,8 @@ area.appendChild(div);
 
 async function moveDeptUp(id){
 
+if(blockViewerAction()) return;
+
 const index =
 departmentList.findIndex(d=>d.id===id);
 
@@ -3362,6 +3465,8 @@ await loadDepartments();
 }
 
 async function moveDeptDown(id){
+
+if(blockViewerAction()) return;
 
 const index =
 departmentList.findIndex(d=>d.id===id);
@@ -3391,6 +3496,8 @@ await loadDepartments();
 }
 
 async function addDepartment(){
+
+if(blockViewerAction()) return;
 
 const name =
 document.getElementById("newDept")
@@ -3425,6 +3532,8 @@ await loadDepartments();
 }
 
 async function deleteDepartment(id){
+
+if(blockViewerAction()) return;
 
 await deleteDoc(doc(db,"departments",id));
 
@@ -3559,6 +3668,8 @@ area.appendChild(div);
 
 async function moveUp(id){
 
+if(blockViewerAction()) return;
+
 const index =
 sealList.findIndex(s=>s.id===id);
 
@@ -3586,6 +3697,8 @@ await loadSeals();
 }
 
 async function moveDown(id){
+
+if(blockViewerAction()) return;
 
 const index =
 sealList.findIndex(s=>s.id===id);
@@ -3615,6 +3728,8 @@ await loadSeals();
 }
 
 async function addSeal(){
+
+if(blockViewerAction()) return;
 
 const name =
 document.getElementById("newSeal")
@@ -3650,6 +3765,8 @@ await loadSeals();
 
 async function deleteSeal(id){
 
+if(blockViewerAction()) return;
+
 await deleteDoc(doc(db,"seals",id));
 
 alert("已刪除");
@@ -3661,6 +3778,8 @@ await loadSeals();
 /* 借用 */
 
 async function borrowSeal(){
+
+if(blockViewerAction()) return;
 
 const borrower =
 document.getElementById("borrower")
@@ -3766,6 +3885,8 @@ loadRecords();
 }
 
 async function returnSeal(id){
+
+if(blockViewerAction()) return;
 
 await updateDoc(
 doc(db,"sealRecords",id),
@@ -4235,9 +4356,13 @@ ${r.returnTime
 
 </td>
 
-<td>
+<td class="record-action-column">
 
-${r.returnTime
+${currentRole === "viewer"
+
+? ""
+
+: r.returnTime
 
 ? `
 <span style="
@@ -4349,6 +4474,8 @@ document.getElementById('editOverlay').style.display='none';
 }
 
 async function editRecord(id){
+if(blockViewerAction()) return;
+
 const r = records.find(x=>x.id===id);
 if(!r || r.returnTime){ alert('已歸還資料不可編輯'); return; }
 
@@ -4363,6 +4490,8 @@ document.getElementById('editOverlay').style.display='flex';
 }
 
 async function saveEditRecord(){
+if(blockViewerAction()) return;
+
 const id=document.getElementById('editId').value;
 
 await updateDoc(doc(db,"sealRecords",id),{
@@ -4379,6 +4508,8 @@ loadRecords();
 }
 
 async function deleteRecord(id){
+
+if(blockViewerAction()) return;
 
 const r = records.find(x=>x.id===id);
 
@@ -4397,6 +4528,8 @@ loadRecords();
 
 
 function exportExcel(){
+
+if(blockViewerAction()) return;
 
 const data =
 records.map(r=>({
@@ -4612,7 +4745,17 @@ document.getElementById(
 "loginPage"
 ).style.display="none";
 
+applyRoleAccess();
 restoreLastPage();
+
+if(currentRole === "viewer"){
+
+await Promise.all([
+    loadSeals(),
+    loadRecords()
+]);
+
+}else{
 
 await Promise.all([
     loadDepartments(),
@@ -4622,6 +4765,8 @@ await Promise.all([
     loadUsers(),
     loadLoginLogs()
 ]);
+
+}
 
 document.getElementById(
 "systemArea"
