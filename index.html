@@ -884,7 +884,7 @@ transition:all .35s ease;
 }
 
 #advancedFilter.show{
-max-height:220px;
+max-height:360px;
 opacity:1;
 margin-top:18px;
 padding-top:18px;
@@ -909,6 +909,20 @@ font-size:14px;
 outline:none;
 border-color:#2563eb;
 box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+.date-filter-field{
+display:flex;
+flex-direction:column;
+gap:5px;
+min-width:190px;
+font-size:12px;
+font-weight:700;
+color:#64748b;
+}
+
+.date-filter-field input{
+min-width:190px !important;
 }
 
 .search-actions .btn{
@@ -2059,13 +2073,33 @@ type="text"
 id="formFilter"
 placeholder="表單編號">
 
-        <input
-            type="date"
-            id="borrowDate">
+        <label class="date-filter-field">
+            <span>借用日期起</span>
+            <input
+                type="date"
+                id="borrowDateStart">
+        </label>
 
-        <input
-            type="date"
-            id="returnDate">
+        <label class="date-filter-field">
+            <span>借用日期迄</span>
+            <input
+                type="date"
+                id="borrowDateEnd">
+        </label>
+
+        <label class="date-filter-field">
+            <span>歸還日期起</span>
+            <input
+                type="date"
+                id="returnDateStart">
+        </label>
+
+        <label class="date-filter-field">
+            <span>歸還日期迄</span>
+            <input
+                type="date"
+                id="returnDateEnd">
+        </label>
 
     </div>
 
@@ -2863,8 +2897,10 @@ document.getElementById("statusFilter").value = "";
 document.getElementById("projectFilter").value = "";
 document.getElementById("formFilter").value = "";
 
-document.getElementById("borrowDate").value = "";
-document.getElementById("returnDate").value = "";
+document.getElementById("borrowDateStart").value = "";
+document.getElementById("borrowDateEnd").value = "";
+document.getElementById("returnDateStart").value = "";
+document.getElementById("returnDateEnd").value = "";
 
 currentPage = 1;
 
@@ -3975,7 +4011,10 @@ document.getElementById("sealDetailContent").textContent =
 
 }
 
-async function borrowSeal(){
+let pendingBorrowData = null;
+let isBorrowing = false;
+
+function borrowSeal(){
 
 if(blockViewerAction()) return;
 
@@ -4028,31 +4067,97 @@ return;
 
 }
 
-/* 新增借用 */
+pendingBorrowData = {
+seal,
+borrower,
+department,
+projectNo,
+formNo,
+purpose,
+pendingId:currentPendingIndex
+};
+
+document.getElementById("borrowConfirmSeal").textContent =
+seal;
+
+document.getElementById("borrowConfirmBorrower").textContent =
+borrower;
+
+document.getElementById("borrowConfirmDepartment").textContent =
+department;
+
+document.getElementById("borrowConfirmProjectNo").textContent =
+projectNo;
+
+document.getElementById("borrowConfirmFormNo").textContent =
+formNo;
+
+document.getElementById("borrowConfirmPurpose").textContent =
+purpose;
+
+document.getElementById("borrowConfirmOverlay").style.display =
+"flex";
+
+}
+
+function closeBorrowConfirmModal(){
+
+if(isBorrowing) return;
+
+pendingBorrowData = null;
+
+document.getElementById("borrowConfirmOverlay").style.display =
+"none";
+
+}
+
+async function confirmBorrowSeal(){
+
+if(blockViewerAction()) return;
+if(isBorrowing || !pendingBorrowData) return;
+
+const data = {...pendingBorrowData};
+
+const exists =
+records.find(r=>
+r.seal === data.seal &&
+!r.returnTime
+);
+
+if(exists){
+alert(`印鑑 ${data.seal} 目前借出中，無法重複借用`);
+closeBorrowConfirmModal();
+await loadRecords();
+return;
+}
+
+const confirmButton =
+document.getElementById("confirmBorrowButton");
+
+isBorrowing = true;
+confirmButton.disabled = true;
+confirmButton.textContent = "處理中...";
+
+try{
 
 await addDoc(collection(db,"sealRecords"),{
 
-seal,
-
-borrower:
-document.getElementById("borrower").value
-|| currentUser,
-
-department,
-
-projectNo,
-formNo,
-
-purpose,
+seal:data.seal,
+borrower:data.borrower || currentUser,
+department:data.department,
+projectNo:data.projectNo,
+formNo:data.formNo,
+purpose:data.purpose,
 borrowTime:new Date(),
 returnTime:null
 
 });
-if(currentPendingIndex){
+
+if(data.pendingId){
 
 const pendingItem =
 pendingRecords.find(
-x => x.id === currentPendingIndex
+x => x.id === data.pendingId
 );
 
 if(pendingItem){
@@ -4076,10 +4181,27 @@ currentPendingIndex = null;
 
 }
 
+document.getElementById("borrowConfirmOverlay").style.display =
+"none";
+
+pendingBorrowData = null;
+
 alert("借用成功");
 
 await loadRecords();
 resetBorrowForm();
+
+}catch(error){
+
+alert(`借用失敗：${error.message}`);
+
+}finally{
+
+isBorrowing = false;
+confirmButton.disabled = false;
+confirmButton.textContent = "確認借用";
+
+}
 
 }
 
@@ -4459,7 +4581,53 @@ lucide.createIcons();
 }
 
 
-function renderTable(){
+function getLocalDateKey(value){
+
+if(!value) return "";
+
+const date =
+value.seconds
+? new Date(value.seconds * 1000)
+: value.toDate
+? value.toDate()
+: new Date(value);
+
+if(Number.isNaN(date.getTime())) return "";
+
+const year = date.getFullYear();
+const month = String(date.getMonth() + 1).padStart(2,"0");
+const day = String(date.getDate()).padStart(2,"0");
+
+return `${year}-${month}-${day}`;
+
+}
+
+function matchesDateRange(value,startDate,endDate){
+
+if(!startDate && !endDate) return true;
+
+const dateKey = getLocalDateKey(value);
+
+if(!dateKey) return false;
+if(startDate && dateKey < startDate) return false;
+if(endDate && dateKey > endDate) return false;
+
+return true;
+
+}
+
+function getRecordTime(value){
+
+if(!value) return 0;
+if(value.seconds) return value.seconds * 1000;
+if(value.toDate) return value.toDate().getTime();
+
+const date = new Date(value);
+return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+
+}
+
+function getFilteredRecords(){
 
 const keyword =
 document.getElementById("searchInput")
@@ -4479,20 +4647,23 @@ const projectFilter =
 const formFilter =
 (document.getElementById("formFilter")?.value || "").toLowerCase();
 
-const borrowDate =
-document.getElementById("borrowDate")
+const borrowDateStart =
+document.getElementById("borrowDateStart")
 .value;
 
-const returnDate =
-document.getElementById("returnDate")
+const borrowDateEnd =
+document.getElementById("borrowDateEnd")
 .value;
 
-const table =
-document.getElementById("recordTable");
+const returnDateStart =
+document.getElementById("returnDateStart")
+.value;
 
-table.innerHTML = "";
+const returnDateEnd =
+document.getElementById("returnDateEnd")
+.value;
 
-const filteredRecords = records
+return records
 .filter(r=>{
 
 const keywordMatch =
@@ -4540,16 +4711,18 @@ const formMatch =
 ((r.formNo || "").toLowerCase().includes(formFilter));
 
 const borrowMatch =
-
-!borrowDate ||
-
-sameDate(r.borrowTime,borrowDate);
+matchesDateRange(
+r.borrowTime,
+borrowDateStart,
+borrowDateEnd
+);
 
 const returnMatch =
-
-!returnDate ||
-
-sameDate(r.returnTime,returnDate);
+matchesDateRange(
+r.returnTime,
+returnDateStart,
+returnDateEnd
+);
 
 const statusMatch =
 
@@ -4574,19 +4747,24 @@ statusMatch
 })
 .sort((a,b)=>{
 
-const t1 =
-a.borrowTime?.seconds
-? a.borrowTime.seconds
-: 0;
-
-const t2 =
-b.borrowTime?.seconds
-? b.borrowTime.seconds
-: 0;
+const t1 = getRecordTime(a.borrowTime);
+const t2 = getRecordTime(b.borrowTime);
 
 return t2 - t1;
 
 });
+
+}
+
+function renderTable(){
+
+const table =
+document.getElementById("recordTable");
+
+table.innerHTML = "";
+
+const filteredRecords =
+getFilteredRecords();
 
 const countEl =
 document.getElementById("recordCount");
@@ -4824,8 +5002,36 @@ function exportExcel(){
 
 if(blockViewerAction()) return;
 
+const borrowStart =
+document.getElementById("borrowDateStart").value;
+
+const borrowEnd =
+document.getElementById("borrowDateEnd").value;
+
+const returnStart =
+document.getElementById("returnDateStart").value;
+
+const returnEnd =
+document.getElementById("returnDateEnd").value;
+
+if(
+(borrowStart && borrowEnd && borrowStart > borrowEnd) ||
+(returnStart && returnEnd && returnStart > returnEnd)
+){
+alert("日期區間的起日不可晚於迄日");
+return;
+}
+
+const filteredRecords =
+getFilteredRecords();
+
+if(filteredRecords.length===0){
+alert("目前篩選條件沒有可匯出的資料");
+return;
+}
+
 const data =
-records.map(r=>({
+filteredRecords.map(r=>({
 
 印鑑:r.seal,
 借用人:r.borrower,
@@ -4842,6 +5048,22 @@ records.map(r=>({
 const ws =
 XLSX.utils.json_to_sheet(data);
 
+ws["!cols"] = [
+{wch:16},
+{wch:14},
+{wch:16},
+{wch:18},
+{wch:18},
+{wch:20},
+{wch:20},
+{wch:36},
+{wch:12}
+];
+
+if(ws["!ref"]){
+ws["!autofilter"] = {ref:ws["!ref"]};
+}
+
 const wb =
 XLSX.utils.book_new();
 
@@ -4853,12 +5075,14 @@ ws,
 
 XLSX.writeFile(
 wb,
-"印鑑借用紀錄.xlsx"
+`印鑑借用紀錄_${getLocalDateKey(new Date())}.xlsx`
 );
 
 }
 
 window.borrowSeal = borrowSeal;
+window.closeBorrowConfirmModal = closeBorrowConfirmModal;
+window.confirmBorrowSeal = confirmBorrowSeal;
 window.openReturnModal = openReturnModal;
 window.closeReturnModal = closeReturnModal;
 window.confirmReturnSeal = confirmReturnSeal;
@@ -4893,11 +5117,20 @@ document.getElementById("projectFilter")
 document.getElementById("formFilter")
 .addEventListener("input",renderTable);
 
-document.getElementById("borrowDate")
-.addEventListener("change",renderTable);
+[
+"borrowDateStart",
+"borrowDateEnd",
+"returnDateStart",
+"returnDateEnd"
+].forEach(id=>{
 
-document.getElementById("returnDate")
-.addEventListener("change",renderTable);
+document.getElementById(id)
+.addEventListener("change",()=>{
+currentPage = 1;
+renderTable();
+});
+
+});
 
 async function googleLogin(){
 
@@ -5191,6 +5424,84 @@ class="btn btn-green btn-modal-save"
 onclick="savePendingRecord()">
 
 儲存
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="borrowConfirmOverlay" class="edit-modal-overlay">
+
+<div class="edit-modal">
+
+<h2 class="detail-title">
+
+<i
+data-lucide="clipboard-check"
+class="detail-title-icon">
+</i>
+
+確認借用資料
+
+</h2>
+
+<p style="margin:12px 0 18px;color:#64748b;">
+請確認以下資料正確後再送出借用。
+</p>
+
+<div class="return-confirm-grid">
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">印鑑</div>
+<div class="return-confirm-value" id="borrowConfirmSeal">-</div>
+</div>
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">借用人</div>
+<div class="return-confirm-value" id="borrowConfirmBorrower">-</div>
+</div>
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">部門</div>
+<div class="return-confirm-value" id="borrowConfirmDepartment">-</div>
+</div>
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">計畫編號</div>
+<div class="return-confirm-value" id="borrowConfirmProjectNo">-</div>
+</div>
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">表單編號</div>
+<div class="return-confirm-value" id="borrowConfirmFormNo">-</div>
+</div>
+
+<div class="return-confirm-item return-confirm-purpose">
+<div class="return-confirm-label">用途</div>
+<div class="return-confirm-value" id="borrowConfirmPurpose">-</div>
+</div>
+
+</div>
+
+<div class="modal-footer">
+
+<button
+class="btn btn-gray btn-modal-cancel"
+onclick="closeBorrowConfirmModal()">
+
+返回修改
+
+</button>
+
+<button
+id="confirmBorrowButton"
+class="btn btn-primary btn-modal-save"
+onclick="confirmBorrowSeal()">
+
+確認借用
 
 </button>
 
