@@ -1365,6 +1365,47 @@ margin-top:20px;
 
 }
 
+.return-confirm-grid{
+display:grid;
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:12px;
+}
+
+.return-confirm-item{
+padding:14px;
+border-radius:12px;
+background:#f8fafc;
+border:1px solid #e2e8f0;
+}
+
+.return-confirm-item.return-confirm-purpose{
+grid-column:1 / -1;
+}
+
+.return-confirm-label{
+font-size:12px;
+font-weight:700;
+color:#64748b;
+margin-bottom:6px;
+}
+
+.return-confirm-value{
+font-size:15px;
+font-weight:600;
+color:#0f172a;
+word-break:break-word;
+}
+
+@media(max-width:600px){
+.return-confirm-grid{
+grid-template-columns:1fr;
+}
+
+.return-confirm-item.return-confirm-purpose{
+grid-column:auto;
+}
+}
+
 
 .viewer-mode .record-action-column,
 .viewer-mode .pending-action-column{
@@ -3965,20 +4006,107 @@ loadRecords();
 
 }
 
-async function returnSeal(id){
+let currentReturningId = null;
+let isReturning = false;
+
+function openReturnModal(id){
 
 if(blockViewerAction()) return;
 
+const record =
+records.find(r=>r.id===id && !r.returnTime);
+
+if(!record){
+alert("找不到可歸還的借用資料");
+return;
+}
+
+currentReturningId = id;
+
+document.getElementById("returnConfirmSeal").textContent =
+record.seal || "-";
+
+document.getElementById("returnConfirmBorrower").textContent =
+record.borrower || "-";
+
+document.getElementById("returnConfirmDepartment").textContent =
+record.department || "-";
+
+document.getElementById("returnConfirmTime").textContent =
+formatDate(record.borrowTime);
+
+document.getElementById("returnConfirmPurpose").textContent =
+record.purpose || "-";
+
+document.getElementById("returnConfirmOverlay").style.display =
+"flex";
+
+}
+
+function closeReturnModal(){
+
+if(isReturning) return;
+
+currentReturningId = null;
+
+document.getElementById("returnConfirmOverlay").style.display =
+"none";
+
+}
+
+async function confirmReturnSeal(){
+
+if(blockViewerAction()) return;
+if(isReturning || !currentReturningId) return;
+
+const record =
+records.find(
+r=>r.id===currentReturningId && !r.returnTime
+);
+
+if(!record){
+alert("此筆資料可能已完成歸還，請重新整理");
+closeReturnModal();
+loadRecords();
+return;
+}
+
+const confirmButton =
+document.getElementById("confirmReturnButton");
+
+isReturning = true;
+confirmButton.disabled = true;
+confirmButton.textContent = "處理中...";
+
+try{
+
 await updateDoc(
-doc(db,"sealRecords",id),
+doc(db,"sealRecords",currentReturningId),
 {
 returnTime:new Date()
 }
 );
 
+document.getElementById("returnConfirmOverlay").style.display =
+"none";
+
+currentReturningId = null;
+
 alert("已歸還");
 
-loadRecords();
+await loadRecords();
+
+}catch(error){
+
+alert(`歸還失敗：${error.message}`);
+
+}finally{
+
+isReturning = false;
+confirmButton.disabled = false;
+confirmButton.textContent = "確認歸還";
+
+}
 
 }
 
@@ -4237,7 +4365,7 @@ tr.innerHTML = `
 <button
 class="action-btn convert-btn tooltip"
 data-tip="歸還"
-onclick="returnSeal('${r.id}')">
+onclick="openReturnModal('${r.id}')">
 
 <i data-lucide="rotate-ccw"></i>
 
@@ -4654,7 +4782,9 @@ wb,
 }
 
 window.borrowSeal = borrowSeal;
-window.returnSeal = returnSeal;
+window.openReturnModal = openReturnModal;
+window.closeReturnModal = closeReturnModal;
+window.confirmReturnSeal = confirmReturnSeal;
 window.exportExcel = exportExcel;
 window.editRecord = editRecord;
 window.deleteRecord = deleteRecord;
@@ -4984,6 +5114,79 @@ class="btn btn-green btn-modal-save"
 onclick="savePendingRecord()">
 
 儲存
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="returnConfirmOverlay" class="edit-modal-overlay">
+
+<div class="edit-modal">
+
+<h2 class="detail-title">
+
+<i
+data-lucide="rotate-ccw"
+class="detail-title-icon">
+</i>
+
+確認歸還印鑑
+
+</h2>
+
+<p style="margin:12px 0 18px;color:#64748b;">
+請確認以下借用資料，歸還後將無法再編輯。
+</p>
+
+<div class="return-confirm-grid">
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">印鑑</div>
+<div class="return-confirm-value" id="returnConfirmSeal">-</div>
+</div>
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">借用人</div>
+<div class="return-confirm-value" id="returnConfirmBorrower">-</div>
+</div>
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">部門</div>
+<div class="return-confirm-value" id="returnConfirmDepartment">-</div>
+</div>
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">借用時間</div>
+<div class="return-confirm-value" id="returnConfirmTime">-</div>
+</div>
+
+<div class="return-confirm-item return-confirm-purpose">
+<div class="return-confirm-label">用途</div>
+<div class="return-confirm-value" id="returnConfirmPurpose">-</div>
+</div>
+
+</div>
+
+<div class="modal-footer">
+
+<button
+class="btn btn-gray btn-modal-cancel"
+onclick="closeReturnModal()">
+
+取消
+
+</button>
+
+<button
+id="confirmReturnButton"
+class="btn btn-green btn-modal-save"
+onclick="confirmReturnSeal()">
+
+確認歸還
 
 </button>
 
