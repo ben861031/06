@@ -81,9 +81,21 @@ const provider = new GoogleAuthProvider();
 
 let currentRole = "";
 
+function normalizeRole(role){
+return String(role || "").trim().toLowerCase();
+}
+
+function isAdminRole(){
+return normalizeRole(currentRole) === "admin";
+}
+
+function isViewerRole(){
+return normalizeRole(currentRole) === "viewer";
+}
+
 function blockViewerAction(){
 
-if(currentRole !== "viewer") return false;
+if(!isViewerRole()) return false;
 
 alert("Viewer 僅能瀏覽待借用管理與借用紀錄");
 return true;
@@ -92,8 +104,7 @@ return true;
 
 function applyRoleAccess(){
 
-const isViewer =
-currentRole === "viewer";
+const isViewer = isViewerRole();
 
 document.body.classList.toggle(
 "viewer-mode",
@@ -302,7 +313,34 @@ return parts.join("；") || "-";
 
 async function loadAuditLogs(){
 
-if(currentRole !== "admin") return;
+const table =
+document.getElementById("auditLogTable");
+
+if(!isAdminRole()){
+
+if(table){
+table.innerHTML = `
+<tr>
+<td colspan="7">
+目前角色無法讀取操作紀錄（角色：${escapeAuditText(currentRole || "未設定")}）
+</td>
+</tr>
+`;
+}
+
+return;
+
+}
+
+if(table){
+table.innerHTML = `
+<tr>
+<td colspan="7">操作紀錄載入中...</td>
+</tr>
+`;
+}
+
+try{
 
 const snapshot =
 await getDocs(collection(db,"auditLogs"));
@@ -322,6 +360,36 @@ getRecordTime(a.createdAt)
 );
 
 renderAuditLogs();
+
+}catch(error){
+
+console.error("讀取操作紀錄失敗",error);
+
+if(table){
+table.innerHTML = `
+<tr>
+<td colspan="7">
+操作紀錄讀取失敗：${escapeAuditText(error.message || "未知錯誤")}
+</td>
+</tr>
+`;
+}
+
+}
+
+}
+
+async function openAuditLogPage(el){
+
+if(!isAdminRole()){
+alert(
+`目前帳號角色為「${currentRole || "未設定"}」，只有 Admin 可以查看操作紀錄`
+);
+return;
+}
+
+showPage("auditLogPage",el);
+await loadAuditLogs();
 
 }
 
@@ -705,7 +773,7 @@ const adminPages = [
 ];
 
 if(
-currentRole !== "admin" &&
+!isAdminRole() &&
 adminPages.includes(pageId)
 ){
 pageId = "borrowPage";
@@ -715,7 +783,7 @@ el = document.querySelector(
 }
 
 if(
-currentRole === "viewer" &&
+isViewerRole() &&
 pageId !== "pendingPage" &&
 pageId !== "historyPage"
 ){
@@ -760,12 +828,13 @@ localStorage.setItem(
 
 window.showPage = showPage;
 window.loadAuditLogs = loadAuditLogs;
+window.openAuditLogPage = openAuditLogPage;
 window.changeAuditPageSize = changeAuditPageSize;
 window.resetAuditFilter = resetAuditFilter;
 
 function restoreLastPage(){
 
-    if(currentRole === "viewer"){
+    if(isViewerRole()){
 
         const viewerPage =
         localStorage.getItem("lastPage") === "pendingPage"
@@ -816,7 +885,7 @@ function restoreLastPage(){
 
         if(
         lastPage === "auditLogPage" &&
-        currentRole === "admin"
+        isAdminRole()
         ){
         loadAuditLogs();
         }
@@ -3479,7 +3548,7 @@ data.enabled === true
 
 allow = true;
 
-currentRole = data.role;
+currentRole = normalizeRole(data.role);
 
 }
 
@@ -3558,7 +3627,7 @@ document.querySelector(
 applyRoleAccess();
 restoreLastPage();
 
-if(currentRole === "viewer"){
+if(isViewerRole()){
 
 await Promise.all([
     loadSeals(),
@@ -3591,7 +3660,7 @@ document.getElementById(
 
 });
 
-if(currentRole !== "admin"){
+if(!isAdminRole()){
 
 document.getElementById(
 "permissionMenu"
