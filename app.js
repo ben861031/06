@@ -872,7 +872,9 @@ function restoreLastPage(){
 }
 
     const targetMenu =
-    document.querySelector(
+    lastPage === "auditLogPage"
+    ? document.getElementById("auditLogMenu")
+    : document.querySelector(
         `[onclick*="${lastPage}"]`
     );
 
