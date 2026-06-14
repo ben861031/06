@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260614-9">
+<link rel="stylesheet" href="./styles.css?v=20260614-10">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -509,17 +509,6 @@ class="detail-title-icon">
 
 </div>
 
-<button
-type="button"
-class="btn btn-green page-heading-action"
-onclick="exportExcel()">
-
-<i data-lucide="file-spreadsheet"></i>
-
-匯出 Excel
-
-</button>
-
 </div>
 
 <div class="section-divider"></div>
@@ -602,6 +591,17 @@ onclick="resetHistoryFilter()">
 <i data-lucide="rotate-ccw"></i>
 
 重設篩選
+
+</button>
+
+<button
+type="button"
+class="btn btn-green"
+onclick="exportExcel()">
+
+<i data-lucide="file-spreadsheet"></i>
+
+匯出 Excel
 
 </button>
 
@@ -1331,7 +1331,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260614-9"></script>
+<script src="./app.js?v=20260614-10"></script>
 
 </body>
 </html>
