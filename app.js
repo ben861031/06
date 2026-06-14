@@ -723,6 +723,18 @@ pageId = "historyPage";
 el = document.querySelector('[onclick*="historyPage"]');
 }
 
+const targetPage =
+document.getElementById(pageId);
+
+if(!targetPage || !el){
+
+pageId = "borrowPage";
+el = document.querySelector(
+'[onclick*="borrowPage"]'
+);
+
+}
+
 document
 .querySelectorAll(
 "#borrowPage,#pendingPage,#returnPage,#historyPage,#sealPage,#deptPage,#permissionPage,#loginLogPage,#auditLogPage"
@@ -802,7 +814,25 @@ function restoreLastPage(){
             targetMenu
         );
 
+        if(
+        lastPage === "auditLogPage" &&
+        currentRole === "admin"
+        ){
+        loadAuditLogs();
+        }
+
+        return;
+
     }
+
+    localStorage.removeItem("lastPage");
+
+    showPage(
+        "borrowPage",
+        document.querySelector(
+            '[onclick*="borrowPage"]'
+        )
+    );
 
 }
 
