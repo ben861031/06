@@ -3619,13 +3619,6 @@ document.getElementById(
 "loginPage"
 ).style.display="none";
 
-showPage(
-"borrowPage",
-document.querySelector(
-'[onclick*="borrowPage"]'
-)
-);
-
 applyRoleAccess();
 restoreLastPage();
 
