@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./styles.css?v=20260614-8">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -372,37 +372,37 @@ class="detail-title-icon">
 
 <div class="panel">
 
+<div class="page-heading">
+
+<div class="page-heading-main">
+
 <h2 class="detail-title">
 
-<i
-data-lucide="clock-3"
-class="detail-title-icon">
-</i>
-
+<i data-lucide="clock-3" class="detail-title-icon"></i>
 待借用管理
 
-</h2>
+ </h2>
 
-<p style="margin-bottom:20px;color:#64748b;">
+<p class="page-description">
 提前建檔，待實際借用時再轉正式借用
 </p>
 
+</div>
+
 <button
 id="addPendingButton"
-class="btn btn-green"
+class="btn btn-primary page-heading-action"
 onclick="openPendingModal()">
 
-<i
-data-lucide="circle-plus">
-</i>
+<i data-lucide="circle-plus"></i>
 
-<span>
-新增待借用案件
-</span>
+<span>新增待借用</span>
 
 </button>
 
-<br><br>
+</div>
+
+<div class="section-divider"></div>
 
 <table>
 
@@ -488,6 +488,10 @@ class="detail-title-icon">
 
 <div class="panel">
 
+<div class="page-heading">
+
+<div class="page-heading-main">
+
 <h2 class="detail-title">
 
 <i
@@ -499,12 +503,26 @@ class="detail-title-icon">
 
 </h2>
 
-<div style="
-color:#64748b;
-margin-bottom:20px;
-">
+<div class="page-description">
 查詢、篩選與匯出印鑑借用歷程
 </div>
+
+</div>
+
+<button
+type="button"
+class="btn btn-green page-heading-action"
+onclick="exportExcel()">
+
+<i data-lucide="file-spreadsheet"></i>
+
+匯出 Excel
+
+</button>
+
+</div>
+
+<div class="section-divider"></div>
 
 <div class="search-toolbar">
 
@@ -584,17 +602,6 @@ onclick="resetHistoryFilter()">
 <i data-lucide="rotate-ccw"></i>
 
 重設篩選
-
-</button>
-
-<button
-type="button"
-class="btn btn-green"
-onclick="exportExcel()">
-
-<i data-lucide="file-spreadsheet"></i>
-
-匯出 Excel
 
 </button>
 
@@ -834,6 +841,10 @@ class="detail-title-icon">
 
 </h2>
 
+<p class="page-description">新增印鑑並管理顯示順序</p>
+
+<div class="compact-create-row compact-create-row-two">
+
 <div class="form-group">
 <label>印鑑名稱</label>
 <input type="text" id="newSeal">
@@ -856,7 +867,7 @@ onclick="addSeal()">
 
 </button>
 
-<br><br>
+</div>
 
 <div id="sealListArea"></div>
 
@@ -881,6 +892,10 @@ class="detail-title-icon">
 
 </h2>
 
+<p class="page-description">新增部門並管理顯示順序</p>
+
+<div class="compact-create-row compact-create-row-two">
+
 <div class="form-group">
 <label>部門名稱</label>
 <input type="text" id="newDept">
@@ -903,7 +918,7 @@ onclick="addDepartment()">
 
 </button>
 
-<br><br>
+</div>
 
 <div id="deptListArea"></div>
 
@@ -928,6 +943,10 @@ class="detail-title-icon">
 
 </h2>
 
+<p class="page-description">新增可登入系統的帳號並設定角色</p>
+
+<div class="compact-create-row compact-create-row-one">
+
 <div class="form-group">
 
 <label>Email</label>
@@ -950,7 +969,7 @@ onclick="addWhitelistUser()">
 
 </button>
 
-<br><br>
+</div>
 
 <div id="userListArea"></div>
 
@@ -1312,7 +1331,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260614-7"></script>
+<script src="./app.js?v=20260614-8"></script>
 
 </body>
 </html>
