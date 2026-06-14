@@ -181,6 +181,20 @@ loadLoginLogs();
 
 </div>
 
+<div class="menu-item"
+id="auditLogMenu"
+data-tooltip="操作紀錄"
+onclick="
+showPage('auditLogPage',this);
+loadAuditLogs();
+">
+
+<i data-lucide="history" class="menu-icon"></i>
+
+<span>操作紀錄</span>
+
+</div>
+
 <div class="sidebar-user">
 
     <div id="sidebarUserName">
@@ -699,6 +713,104 @@ style="padding:8px;border-radius:8px;">
 
 <div id="paginationArea"
 style="display:flex;gap:8px;flex-wrap:wrap;">
+</div>
+
+</div>
+
+<div id="auditLogPage"
+class="hidden">
+
+<div class="panel">
+
+<h2 class="detail-title">
+
+<i
+data-lucide="history"
+class="detail-title-icon">
+</i>
+
+操作紀錄
+
+<span id="auditCount">
+(0筆)
+</span>
+
+</h2>
+
+<div class="audit-toolbar">
+
+<input
+type="text"
+id="auditSearch"
+placeholder="搜尋操作者、Email、印鑑或案件資料">
+
+<select id="auditActionFilter">
+<option value="">全部操作</option>
+<option value="borrow">借用</option>
+<option value="return">歸還</option>
+<option value="update">修改</option>
+<option value="delete">刪除</option>
+<option value="create">新增</option>
+<option value="permission">權限異動</option>
+</select>
+
+<label class="audit-date-field">
+<span>起日</span>
+<input type="date" id="auditDateStart">
+</label>
+
+<label class="audit-date-field">
+<span>迄日</span>
+<input type="date" id="auditDateEnd">
+</label>
+
+<button
+type="button"
+class="btn btn-gray"
+onclick="resetAuditFilter()">
+重設
+</button>
+
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>操作時間</th>
+<th>操作者</th>
+<th>角色</th>
+<th>操作</th>
+<th>類別</th>
+<th>對象</th>
+<th>內容</th>
+</tr>
+</thead>
+
+<tbody id="auditLogTable"></tbody>
+
+</table>
+
+</div>
+
+<div class="audit-pagination-row">
+
+<div>
+每頁顯示：
+<select id="auditPageSize" onchange="changeAuditPageSize()">
+<option value="10">10</option>
+<option value="25" selected>25</option>
+<option value="50">50</option>
+<option value="100">100</option>
+</select>
+</div>
+
+<div id="auditPagination"></div>
+
+</div>
+
 </div>
 
 </div>

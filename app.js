@@ -179,6 +179,318 @@ let loginLogs = [];
 let loginCurrentPage = 1;
 let loginPageSize = 10;
 
+let auditLogs = [];
+let auditCurrentPage = 1;
+let auditPageSize = 25;
+
+const auditActionLabels = {
+borrow:"借用",
+return:"歸還",
+update:"修改",
+delete:"刪除",
+create:"新增",
+permission:"權限異動"
+};
+
+const auditCategoryLabels = {
+sealRecord:"借用紀錄",
+pendingRecord:"待借用案件",
+seal:"印鑑",
+department:"部門",
+user:"使用者權限"
+};
+
+function compactAuditData(data){
+
+if(!data) return null;
+
+const result = {};
+
+Object.entries(data).forEach(([key,value])=>{
+
+if(key === "id") return;
+
+if(
+value === null ||
+["string","number","boolean"].includes(typeof value)
+){
+result[key] = value;
+}
+
+});
+
+return result;
+
+}
+
+async function writeAuditLog({
+action,
+category,
+targetId = "",
+targetLabel = "",
+before = null,
+after = null
+}){
+
+try{
+
+await addDoc(
+collection(db,"auditLogs"),
+{
+actorName:currentUser || "系統使用者",
+actorEmail:currentUserEmail || "",
+actorRole:currentRole || "",
+action,
+category,
+targetId,
+targetLabel,
+before:compactAuditData(before),
+after:compactAuditData(after),
+createdAt:new Date()
+}
+);
+
+}catch(error){
+
+console.error("操作紀錄寫入失敗",error);
+
+}
+
+}
+
+function escapeAuditText(value){
+
+return String(value ?? "")
+.replaceAll("&","&amp;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;")
+.replaceAll('"',"&quot;")
+.replaceAll("'","&#039;");
+
+}
+
+function getAuditSummary(log){
+
+const source =
+log.after || log.before || {};
+
+const labels = {
+seal:"印鑑",
+borrower:"借用人",
+department:"部門",
+projectNo:"計畫編號",
+formNo:"表單編號",
+purpose:"用途",
+name:"名稱",
+email:"Email",
+role:"角色",
+enabled:"啟用狀態",
+status:"狀態",
+sortOrder:"排序"
+};
+
+const parts =
+Object.entries(source)
+.filter(([key])=>labels[key])
+.map(([key,value])=>
+`${labels[key]}：${value === true ? "是" : value === false ? "否" : value}`
+);
+
+return parts.join("；") || "-";
+
+}
+
+async function loadAuditLogs(){
+
+if(currentRole !== "admin") return;
+
+const snapshot =
+await getDocs(collection(db,"auditLogs"));
+
+auditLogs = [];
+
+snapshot.forEach(docSnap=>{
+auditLogs.push({
+id:docSnap.id,
+...docSnap.data()
+});
+});
+
+auditLogs.sort((a,b)=>
+getRecordTime(b.createdAt) -
+getRecordTime(a.createdAt)
+);
+
+renderAuditLogs();
+
+}
+
+function getFilteredAuditLogs(){
+
+const keyword =
+(document.getElementById("auditSearch")?.value || "")
+.trim()
+.toLowerCase();
+
+const action =
+document.getElementById("auditActionFilter")?.value || "";
+
+const startDate =
+document.getElementById("auditDateStart")?.value || "";
+
+const endDate =
+document.getElementById("auditDateEnd")?.value || "";
+
+return auditLogs.filter(log=>{
+
+const keywordMatch =
+!keyword ||
+[
+log.actorName,
+log.actorEmail,
+log.targetLabel,
+getAuditSummary(log)
+]
+.some(value=>
+String(value || "").toLowerCase().includes(keyword)
+);
+
+const actionMatch =
+!action || log.action === action;
+
+const dateMatch =
+matchesDateRange(
+log.createdAt,
+startDate,
+endDate
+);
+
+return keywordMatch && actionMatch && dateMatch;
+
+});
+
+}
+
+function renderAuditLogs(){
+
+const table =
+document.getElementById("auditLogTable");
+
+if(!table) return;
+
+const filtered = getFilteredAuditLogs();
+
+document.getElementById("auditCount").textContent =
+`(${filtered.length}筆)`;
+
+const totalPages =
+Math.ceil(filtered.length / auditPageSize);
+
+if(auditCurrentPage > totalPages){
+auditCurrentPage = 1;
+}
+
+const start =
+(auditCurrentPage - 1) * auditPageSize;
+
+const pageRows =
+filtered.slice(start,start + auditPageSize);
+
+if(pageRows.length === 0){
+
+table.innerHTML = `
+<tr>
+<td colspan="7">目前沒有符合條件的操作紀錄</td>
+</tr>
+`;
+
+renderAuditPagination(totalPages);
+return;
+
+}
+
+table.innerHTML =
+pageRows.map(log=>`
+<tr>
+<td>${escapeAuditText(formatDate(log.createdAt))}</td>
+<td>
+${escapeAuditText(log.actorName || "-")}
+<div style="font-size:11px;color:#94a3b8;margin-top:4px;">
+${escapeAuditText(log.actorEmail || "")}
+</div>
+</td>
+<td>${escapeAuditText(log.actorRole || "-")}</td>
+<td>
+<span class="badge badge-blue">
+${escapeAuditText(auditActionLabels[log.action] || log.action || "-")}
+</span>
+</td>
+<td>${escapeAuditText(auditCategoryLabels[log.category] || log.category || "-")}</td>
+<td>${escapeAuditText(log.targetLabel || log.targetId || "-")}</td>
+<td class="audit-detail">${escapeAuditText(getAuditSummary(log))}</td>
+</tr>
+`).join("");
+
+renderAuditPagination(totalPages);
+
+}
+
+function renderAuditPagination(totalPages){
+
+const area =
+document.getElementById("auditPagination");
+
+if(!area) return;
+
+area.innerHTML = "";
+
+for(let page=1;page<=totalPages;page++){
+
+const button =
+document.createElement("button");
+
+button.className = "btn";
+button.textContent = page;
+button.style.background =
+page === auditCurrentPage ? "#2563eb" : "#e2e8f0";
+button.style.color =
+page === auditCurrentPage ? "white" : "#0f172a";
+
+button.onclick = ()=>{
+auditCurrentPage = page;
+renderAuditLogs();
+};
+
+area.appendChild(button);
+
+}
+
+}
+
+function changeAuditPageSize(){
+
+auditPageSize =
+parseInt(
+document.getElementById("auditPageSize").value
+);
+
+auditCurrentPage = 1;
+renderAuditLogs();
+
+}
+
+function resetAuditFilter(){
+
+document.getElementById("auditSearch").value = "";
+document.getElementById("auditActionFilter").value = "";
+document.getElementById("auditDateStart").value = "";
+document.getElementById("auditDateEnd").value = "";
+
+auditCurrentPage = 1;
+renderAuditLogs();
+
+}
+
 async function loadLoginLogs(){
 
 const snapshot =
@@ -386,6 +698,22 @@ let pageSize = 10;
 
 function showPage(pageId,el){
 
+const adminPages = [
+"permissionPage",
+"loginLogPage",
+"auditLogPage"
+];
+
+if(
+currentRole !== "admin" &&
+adminPages.includes(pageId)
+){
+pageId = "borrowPage";
+el = document.querySelector(
+'[onclick*="borrowPage"]'
+);
+}
+
 if(
 currentRole === "viewer" &&
 pageId !== "pendingPage" &&
@@ -397,7 +725,7 @@ el = document.querySelector('[onclick*="historyPage"]');
 
 document
 .querySelectorAll(
-"#borrowPage,#pendingPage,#returnPage,#historyPage,#sealPage,#deptPage,#permissionPage,#loginLogPage"
+"#borrowPage,#pendingPage,#returnPage,#historyPage,#sealPage,#deptPage,#permissionPage,#loginLogPage,#auditLogPage"
 )
 .forEach(page=>page.classList.add("hidden"));
 
@@ -419,6 +747,9 @@ localStorage.setItem(
 }
 
 window.showPage = showPage;
+window.loadAuditLogs = loadAuditLogs;
+window.changeAuditPageSize = changeAuditPageSize;
+window.resetAuditFilter = resetAuditFilter;
 
 function restoreLastPage(){
 
@@ -527,6 +858,9 @@ async function deletePending(id){
 
 if(blockViewerAction()) return;
 
+const pendingItem =
+pendingRecords.find(item=>item.id===id);
+
 if(!confirm("確定刪除？"))
 return;
 
@@ -537,6 +871,14 @@ db,
 id
 )
 );
+
+await writeAuditLog({
+action:"delete",
+category:"pendingRecord",
+targetId:id,
+targetLabel:pendingItem?.formNo || pendingItem?.borrower || id,
+before:pendingItem
+});
 
 await loadPendingRecords();
 
@@ -640,6 +982,11 @@ return;
 
 if(editingPendingId){
 
+const before =
+pendingRecords.find(
+item=>item.id===editingPendingId
+);
+
 await updateDoc(
 doc(
 db,
@@ -657,8 +1004,25 @@ purpose
 }
 );
 
+await writeAuditLog({
+action:"update",
+category:"pendingRecord",
+targetId:editingPendingId,
+targetLabel:formNo || borrower,
+before,
+after:{
+borrower,
+department,
+projectNo,
+formNo,
+purpose,
+status:before?.status || "待借用"
+}
+});
+
 }else{
 
+const newPendingRef =
 await addDoc(
 collection(db,"pendingRecords"),
 {
@@ -673,6 +1037,21 @@ createTime:new Date()
 
 }
 );
+
+await writeAuditLog({
+action:"create",
+category:"pendingRecord",
+targetId:newPendingRef.id,
+targetLabel:formNo || borrower,
+after:{
+borrower,
+department,
+projectNo,
+formNo,
+purpose,
+status:"待借用"
+}
+});
 
 }
 
@@ -703,6 +1082,7 @@ return;
 
 }
 
+const newUserRef =
 await addDoc(
 collection(db,"users"),
 {
@@ -711,6 +1091,18 @@ email,
 role:"user",
 enabled:true
 
+});
+
+await writeAuditLog({
+action:"permission",
+category:"user",
+targetId:newUserRef.id,
+targetLabel:email,
+after:{
+email,
+role:"user",
+enabled:true
+}
 });
 
 document.getElementById(
@@ -747,6 +1139,15 @@ await deleteDoc(
 doc(db,"users",id)
 );
 
+await writeAuditLog({
+action:"permission",
+category:"user",
+targetId:id,
+targetLabel:user?.email || id,
+before:user,
+after:{deleted:true}
+});
+
 loadUsers();
 
 }
@@ -761,12 +1162,27 @@ enabled
 
 if(blockViewerAction()) return;
 
+const user =
+userList.find(item=>item.id===id);
+
 await updateDoc(
 doc(db,"users",id),
 {
 enabled:!enabled
 }
 );
+
+await writeAuditLog({
+action:"permission",
+category:"user",
+targetId:id,
+targetLabel:user?.email || id,
+before:user,
+after:{
+...user,
+enabled:!enabled
+}
+});
 
 loadUsers();
 
@@ -782,12 +1198,27 @@ role
 
 if(blockViewerAction()) return;
 
+const user =
+userList.find(item=>item.id===id);
+
 await updateDoc(
 doc(db,"users",id),
 {
 role
 }
 );
+
+await writeAuditLog({
+action:"permission",
+category:"user",
+targetId:id,
+targetLabel:user?.email || id,
+before:user,
+after:{
+...user,
+role
+}
+});
 
 loadUsers();
 
@@ -1271,6 +1702,9 @@ departmentList.findIndex(d=>d.id===id);
 
 if(index <= 0) return;
 
+const movedDepartment =
+{...departmentList[index]};
+
 [departmentList[index - 1],
 departmentList[index]] =
 
@@ -1288,6 +1722,18 @@ sortOrder:i + 1
 
 }
 
+await writeAuditLog({
+action:"update",
+category:"department",
+targetId:id,
+targetLabel:movedDepartment.name,
+before:movedDepartment,
+after:{
+...movedDepartment,
+sortOrder:index
+}
+});
+
 await loadDepartments();
 
 }
@@ -1301,6 +1747,9 @@ departmentList.findIndex(d=>d.id===id);
 
 if(index >= departmentList.length - 1)
 return;
+
+const movedDepartment =
+{...departmentList[index]};
 
 [departmentList[index],
 departmentList[index + 1]] =
@@ -1318,6 +1767,18 @@ sortOrder:i + 1
 );
 
 }
+
+await writeAuditLog({
+action:"update",
+category:"department",
+targetId:id,
+targetLabel:movedDepartment.name,
+before:movedDepartment,
+after:{
+...movedDepartment,
+sortOrder:index + 2
+}
+});
 
 await loadDepartments();
 
@@ -1343,11 +1804,23 @@ return;
 
 }
 
+const newDepartmentRef =
 await addDoc(collection(db,"departments"),{
 
 name:name,
 sortOrder:order
 
+});
+
+await writeAuditLog({
+action:"create",
+category:"department",
+targetId:newDepartmentRef.id,
+targetLabel:name,
+after:{
+name,
+sortOrder:order
+}
 });
 
 document.getElementById("newDept").value = "";
@@ -1363,7 +1836,18 @@ async function deleteDepartment(id){
 
 if(blockViewerAction()) return;
 
+const department =
+departmentList.find(item=>item.id===id);
+
 await deleteDoc(doc(db,"departments",id));
+
+await writeAuditLog({
+action:"delete",
+category:"department",
+targetId:id,
+targetLabel:department?.name || id,
+before:department
+});
 
 alert("已刪除");
 
@@ -1503,6 +1987,9 @@ sealList.findIndex(s=>s.id===id);
 
 if(index <= 0) return;
 
+const movedSeal =
+{...sealList[index]};
+
 [sealList[index - 1],
 sealList[index]] =
 
@@ -1520,6 +2007,18 @@ sortOrder:i + 1
 
 }
 
+await writeAuditLog({
+action:"update",
+category:"seal",
+targetId:id,
+targetLabel:movedSeal.name,
+before:movedSeal,
+after:{
+...movedSeal,
+sortOrder:index
+}
+});
+
 await loadSeals();
 
 }
@@ -1533,6 +2032,9 @@ sealList.findIndex(s=>s.id===id);
 
 if(index >= sealList.length - 1)
 return;
+
+const movedSeal =
+{...sealList[index]};
 
 [sealList[index],
 sealList[index + 1]] =
@@ -1550,6 +2052,18 @@ sortOrder:i + 1
 );
 
 }
+
+await writeAuditLog({
+action:"update",
+category:"seal",
+targetId:id,
+targetLabel:movedSeal.name,
+before:movedSeal,
+after:{
+...movedSeal,
+sortOrder:index + 2
+}
+});
 
 await loadSeals();
 
@@ -1575,11 +2089,23 @@ return;
 
 }
 
+const newSealRef =
 await addDoc(collection(db,"seals"),{
 
 name:name,
 sortOrder:order
 
+});
+
+await writeAuditLog({
+action:"create",
+category:"seal",
+targetId:newSealRef.id,
+targetLabel:name,
+after:{
+name,
+sortOrder:order
+}
 });
 
 document.getElementById("newSeal").value = "";
@@ -1595,7 +2121,18 @@ async function deleteSeal(id){
 
 if(blockViewerAction()) return;
 
+const seal =
+sealList.find(item=>item.id===id);
+
 await deleteDoc(doc(db,"seals",id));
+
+await writeAuditLog({
+action:"delete",
+category:"seal",
+targetId:id,
+targetLabel:seal?.name || id,
+before:seal
+});
 
 alert("已刪除");
 
@@ -1752,6 +2289,7 @@ confirmButton.textContent = "處理中...";
 
 try{
 
+const borrowRecordRef =
 await addDoc(collection(db,"sealRecords"),{
 
 seal:data.seal,
@@ -1763,6 +2301,22 @@ purpose:data.purpose,
 borrowTime:new Date(),
 returnTime:null
 
+});
+
+await writeAuditLog({
+action:"borrow",
+category:"sealRecord",
+targetId:borrowRecordRef.id,
+targetLabel:`${data.seal} / ${data.borrower}`,
+after:{
+seal:data.seal,
+borrower:data.borrower || currentUser,
+department:data.department,
+projectNo:data.projectNo,
+formNo:data.formNo,
+purpose:data.purpose,
+status:"借出中"
+}
 });
 
 if(data.pendingId){
@@ -1784,6 +2338,18 @@ pendingItem.id
 status:"已借出"
 }
 );
+
+await writeAuditLog({
+action:"update",
+category:"pendingRecord",
+targetId:pendingItem.id,
+targetLabel:pendingItem.formNo || pendingItem.borrower,
+before:pendingItem,
+after:{
+...pendingItem,
+status:"已借出"
+}
+});
 
 await loadPendingRecords();
 
@@ -1891,12 +2457,31 @@ confirmButton.textContent = "處理中...";
 
 try{
 
+const returningId =
+currentReturningId;
+
+const returnTime =
+new Date();
+
 await updateDoc(
-doc(db,"sealRecords",currentReturningId),
+doc(db,"sealRecords",returningId),
 {
-returnTime:new Date()
+returnTime
 }
 );
+
+await writeAuditLog({
+action:"return",
+category:"sealRecord",
+targetId:returningId,
+targetLabel:`${record.seal} / ${record.borrower}`,
+before:record,
+after:{
+...record,
+returnTime:returnTime.toISOString(),
+status:"已歸還"
+}
+});
 
 document.getElementById("returnConfirmOverlay").style.display =
 "none";
@@ -2577,12 +3162,32 @@ if(blockViewerAction()) return;
 
 const id=document.getElementById('editId').value;
 
-await updateDoc(doc(db,"sealRecords",id),{
+const before =
+records.find(item=>item.id===id);
+
+const after = {
 borrower:document.getElementById('editBorrower').value,
 department:document.getElementById('editDepartment').value,
 projectNo:document.getElementById('editProjectNo').value,
 formNo:document.getElementById('editFormNo').value,
 purpose:document.getElementById('editPurpose').value
+};
+
+await updateDoc(
+doc(db,"sealRecords",id),
+after
+);
+
+await writeAuditLog({
+action:"update",
+category:"sealRecord",
+targetId:id,
+targetLabel:`${before?.seal || "印鑑"} / ${after.borrower}`,
+before,
+after:{
+...before,
+...after
+}
 });
 
 closeEditModal();
@@ -2604,6 +3209,14 @@ return;
 if(!confirm("確定刪除此借用紀錄？")) return;
 
 await deleteDoc(doc(db,"sealRecords",id));
+
+await writeAuditLog({
+action:"delete",
+category:"sealRecord",
+targetId:id,
+targetLabel:`${r?.seal || "印鑑"} / ${r?.borrower || id}`,
+before:r
+});
 
 alert("刪除成功");
 loadRecords();
@@ -2740,6 +3353,26 @@ document.getElementById(id)
 .addEventListener("change",()=>{
 currentPage = 1;
 renderTable();
+});
+
+});
+
+document.getElementById("auditSearch")
+.addEventListener("input",()=>{
+auditCurrentPage = 1;
+renderAuditLogs();
+});
+
+[
+"auditActionFilter",
+"auditDateStart",
+"auditDateEnd"
+].forEach(id=>{
+
+document.getElementById(id)
+.addEventListener("change",()=>{
+auditCurrentPage = 1;
+renderAuditLogs();
 });
 
 });
@@ -2929,6 +3562,10 @@ document.getElementById(
 
 document.getElementById(
 "loginLogMenu"
+).style.display = "none";
+
+document.getElementById(
+"auditLogMenu"
 ).style.display = "none";
 
 }
