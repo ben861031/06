@@ -2020,3 +2020,68 @@ justify-content:flex-end;
 padding:18px 12px 28px;
 }
 }
+
+
+/* v13.1：白色上方功能列精簡版（無公司名稱、無Logo、無我的資產） */
+.top-navbar{
+height:76px;
+background:#fff;
+border-bottom:1px solid #d9e2ef;
+box-shadow:0 4px 18px rgba(15,23,42,.06);
+gap:22px;
+}
+
+.brand-area{
+min-width:250px;
+padding-right:22px;
+border-right:1px solid #d9e2ef;
+}
+
+.brand-mark{
+display:none !important;
+}
+
+.brand-title{
+font-size:22px;
+font-weight:800;
+letter-spacing:.2px;
+color:#0f172a;
+}
+
+.brand-subtitle{
+font-size:10px;
+letter-spacing:.4px;
+color:#94a3b8;
+}
+
+.top-menu-button,
+.top-menu-link{
+font-size:16px;
+padding:0 20px;
+}
+
+.top-dropdown{
+border-radius:0 0 16px 16px;
+}
+
+@media(max-width:900px){
+.top-navbar{
+height:auto;
+min-height:76px;
+flex-wrap:wrap;
+padding:14px 18px;
+}
+.brand-area{
+min-width:auto;
+width:100%;
+border-right:none;
+padding-right:0;
+}
+.top-menu{
+width:100%;
+height:54px;
+}
+.top-user-area{
+margin-left:0;
+}
+}
