@@ -3725,46 +3725,32 @@ document.addEventListener('keydown', function(e){
 
 lucide.createIcons();
 
-const topMenu =
-document.getElementById("topMenu");
+const sidebar =
+document.querySelector(".sidebar");
 
 const toggle =
 document.getElementById("sidebarToggle");
 
-/* 上方功能列：手機版展開 / 收合 */
+/* v13 TopNav 版沒有左側 sidebar；保留相容舊版的切換程式 */
+if(sidebar && toggle){
 
-if(toggle && topMenu){
-
-toggle.addEventListener("click",(event)=>{
-
-event.stopPropagation();
-
-topMenu.classList.toggle("open");
-
-});
-
-document.addEventListener("click",(event)=>{
-
+/* 還原上次狀態 */
 if(
-topMenu.classList.contains("open") &&
-!topMenu.contains(event.target) &&
-event.target !== toggle
+localStorage.getItem("sidebarState")
+==="collapsed"
 ){
-topMenu.classList.remove("open");
+sidebar.classList.add("collapsed");
 }
 
-});
-
-document
-.querySelectorAll(".top-menu .menu-item")
-.forEach(item=>{
-
-item.addEventListener("click",()=>{
-
-topMenu.classList.remove("open");
-
-});
-
+/* 切換 */
+toggle.addEventListener("click",()=>{
+sidebar.classList.toggle("collapsed");
+localStorage.setItem(
+"sidebarState",
+sidebar.classList.contains("collapsed")
+? "collapsed"
+: "expanded"
+);
 });
 
 }
