@@ -3103,15 +3103,15 @@ tr.innerHTML = `
 
 <td>${r.department}</td>
 
-<td>${formatTableDate(r.borrowTime)}</td>
-
-<td>${formatTableDate(r.returnTime)}</td>
-
 <td>${r.projectNo || ""}</td>
 
 <td>${r.formNo || ""}</td>
 
 <td>${r.purpose}</td>
+
+<td>${formatTableDate(r.borrowTime)}</td>
+
+<td>${formatTableDate(r.returnTime)}</td>
 
 <td>
 
