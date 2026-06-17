@@ -1686,3 +1686,395 @@ grid-column:auto;
 .viewer-mode .pending-action-column{
 display:none;
 }
+
+/* =========================================================
+   Top Navigation Edition - 2026/06/18
+   左側功能列改為上方功能列＋下拉選單
+   ========================================================= */
+
+.app{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+}
+
+.top-nav{
+    position:sticky;
+    top:0;
+    z-index:9999;
+    height:76px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:0 24px;
+    background:linear-gradient(135deg,#0f3f86,#0b63c7);
+    color:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.16);
+}
+
+.top-brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-width:260px;
+    cursor:pointer;
+    user-select:none;
+}
+
+.top-menu-toggle{
+    display:none;
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:14px;
+    background:rgba(255,255,255,.15);
+    color:#fff;
+    font-size:22px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+.brand-mark{
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:16px;
+    background:rgba(255,255,255,.16);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);
+}
+
+.brand-mark svg{
+    width:24px;
+    height:24px;
+}
+
+.brand-title{
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:.3px;
+    white-space:nowrap;
+}
+
+.brand-sub{
+    margin-top:2px;
+    font-size:12px;
+    color:rgba(255,255,255,.72);
+    white-space:nowrap;
+}
+
+.top-menu{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    height:100%;
+}
+
+.top-link,
+.top-dropdown-btn{
+    height:44px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:0 16px;
+    border-radius:14px;
+    color:#fff;
+    font-size:15px;
+    font-weight:800;
+    white-space:nowrap;
+    cursor:pointer;
+    transition:.2s ease;
+}
+
+.top-dropdown-btn{
+    border:0;
+    background:transparent;
+    font-family:inherit;
+}
+
+.top-link:hover,
+.top-dropdown:hover .top-dropdown-btn,
+.top-dropdown-btn:hover{
+    background:rgba(255,255,255,.14);
+}
+
+.top-link.active{
+    background:rgba(255,255,255,.2);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+}
+
+.top-dropdown{
+    position:relative;
+    height:100%;
+    display:flex;
+    align-items:center;
+}
+
+.chevron-icon{
+    width:16px;
+    height:16px;
+    transition:.2s ease;
+}
+
+.top-dropdown:hover .chevron-icon{
+    transform:rotate(180deg);
+}
+
+.top-dropdown-menu{
+    position:absolute;
+    top:calc(100% - 8px);
+    left:0;
+    min-width:220px;
+    padding:10px;
+    border-radius:18px;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    box-shadow:0 18px 45px rgba(15,23,42,.18);
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(8px);
+    transition:.18s ease;
+}
+
+.top-dropdown:hover .top-dropdown-menu,
+.top-dropdown:focus-within .top-dropdown-menu{
+    opacity:1;
+    visibility:visible;
+    transform:translateY(0);
+}
+
+.top-dropdown-menu .menu-item{
+    height:46px;
+    margin:0 0 4px;
+    padding:0 12px;
+    border-radius:12px;
+    color:#334155;
+    font-size:14px;
+    font-weight:800;
+    gap:12px;
+    box-shadow:none;
+    background:transparent;
+}
+
+.top-dropdown-menu .menu-item:last-child{
+    margin-bottom:0;
+}
+
+.top-dropdown-menu .menu-item:hover{
+    background:#f1f5f9;
+    transform:none;
+}
+
+.top-dropdown-menu .menu-item.active{
+    color:#1d4ed8;
+    background:#eff6ff;
+    box-shadow:none;
+}
+
+.top-dropdown-menu .menu-icon,
+.top-link .menu-icon,
+.top-dropdown-btn .menu-icon{
+    width:20px;
+    height:20px;
+    color:currentColor;
+    stroke-width:2.4;
+}
+
+.top-user{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:240px;
+    justify-content:flex-end;
+    padding:0;
+    border:0;
+    background:transparent;
+    color:#fff;
+}
+
+.top-user-avatar{
+    width:38px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    background:rgba(255,255,255,.16);
+}
+
+.top-user-avatar svg{
+    width:20px;
+    height:20px;
+}
+
+.top-user-info{
+    max-width:170px;
+    line-height:1.25;
+    text-align:right;
+}
+
+.top-user-info #sidebarUserName{
+    font-size:14px;
+    font-weight:800;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.top-user-info #sidebarUserEmail{
+    margin-top:2px;
+    font-size:11px;
+    color:rgba(255,255,255,.72);
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.top-logout,
+.logout-menu-btn.top-logout{
+    height:34px;
+    padding:0 12px;
+    border-radius:11px;
+    border:1px solid rgba(255,255,255,.22);
+    background:rgba(255,255,255,.12);
+    color:#fff;
+    font-weight:800;
+    cursor:pointer;
+}
+
+.main{
+    flex:1;
+    width:100%;
+    padding:28px;
+}
+
+/* 原側欄相關樣式保留給舊版相容，但實際 HTML 已改為 top-nav */
+.sidebar,
+.menu-title,
+.logo,
+.logo-content{
+    display:none;
+}
+
+@media (max-width:1100px){
+    .top-nav{
+        height:auto;
+        min-height:70px;
+        flex-wrap:wrap;
+        padding:12px 16px;
+    }
+
+    .top-brand{
+        flex:1;
+        min-width:0;
+    }
+
+    .top-menu-toggle{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    .top-user{
+        min-width:auto;
+    }
+
+    .top-user-info,
+    .top-logout{
+        display:none;
+    }
+
+    .top-menu{
+        order:3;
+        display:none;
+        width:100%;
+        height:auto;
+        flex-direction:column;
+        align-items:stretch;
+        gap:8px;
+        padding-top:10px;
+    }
+
+    .top-menu.open{
+        display:flex;
+    }
+
+    .top-link,
+    .top-dropdown,
+    .top-dropdown-btn{
+        width:100%;
+        height:auto;
+    }
+
+    .top-link,
+    .top-dropdown-btn{
+        min-height:46px;
+        justify-content:flex-start;
+        background:rgba(255,255,255,.1);
+    }
+
+    .top-dropdown{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .top-dropdown-menu{
+        position:static;
+        opacity:1;
+        visibility:visible;
+        transform:none;
+        margin-top:8px;
+        min-width:0;
+        width:100%;
+        box-shadow:none;
+        border:1px solid rgba(255,255,255,.18);
+    }
+
+    .main{
+        padding:18px;
+    }
+}
+
+@media (max-width:720px){
+    .brand-sub{
+        display:none;
+    }
+    .brand-title{
+        font-size:16px;
+    }
+    .brand-mark{
+        display:none;
+    }
+    .main{
+        padding:12px;
+    }
+}
+
+.top-user{
+    margin-top:0 !important;
+    padding-top:0 !important;
+    border-top:0 !important;
+}
+
+.top-user-info #sidebarUserName{
+    color:#fff !important;
+    margin-bottom:0 !important;
+}
+
+.top-user-info #sidebarUserEmail{
+    color:rgba(255,255,255,.72) !important;
+    margin-bottom:0 !important;
+}
+
+.logout-menu-btn.top-logout{
+    width:auto !important;
+}
+.top-link:hover,
+.top-link.active,
+.top-dropdown-menu .menu-item:hover,
+.top-dropdown-menu .menu-item.active{
+    transform:none !important;
+}

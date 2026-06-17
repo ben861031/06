@@ -3725,40 +3725,49 @@ document.addEventListener('keydown', function(e){
 
 lucide.createIcons();
 
-const sidebar =
-document.querySelector(".sidebar");
+const topMenu =
+document.getElementById("topMenu");
 
 const toggle =
 document.getElementById("sidebarToggle");
 
-/* 還原上次狀態 */
+/* 上方功能列：手機版展開 / 收合 */
 
-if(
-localStorage.getItem("sidebarState")
-==="collapsed"
-){
+if(toggle && topMenu){
 
-sidebar.classList.add("collapsed");
+toggle.addEventListener("click",(event)=>{
 
-}
+event.stopPropagation();
 
-/* 切換 */
-
-toggle.addEventListener("click",()=>{
-
-sidebar.classList.toggle("collapsed");
-
-localStorage.setItem(
-
-"sidebarState",
-
-sidebar.classList.contains("collapsed")
-? "collapsed"
-: "expanded"
-
-);
+topMenu.classList.toggle("open");
 
 });
+
+document.addEventListener("click",(event)=>{
+
+if(
+topMenu.classList.contains("open") &&
+!topMenu.contains(event.target) &&
+event.target !== toggle
+){
+topMenu.classList.remove("open");
+}
+
+});
+
+document
+.querySelectorAll(".top-menu .menu-item")
+.forEach(item=>{
+
+item.addEventListener("click",()=>{
+
+topMenu.classList.remove("open");
+
+});
+
+});
+
+}
 
 })().catch(error=>{
 

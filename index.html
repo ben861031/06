@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260617-5">
+<link rel="stylesheet" href="./styles.css?v=20260618-topnav">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -62,155 +62,73 @@ transition:.15s;
 
 <div class="app">
 
-<div class="sidebar">
+<header class="top-nav">
 
-<div class="logo">
-
-<button
-id="sidebarToggle"
-class="sidebar-toggle">
-
-☰
-
-</button>
-
-<div class="logo-content">
-
-<div class="logo-title">
-印鑑借用管理系統
-</div>
-
-<div class="logo-sub">
-Seal Borrowing System
-</div>
-
-</div>
-
-</div>
-
-<div class="menu-title">
-印鑑作業
-</div>
-
-<div class="menu-item active"
-data-tooltip="借用登記"
-onclick="showPage('borrowPage',this)">
-
-<i data-lucide="clipboard-list" class="menu-icon"></i>
-
-<span>借用登記</span>
-
-</div>
-
-<div class="menu-item"
-data-tooltip="待借用管理"
-onclick="showPage('pendingPage',this)">
-
-<i data-lucide="clock-3" class="menu-icon"></i>
-
-<span>待借用管理</span>
-
-</div>
-
-<div class="menu-item"
-data-tooltip="歸還作業"
-onclick="showPage('returnPage',this)">
-
-<i data-lucide="rotate-ccw" class="menu-icon"></i>
-
-<span>歸還作業</span>
-
-</div>
-
-<div class="menu-item"
-data-tooltip="借用紀錄"
-onclick="showPage('historyPage',this)">
-
-<i data-lucide="file-text" class="menu-icon"></i>
-
-<span>借用紀錄</span>
-
-</div>
-
-<div class="menu-title" id="systemMenuTitle">
-系統管理
-</div>
-
-<div class="menu-item"
-data-tooltip="印鑑維護"
-onclick="showPage('sealPage',this)">
-
-<i data-lucide="badge-check" class="menu-icon"></i>
-
-<span>印鑑維護</span>
-
-</div>
-
-<div class="menu-item"
-data-tooltip="部門維護"
-onclick="showPage('deptPage',this)">
-
-<i data-lucide="building-2" class="menu-icon"></i>
-
-<span>部門維護</span>
-
-</div>
-
-<div class="menu-item"
-id="permissionMenu"
-data-tooltip="權限管理"
-onclick="showPage('permissionPage',this)">
-
-<i data-lucide="users" class="menu-icon"></i>
-
-<span>權限管理</span>
-
-</div>
-
-<div class="menu-item"
-id="loginLogMenu"
-data-tooltip="登入紀錄"
-onclick="
-showPage('loginLogPage',this);
-loadLoginLogs();
-">
-
-<i data-lucide="log-in" class="menu-icon"></i>
-
-<span>登入紀錄</span>
-
-</div>
-
-<div class="menu-item"
-id="auditLogMenu"
-data-tooltip="操作紀錄"
-onclick="openAuditLogPage(this)">
-
-<i data-lucide="history" class="menu-icon"></i>
-
-<span>操作紀錄</span>
-
-</div>
-
-<div class="sidebar-user">
-
-    <div id="sidebarUserName">
-        使用者
+    <div class="top-brand" onclick="showPage('borrowPage', document.querySelector('[onclick*=borrowPage]'))">
+        <button id="sidebarToggle" class="top-menu-toggle" type="button">☰</button>
+        <div class="brand-mark"><i data-lucide="badge-check"></i></div>
+        <div class="brand-text">
+            <div class="brand-title">印鑑借用管理系統</div>
+            <div class="brand-sub">Seal Borrowing System</div>
+        </div>
     </div>
 
-    <div id="sidebarUserEmail">
-        -
+    <nav class="top-menu" id="topMenu">
+        <div class="menu-item active top-link" data-tooltip="借用登記" onclick="showPage('borrowPage',this)">
+            <i data-lucide="clipboard-list" class="menu-icon"></i><span>借用登記</span>
+        </div>
+
+        <div class="top-dropdown">
+            <button class="top-dropdown-btn" type="button">
+                <i data-lucide="briefcase-business" class="menu-icon"></i><span>印鑑作業</span><i data-lucide="chevron-down" class="chevron-icon"></i>
+            </button>
+            <div class="top-dropdown-menu">
+                <div class="menu-item" data-tooltip="待借用管理" onclick="showPage('pendingPage',this)">
+                    <i data-lucide="clock-3" class="menu-icon"></i><span>待借用管理</span>
+                </div>
+                <div class="menu-item" data-tooltip="歸還作業" onclick="showPage('returnPage',this)">
+                    <i data-lucide="rotate-ccw" class="menu-icon"></i><span>歸還作業</span>
+                </div>
+                <div class="menu-item" data-tooltip="借用紀錄" onclick="showPage('historyPage',this)">
+                    <i data-lucide="file-text" class="menu-icon"></i><span>借用紀錄</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="top-dropdown" id="systemMenuTitle">
+            <button class="top-dropdown-btn" type="button">
+                <i data-lucide="settings" class="menu-icon"></i><span>系統管理</span><i data-lucide="chevron-down" class="chevron-icon"></i>
+            </button>
+            <div class="top-dropdown-menu">
+                <div class="menu-item" data-tooltip="印鑑維護" onclick="showPage('sealPage',this)">
+                    <i data-lucide="badge-check" class="menu-icon"></i><span>印鑑維護</span>
+                </div>
+                <div class="menu-item" data-tooltip="部門維護" onclick="showPage('deptPage',this)">
+                    <i data-lucide="building-2" class="menu-icon"></i><span>部門維護</span>
+                </div>
+                <div class="menu-item" id="permissionMenu" data-tooltip="權限管理" onclick="showPage('permissionPage',this)">
+                    <i data-lucide="users" class="menu-icon"></i><span>權限管理</span>
+                </div>
+                <div class="menu-item" id="loginLogMenu" data-tooltip="登入紀錄" onclick="showPage('loginLogPage',this); loadLoginLogs();">
+                    <i data-lucide="log-in" class="menu-icon"></i><span>登入紀錄</span>
+                </div>
+                <div class="menu-item" id="auditLogMenu" data-tooltip="操作紀錄" onclick="openAuditLogPage(this)">
+                    <i data-lucide="history" class="menu-icon"></i><span>操作紀錄</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="sidebar-user top-user">
+        <div class="top-user-avatar"><i data-lucide="user"></i></div>
+        <div class="top-user-info">
+            <div id="sidebarUserName">使用者</div>
+            <div id="sidebarUserEmail">-</div>
+        </div>
+        <button class="logout-menu-btn top-logout" onclick="logout()">登出</button>
     </div>
 
-    <button
-        class="logout-menu-btn"
-        onclick="logout()">
-        登出
-    </button>
-
-</div>
-
-</div>
+</header>
 
 <div class="main">
 
