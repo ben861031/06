@@ -3191,35 +3191,64 @@ area.innerHTML = "";
 
 if(totalPages <= 1) return;
 
-for(let i=1;i<=totalPages;i++){
+function createPageButton(label,page,disabled=false,active=false){
 
 const btn =
 document.createElement("button");
 
 btn.className = "btn";
 
-btn.innerText = i;
+btn.innerText = label;
+
+btn.disabled = disabled;
 
 btn.style.background =
-i === currentPage
+active
 ? "#2563eb"
+: disabled
+? "#f1f5f9"
 : "#e2e8f0";
 
 btn.style.color =
-i === currentPage
+active
 ? "white"
+: disabled
+? "#94a3b8"
 : "black";
+
+btn.style.cursor =
+disabled
+? "not-allowed"
+: "pointer";
 
 btn.onclick = ()=>{
 
-currentPage = i;
+if(disabled) return;
+
+currentPage = page;
 renderTable();
 
 };
 
-area.appendChild(btn);
+return btn;
 
 }
+
+area.appendChild(
+createPageButton("上一頁",currentPage - 1,currentPage === 1)
+);
+
+for(let i=1;i<=totalPages;i++){
+
+area.appendChild(
+createPageButton(i,i,false,i === currentPage)
+);
+
+}
+
+area.appendChild(
+createPageButton("下一頁",currentPage + 1,currentPage === totalPages)
+);
 
 }
 
