@@ -138,6 +138,11 @@ if(systemMenuTitle){
 systemMenuTitle.style.display = "";
 }
 
+var adminNavGroup = document.querySelector(".admin-nav-group");
+if(adminNavGroup){
+adminNavGroup.style.display = "";
+}
+
 if(!isViewer) return;
 
 document
@@ -163,6 +168,11 @@ addPendingButton.style.display = "none";
 
 if(systemMenuTitle){
 systemMenuTitle.style.display = "none";
+}
+
+var adminNavGroup = document.querySelector(".admin-nav-group");
+if(adminNavGroup){
+adminNavGroup.style.display = "none";
 }
 
 document
