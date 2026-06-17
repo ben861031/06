@@ -2085,3 +2085,94 @@ height:54px;
 margin-left:0;
 }
 }
+
+/* v13.2：Stamp 圖示上方功能列精修版 */
+.top-navbar{
+height:72px;
+background:#fff;
+border-bottom:1px solid #d9e2ef;
+box-shadow:0 4px 18px rgba(15,23,42,.06);
+gap:24px;
+}
+
+.brand-area{
+min-width:300px;
+padding-right:26px;
+border-right:1px solid #d9e2ef;
+display:flex;
+align-items:center;
+}
+
+.brand-title{
+display:flex;
+align-items:center;
+gap:12px;
+font-size:23px;
+font-weight:800;
+letter-spacing:.2px;
+color:#0f172a;
+white-space:nowrap;
+line-height:1;
+}
+
+.brand-icon-wrap{
+width:42px;
+height:42px;
+border-radius:14px;
+background:#eff6ff;
+color:#2563eb;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+box-shadow:inset 0 0 0 1px rgba(37,99,235,.08);
+flex-shrink:0;
+}
+
+.brand-icon{
+width:25px;
+height:25px;
+stroke-width:2.4;
+}
+
+.brand-subtitle,
+.brand-mark{
+display:none !important;
+}
+
+.top-menu-button,
+.top-menu-link{
+font-size:16px;
+padding:0 20px;
+}
+
+.top-user-area{
+padding-left:18px;
+border-left:1px solid #e2e8f0;
+}
+
+@media(max-width:900px){
+.top-navbar{
+height:auto;
+min-height:72px;
+flex-wrap:wrap;
+padding:14px 18px;
+}
+.brand-area{
+min-width:auto;
+width:100%;
+border-right:none;
+padding-right:0;
+}
+.brand-title{
+font-size:20px;
+}
+.top-menu{
+width:100%;
+height:54px;
+}
+.top-user-area{
+margin-left:0;
+border-left:none;
+padding-left:0;
+}
+}
