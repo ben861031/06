@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260618-v133-logo-fix">
+<link rel="stylesheet" href="./styles.css?v=20260618-v137-user-profile">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -870,9 +870,9 @@ class="detail-title-icon">
 
 </h2>
 
-<p class="page-description">新增可登入系統的帳號並設定角色</p>
+<p class="page-description">新增可登入系統的帳號並設定角色，並維護部門與員工姓名供辨識</p>
 
-<div class="compact-create-row compact-create-row-one">
+<div class="compact-create-row compact-create-row-user">
 
 <div class="form-group">
 
@@ -880,7 +880,30 @@ class="detail-title-icon">
 
 <input
 type="email"
-id="newUserEmail">
+id="newUserEmail"
+placeholder="請輸入可登入帳號">
+
+</div>
+
+<div class="form-group">
+
+<label>部門名稱</label>
+
+<input
+type="text"
+id="newUserDepartment"
+placeholder="例如：行政部">
+
+</div>
+
+<div class="form-group">
+
+<label>員工姓名</label>
+
+<input
+type="text"
+id="newUserName"
+placeholder="例如：蔡雨鑫">
 
 </div>
 
@@ -1258,7 +1281,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260618-v133-logo-fix"></script>
+<script src="./app.js?v=20260618-v137-user-profile"></script>
 
 </body>
 </html>

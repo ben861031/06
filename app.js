@@ -293,6 +293,8 @@ projectNo:"計畫編號",
 formNo:"表單編號",
 purpose:"用途",
 email:"Email",
+departmentName:"部門名稱",
+employeeName:"員工姓名",
 role:"角色",
 enabled:"啟用狀態",
 status:"狀態",
@@ -322,6 +324,8 @@ pendingRecord:[
 ],
 user:[
 "email",
+"departmentName",
+"employeeName",
 "role",
 "enabled",
 "name"
@@ -346,6 +350,8 @@ const fallbackOrder = [
 "formNo",
 "purpose",
 "email",
+"departmentName",
+"employeeName",
 "role",
 "enabled",
 "status",
@@ -1249,6 +1255,14 @@ document.getElementById(
 "newUserEmail"
 ).value.trim();
 
+const departmentName =
+(document.getElementById("newUserDepartment")?.value || "")
+.trim();
+
+const employeeName =
+(document.getElementById("newUserName")?.value || "")
+.trim();
+
 if(!email){
 
 alert("請輸入Email");
@@ -1256,32 +1270,39 @@ return;
 
 }
 
+const newUserData = {
+email,
+departmentName,
+employeeName,
+role:"user",
+enabled:true
+};
+
 const newUserRef =
 await addDoc(
 collection(db,"users"),
-{
-
-email,
-role:"user",
-enabled:true
-
-});
+newUserData
+);
 
 await writeAuditLog({
 action:"permission",
 category:"user",
 targetId:newUserRef.id,
 targetLabel:email,
-after:{
-email,
-role:"user",
-enabled:true
-}
+after:newUserData
 });
 
 document.getElementById(
 "newUserEmail"
 ).value = "";
+
+if(document.getElementById("newUserDepartment")){
+document.getElementById("newUserDepartment").value = "";
+}
+
+if(document.getElementById("newUserName")){
+document.getElementById("newUserName").value = "";
+}
 
 alert("新增成功");
 
@@ -1511,6 +1532,71 @@ alert("資料已帶入借用管理，請選擇印鑑後完成借用。");
 
 window.convertPending = convertPending;
 
+function getUserDisplayName(user){
+
+const departmentName = String(user?.departmentName || "").trim();
+const employeeName = String(user?.employeeName || user?.name || "").trim();
+
+return [departmentName,employeeName]
+.filter(Boolean)
+.join(" ") || user?.email || "使用者";
+
+}
+
+function escapeHtml(value){
+
+return String(value ?? "")
+.replaceAll("&","&amp;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;")
+.replaceAll('"',"&quot;")
+.replaceAll("'","&#039;");
+
+}
+
+async function updateUserProfile(id){
+
+if(blockViewerAction()) return;
+
+const user =
+userList.find(item=>item.id===id);
+
+const departmentName =
+(document.getElementById(`userDepartment_${id}`)?.value || "")
+.trim();
+
+const employeeName =
+(document.getElementById(`userName_${id}`)?.value || "")
+.trim();
+
+await updateDoc(
+doc(db,"users",id),
+{
+departmentName,
+employeeName
+}
+);
+
+await writeAuditLog({
+action:"permission",
+category:"user",
+targetId:id,
+targetLabel:user?.email || id,
+before:user,
+after:{
+...user,
+departmentName,
+employeeName
+}
+});
+
+alert("使用者資料已更新");
+loadUsers();
+
+}
+
+window.updateUserProfile = updateUserProfile;
+
 function renderUserList(){
 
 const area =
@@ -1524,26 +1610,44 @@ area.innerHTML = "";
 
 userList.forEach(user=>{
 
+const email = escapeHtml(user.email || "");
+const departmentName = escapeHtml(user.departmentName || "");
+const employeeName = escapeHtml(user.employeeName || user.name || "");
+const displayName = escapeHtml(getUserDisplayName(user));
+
 area.innerHTML += `
 
-<div class="maintenance-item">
+<div class="maintenance-item user-maintenance-item">
 
-<div>
+<div class="user-maintenance-main">
 
-<strong>${user.email}</strong>
+<div class="user-identity-row">
+<strong>${displayName}</strong>
+<span class="user-email-text">${email}</span>
+</div>
 
-<div
-style="
-display:flex;
-align-items:center;
-gap:12px;
-margin-top:8px;
-">
+<div class="user-profile-grid">
 
-<div>
+<label class="user-profile-field">
+<span>部門名稱</span>
+<input
+    type="text"
+    id="userDepartment_${user.id}"
+    value="${departmentName}"
+    placeholder="例如：行政部">
+</label>
 
-角色：
+<label class="user-profile-field">
+<span>員工姓名</span>
+<input
+    type="text"
+    id="userName_${user.id}"
+    value="${employeeName}"
+    placeholder="例如：蔡雨鑫">
+</label>
 
+<div class="user-profile-field">
+<span>角色</span>
 <select onchange="changeRole('${user.id}',this.value)">
 
 <option value="admin"
@@ -1562,9 +1666,9 @@ Viewer
 </option>
 
 </select>
-
 </div>
 
+<div class="user-profile-status">
 ${user.enabled
 
 ? '<span class="badge badge-green">啟用</span>'
@@ -1572,12 +1676,19 @@ ${user.enabled
 : '<span class="badge badge-red">停用</span>'
 
 }
-
 </div>
 
 </div>
 
-<div>
+</div>
+
+<div class="user-maintenance-actions">
+
+<button
+class="btn btn-gray"
+onclick="updateUserProfile('${user.id}')">
+儲存資料
+</button>
 
 <button
 class="btn btn-gray"
@@ -3649,6 +3760,7 @@ const snapshot =
 await getDocs(collection(db,"users"));
 
 let allow = false;
+let loginUserData = null;
 
 snapshot.forEach(docSnap=>{
 
@@ -3660,6 +3772,10 @@ data.enabled === true
 ){
 
 allow = true;
+loginUserData = {
+id:docSnap.id,
+...data
+};
 
 currentRole = normalizeRole(data.role);
 
@@ -3678,7 +3794,10 @@ return;
 }
 
 currentUser =
-user.displayName;
+getUserDisplayName(loginUserData || {
+name:user.displayName,
+email:user.email
+});
 
 currentUserEmail =
 user.email;
@@ -3695,7 +3814,7 @@ user.email
 
 localStorage.setItem(
 "userName",
-user.displayName
+currentUser
 );
 
 if(!sessionStorage.getItem("loginLogged")){
@@ -3703,7 +3822,7 @@ if(!sessionStorage.getItem("loginLogged")){
 await addDoc(
 collection(db,"loginLogs"),
 {
-name:user.displayName,
+name:currentUser,
 email:user.email,
 role:currentRole,
 loginTime:new Date()
@@ -3719,7 +3838,7 @@ sessionStorage.setItem(
 document.getElementById(
 "sidebarUserName"
 ).textContent =
-user.displayName;
+currentUser;
 
 document.getElementById(
 "sidebarUserEmail"
