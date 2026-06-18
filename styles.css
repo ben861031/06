@@ -1885,9 +1885,10 @@ color:#2563eb;
 transform:none;
 }
 
+/* v13.8：下拉選單目前頁面不再常駐淺藍底，僅保留滑鼠移過時的 hover 效果 */
 .top-dropdown .menu-item.active{
-background:#eff6ff;
-color:#2563eb;
+background:transparent;
+color:#334155;
 box-shadow:none;
 }
 
