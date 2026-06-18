@@ -2317,3 +2317,17 @@ padding-left:0;
         grid-template-columns:1fr;
     }
 }
+
+/* v13.9：修正下拉選單 active 項目圖示被全域 .menu-item.active 樣式變成白色而看不見 */
+.top-dropdown .menu-item.active .menu-icon{
+color:#334155 !important;
+}
+
+.top-dropdown .menu-item.active:hover .menu-icon{
+color:#2563eb !important;
+}
+
+.top-dropdown .menu-item.active:hover{
+background:#eff6ff;
+color:#2563eb;
+}
