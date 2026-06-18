@@ -292,20 +292,94 @@ department:"部門",
 projectNo:"計畫編號",
 formNo:"表單編號",
 purpose:"用途",
-name:"名稱",
 email:"Email",
 role:"角色",
 enabled:"啟用狀態",
 status:"狀態",
-sortOrder:"排序"
+name:"名稱",
+sortOrder:"排序",
+returnTime:"歸還時間"
 };
 
-const parts =
-Object.entries(source)
-.filter(([key])=>labels[key])
-.map(([key,value])=>
-`${labels[key]}：${value === true ? "是" : value === false ? "否" : value}`
-);
+const categoryFieldOrders = {
+sealRecord:[
+"seal",
+"borrower",
+"department",
+"projectNo",
+"formNo",
+"purpose",
+"status",
+"returnTime"
+],
+pendingRecord:[
+"borrower",
+"department",
+"projectNo",
+"formNo",
+"purpose",
+"status"
+],
+user:[
+"email",
+"role",
+"enabled",
+"name"
+],
+seal:[
+"name",
+"sortOrder",
+"status"
+],
+department:[
+"name",
+"sortOrder",
+"status"
+]
+};
+
+const fallbackOrder = [
+"seal",
+"borrower",
+"department",
+"projectNo",
+"formNo",
+"purpose",
+"email",
+"role",
+"enabled",
+"status",
+"name",
+"sortOrder",
+"returnTime"
+];
+
+const primaryOrder =
+categoryFieldOrders[log.category] || fallbackOrder;
+
+const extraKeys =
+Object.keys(source)
+.filter(key=>labels[key] && !primaryOrder.includes(key))
+.sort((a,b)=>labels[a].localeCompare(labels[b],"zh-Hant"));
+
+const orderedKeys = [
+...primaryOrder,
+...extraKeys
+];
+
+const parts = orderedKeys
+.filter(key => Object.prototype.hasOwnProperty.call(source,key))
+.map(key=>{
+
+const value = source[key];
+
+return `${labels[key]}：${
+value === true ? "是" :
+value === false ? "否" :
+value ?? "-"
+}`;
+
+});
 
 return parts.join("；") || "-";
 
