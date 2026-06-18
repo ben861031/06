@@ -3731,29 +3731,34 @@ document.querySelector(".sidebar");
 const toggle =
 document.getElementById("sidebarToggle");
 
-/* v13 TopNav 版沒有左側 sidebar；保留相容舊版的切換程式 */
-if(sidebar && toggle){
-
 /* 還原上次狀態 */
+
 if(
 localStorage.getItem("sidebarState")
 ==="collapsed"
 ){
+
 sidebar.classList.add("collapsed");
+
 }
 
 /* 切換 */
+
 toggle.addEventListener("click",()=>{
+
 sidebar.classList.toggle("collapsed");
+
 localStorage.setItem(
+
 "sidebarState",
+
 sidebar.classList.contains("collapsed")
 ? "collapsed"
 : "expanded"
-);
-});
 
-}
+);
+
+});
 
 })().catch(error=>{
 
