@@ -354,10 +354,17 @@ id:docSnap.id,
 });
 });
 
-auditLogs.sort((a,b)=>
+auditLogs.sort((a,b)=>{
+
+const timeDiff =
 getRecordTime(b.createdAt) -
-getRecordTime(a.createdAt)
-);
+getRecordTime(a.createdAt);
+
+if(timeDiff !== 0) return timeDiff;
+
+return String(b.id || "").localeCompare(String(a.id || ""));
+
+});
 
 renderAuditLogs();
 
@@ -593,17 +600,9 @@ table.innerHTML = "";
 
 const sortedLogs =
 [...loginLogs]
-.sort((a,b)=>{
-
-const t1 =
-a.loginTime?.seconds || 0;
-
-const t2 =
-b.loginTime?.seconds || 0;
-
-return t2 - t1;
-
-});
+.sort((a,b)=>
+getRecordTime(b.loginTime) - getRecordTime(a.loginTime)
+);
 
 document.getElementById(
 "loginCount"
@@ -2917,7 +2916,16 @@ return true;
 function getRecordTime(value){
 
 if(!value) return 0;
-if(value.seconds) return value.seconds * 1000;
+
+if(value.seconds){
+
+const seconds = Number(value.seconds || 0) * 1000;
+const nanos = Number(value.nanoseconds || 0) / 1000000;
+
+return seconds + nanos;
+
+}
+
 if(value.toDate) return value.toDate().getTime();
 
 const date = new Date(value);
@@ -3731,34 +3739,29 @@ document.querySelector(".sidebar");
 const toggle =
 document.getElementById("sidebarToggle");
 
-/* 還原上次狀態 */
+/* v13 TopNav 版沒有左側 sidebar；保留相容舊版的切換程式 */
+if(sidebar && toggle){
 
+/* 還原上次狀態 */
 if(
 localStorage.getItem("sidebarState")
 ==="collapsed"
 ){
-
 sidebar.classList.add("collapsed");
-
 }
 
 /* 切換 */
-
 toggle.addEventListener("click",()=>{
-
 sidebar.classList.toggle("collapsed");
-
 localStorage.setItem(
-
 "sidebarState",
-
 sidebar.classList.contains("collapsed")
 ? "collapsed"
 : "expanded"
-
 );
-
 });
+
+}
 
 })().catch(error=>{
 

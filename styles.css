@@ -1686,3 +1686,529 @@ grid-column:auto;
 .viewer-mode .pending-action-column{
 display:none;
 }
+
+
+/* =========================================================
+   v13 Enterprise Portal Edition - Top Navigation Layout
+   ========================================================= */
+body{
+background:#f7f9fc;
+}
+
+.app.portal-app{
+display:block;
+min-height:100vh;
+}
+
+.top-navbar{
+height:78px;
+background:#fff;
+border-bottom:1px solid #d9e2ef;
+box-shadow:0 4px 18px rgba(15,23,42,.06);
+display:flex;
+align-items:center;
+gap:28px;
+padding:0 24px;
+position:sticky;
+top:0;
+z-index:5000;
+}
+
+.brand-area{
+display:flex;
+align-items:center;
+gap:14px;
+min-width:330px;
+padding-right:24px;
+border-right:1px solid #d9e2ef;
+}
+
+.brand-mark{
+width:42px;
+height:42px;
+color:#e11d2e;
+font-weight:900;
+font-size:38px;
+line-height:36px;
+font-style:italic;
+display:flex;
+align-items:center;
+justify-content:center;
+transform:skew(-10deg);
+}
+
+.brand-title{
+font-size:22px;
+font-weight:800;
+letter-spacing:.5px;
+color:#111827;
+white-space:nowrap;
+line-height:1.15;
+}
+
+.brand-subtitle{
+font-size:10px;
+font-weight:700;
+letter-spacing:.8px;
+color:#475569;
+margin-top:4px;
+white-space:nowrap;
+}
+
+.top-menu{
+display:flex;
+align-items:center;
+gap:8px;
+height:100%;
+flex:1;
+min-width:0;
+}
+
+.top-menu-group{
+position:relative;
+height:100%;
+display:flex;
+align-items:center;
+}
+
+.top-menu-button,
+.top-menu-link{
+height:100%;
+min-width:auto;
+border:none;
+background:transparent;
+display:flex;
+align-items:center;
+gap:8px;
+padding:0 18px;
+font-size:16px;
+font-weight:700;
+color:#334155;
+cursor:pointer;
+border-radius:0;
+position:relative;
+transition:.2s;
+}
+
+.top-menu-button:hover,
+.top-menu-link:hover{
+background:#f8fbff;
+color:#2563eb;
+transform:none;
+}
+
+.top-menu-link.menu-item{
+margin:0;
+}
+
+.top-menu-link.menu-item.active{
+background:transparent;
+color:#2563eb;
+box-shadow:none;
+}
+
+.top-menu-link.menu-item.active::after{
+content:"";
+position:absolute;
+left:14px;
+right:14px;
+bottom:0;
+height:3px;
+border-radius:999px 999px 0 0;
+background:#2563eb;
+}
+
+.top-menu-button .menu-icon,
+.top-menu-link .menu-icon{
+width:18px;
+height:18px;
+color:currentColor;
+stroke-width:2.4;
+}
+
+.top-chevron{
+width:16px;
+height:16px;
+color:#64748b;
+transition:.2s;
+}
+
+.top-menu-group:hover .top-chevron{
+transform:rotate(180deg);
+color:#2563eb;
+}
+
+.top-dropdown{
+position:absolute;
+top:calc(100% - 1px);
+left:0;
+min-width:210px;
+background:#fff;
+border:1px solid #e2e8f0;
+border-radius:0 0 16px 16px;
+box-shadow:0 18px 42px rgba(15,23,42,.16);
+padding:10px;
+opacity:0;
+visibility:hidden;
+transform:translateY(8px);
+transition:.18s ease;
+z-index:6000;
+}
+
+.top-menu-group:hover .top-dropdown,
+.top-menu-group:focus-within .top-dropdown{
+opacity:1;
+visibility:visible;
+transform:translateY(0);
+}
+
+.top-dropdown .menu-item{
+height:46px;
+margin:0 0 4px 0;
+padding:0 12px;
+gap:10px;
+border-radius:10px;
+font-size:15px;
+font-weight:700;
+color:#334155;
+background:transparent;
+box-shadow:none;
+}
+
+.top-dropdown .menu-item:last-child{
+margin-bottom:0;
+}
+
+.top-dropdown .menu-item:hover{
+background:#eff6ff;
+color:#2563eb;
+transform:none;
+}
+
+.top-dropdown .menu-item.active{
+background:#eff6ff;
+color:#2563eb;
+box-shadow:none;
+}
+
+.top-dropdown .menu-icon{
+width:18px;
+height:18px;
+color:currentColor;
+stroke-width:2.2;
+}
+
+.top-user-area{
+display:flex;
+align-items:center;
+gap:10px;
+margin-left:auto;
+min-width:max-content;
+color:#475569;
+font-weight:700;
+}
+
+.top-user-icon{
+width:19px;
+height:19px;
+color:#64748b;
+}
+
+.top-user-text{
+display:flex;
+flex-direction:column;
+line-height:1.2;
+align-items:flex-end;
+}
+
+#sidebarUserName{
+font-size:15px;
+color:#334155;
+}
+
+#sidebarUserEmail{
+font-size:11px;
+font-weight:600;
+color:#94a3b8;
+max-width:180px;
+overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap;
+}
+
+.top-logout-btn{
+border:1px solid #e2e8f0;
+background:#fff;
+color:#64748b;
+border-radius:999px;
+padding:7px 12px;
+font-size:12px;
+font-weight:800;
+cursor:pointer;
+transition:.2s;
+}
+
+.top-logout-btn:hover{
+background:#f1f5f9;
+color:#0f172a;
+}
+
+.main{
+padding:30px 40px 42px;
+max-width:none;
+}
+
+.panel{
+border-radius:22px;
+box-shadow:0 10px 30px rgba(15,23,42,.05);
+}
+
+.kpi-grid{
+margin-top:0;
+}
+
+/* viewer 權限模式下，若系統管理被隱藏，版面不留空 */
+.viewer-mode #systemMenuTitle{
+display:none !important;
+}
+
+@media(max-width:1180px){
+.top-navbar{
+height:auto;
+min-height:78px;
+flex-wrap:wrap;
+padding:12px 18px;
+gap:10px 18px;
+}
+.brand-area{
+min-width:260px;
+}
+.top-menu{
+order:3;
+width:100%;
+height:54px;
+overflow-x:auto;
+}
+.top-menu-button,
+.top-menu-link{
+height:54px;
+white-space:nowrap;
+}
+.top-dropdown{
+top:54px;
+}
+.main{
+padding:24px 20px 36px;
+}
+}
+
+@media(max-width:760px){
+.brand-area{
+min-width:0;
+width:100%;
+border-right:none;
+padding-right:0;
+}
+.brand-title{
+font-size:18px;
+}
+.top-user-area{
+width:100%;
+justify-content:flex-end;
+}
+.main{
+padding:18px 12px 28px;
+}
+}
+
+
+/* v13.1：白色上方功能列精簡版（無公司名稱、無Logo、無我的資產） */
+.top-navbar{
+height:76px;
+background:#fff;
+border-bottom:1px solid #d9e2ef;
+box-shadow:0 4px 18px rgba(15,23,42,.06);
+gap:22px;
+}
+
+.brand-area{
+min-width:250px;
+padding-right:22px;
+border-right:1px solid #d9e2ef;
+}
+
+.brand-mark{
+display:none !important;
+}
+
+.brand-title{
+font-size:22px;
+font-weight:800;
+letter-spacing:.2px;
+color:#0f172a;
+}
+
+.brand-subtitle{
+font-size:10px;
+letter-spacing:.4px;
+color:#94a3b8;
+}
+
+.top-menu-button,
+.top-menu-link{
+font-size:16px;
+padding:0 20px;
+}
+
+.top-dropdown{
+border-radius:0 0 16px 16px;
+}
+
+@media(max-width:900px){
+.top-navbar{
+height:auto;
+min-height:76px;
+flex-wrap:wrap;
+padding:14px 18px;
+}
+.brand-area{
+min-width:auto;
+width:100%;
+border-right:none;
+padding-right:0;
+}
+.top-menu{
+width:100%;
+height:54px;
+}
+.top-user-area{
+margin-left:0;
+}
+}
+
+/* v13.2：Stamp 圖示上方功能列精修版 */
+.top-navbar{
+height:72px;
+background:#fff;
+border-bottom:1px solid #d9e2ef;
+box-shadow:0 4px 18px rgba(15,23,42,.06);
+gap:24px;
+}
+
+.brand-area{
+min-width:300px;
+padding-right:26px;
+border-right:1px solid #d9e2ef;
+display:flex;
+align-items:center;
+}
+
+.brand-title{
+display:flex;
+align-items:center;
+gap:12px;
+font-size:23px;
+font-weight:800;
+letter-spacing:.2px;
+color:#0f172a;
+white-space:nowrap;
+line-height:1;
+}
+
+.brand-icon-wrap{
+width:42px;
+height:42px;
+border-radius:14px;
+background:#eff6ff;
+color:#2563eb;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+box-shadow:inset 0 0 0 1px rgba(37,99,235,.08);
+flex-shrink:0;
+}
+
+.brand-icon{
+width:25px;
+height:25px;
+stroke-width:2.4;
+}
+
+.brand-subtitle,
+.brand-mark{
+display:none !important;
+}
+
+.top-menu-button,
+.top-menu-link{
+font-size:16px;
+padding:0 20px;
+}
+
+.top-user-area{
+padding-left:18px;
+border-left:1px solid #e2e8f0;
+}
+
+@media(max-width:900px){
+.top-navbar{
+height:auto;
+min-height:72px;
+flex-wrap:wrap;
+padding:14px 18px;
+}
+.brand-area{
+min-width:auto;
+width:100%;
+border-right:none;
+padding-right:0;
+}
+.brand-title{
+font-size:20px;
+}
+.top-menu{
+width:100%;
+height:54px;
+}
+.top-user-area{
+margin-left:0;
+border-left:none;
+padding-left:0;
+}
+}
+
+/* v13.3 Logo Header 修正版 */
+.brand-logo-wrap{
+    width:42px;
+    height:42px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:transparent;
+    border-radius:12px;
+    flex-shrink:0;
+}
+
+.brand-logo{
+    width:42px;
+    height:42px;
+    object-fit:contain;
+    display:block;
+}
+
+.brand-icon-wrap.brand-logo-wrap{
+    background:transparent;
+    box-shadow:none;
+}
+
+.top-user-email-hidden{
+    display:none !important;
+}
+
+.top-user-text{
+    gap:0;
+}
+
+.top-user-area{
+    min-width:auto;
+}
