@@ -708,16 +708,17 @@ padding:0 28px;
 .borrow-action-buttons .btn-gray{
 height:52px;
 padding:0 20px;
-min-width:96px;
+width:180px;
+min-width:180px;
 white-space:nowrap;
-flex:0 0 auto;
+flex:0 0 180px;
 }
 
 .borrow-action-buttons .borrow-main-action{
-width:auto;
+width:180px;
 min-width:180px;
 white-space:nowrap;
-flex:0 0 auto;
+flex:0 0 180px;
 }
 
 .btn:disabled,
