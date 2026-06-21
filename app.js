@@ -2441,7 +2441,7 @@ const firstAvailable = sealList.find(seal=>
 selectedBorrowSeal = firstAvailable?.name || "";
 
 populateBorrowForm({
-borrower:currentUser || "",
+borrower:"",
 department:"",
 projectNo:"",
 formNo:"",
@@ -2542,7 +2542,7 @@ if(currentPendingIndex && pendingTransferDraft){
 populateBorrowForm(pendingTransferDraft);
 }else if(document.getElementById("borrower").disabled){
 populateBorrowForm(
-borrowEntryDraft || {borrower:currentUser || ""}
+borrowEntryDraft || {borrower:""}
 );
 }
 
@@ -2841,7 +2841,7 @@ const borrowRecordRef =
 await addDoc(collection(db,"sealRecords"),{
 
 seal:data.seal,
-borrower:data.borrower || currentUser,
+borrower:data.borrower,
 department:data.department,
 projectNo:data.projectNo,
 formNo:data.formNo,
@@ -2858,7 +2858,7 @@ targetId:borrowRecordRef.id,
 targetLabel:`${data.seal} / ${data.borrower}`,
 after:{
 seal:data.seal,
-borrower:data.borrower || currentUser,
+borrower:data.borrower,
 department:data.department,
 projectNo:data.projectNo,
 formNo:data.formNo,
@@ -3274,9 +3274,6 @@ if(firstAvailable){
 selectedBorrowSeal = firstAvailable.name;
 document.getElementById("seal").value = firstAvailable.name;
 
-if(!document.getElementById("borrower").value){
-document.getElementById("borrower").value = currentUser || "";
-}
 }
 }
 
@@ -3315,7 +3312,7 @@ ${active ? "借出中" : "可借用"}
 ${selectedBorrowSeal===seal.name && !active
 ? `<span class="seal-row-check"><i data-lucide="check"></i></span>`
 : active
-? `<span class="btn-link">查看</span>`
+? `<i data-lucide="chevron-right"></i>`
 : `<i data-lucide="chevron-right"></i>`}
 </div>`;
 

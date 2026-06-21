@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260621-v138-borrow-workbench">
+<link rel="stylesheet" href="./styles.css?v=20260621-v139-borrow-panel">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -141,8 +141,16 @@ transition:.15s;
 
 <div id="borrowPage">
 
-<div class="borrow-page-heading">
-<h1>借用登記</h1>
+<div class="panel borrow-page-panel">
+
+<div class="page-heading">
+<div class="page-heading-main">
+<h2 class="detail-title">
+<i data-lucide="clipboard-list" class="detail-title-icon"></i>
+借用登記
+</h2>
+<p class="page-description">選擇印鑑並填寫本次借用資料</p>
+</div>
 <div class="borrow-summary">
 <span class="summary-pill summary-pill-available">
 <b id="borrowAvailableCount">0</b> 組可借用
@@ -152,6 +160,8 @@ transition:.15s;
 </span>
 </div>
 </div>
+
+<div class="section-divider"></div>
 
 <div id="pendingTransferBanner" class="pending-transfer-banner hidden">
 <div>
@@ -204,7 +214,7 @@ autocomplete="off">
 <div class="borrow-form-grid">
 <div class="form-group">
 <label for="borrower">借用人</label>
-<input type="text" id="borrower" autocomplete="off">
+<input type="text" id="borrower" placeholder="請輸入借用人" autocomplete="off">
 </div>
 
 <div class="form-group">
@@ -270,6 +280,8 @@ disabled>
 </div>
 </div>
 </section>
+
+</div>
 
 </div>
 
@@ -1269,7 +1281,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260621-v138-borrow-workbench"></script>
+<script src="./app.js?v=20260621-v139-borrow-panel"></script>
 
 </body>
 </html>

@@ -363,6 +363,11 @@ letter-spacing:-.5px;
 display:flex;
 align-items:center;
 gap:10px;
+flex:0 0 auto;
+}
+
+.borrow-page-panel{
+margin-bottom:0;
 }
 
 .summary-pill{
@@ -434,13 +439,15 @@ align-items:stretch;
 
 .borrow-workbench > .panel{
 margin-bottom:0;
-border-radius:20px;
+border-radius:16px;
 padding:24px;
+border-color:#e2e8f0;
+box-shadow:none;
 }
 
 .seal-status-panel,
 .borrow-data-panel{
-min-height:620px;
+min-height:0;
 }
 
 .panel-heading-compact h2,
@@ -539,9 +546,9 @@ background:#f8fafc;
 }
 
 .seal-status-row.is-borrowed.selected{
-border-color:#f97316;
-background:#fff7ed;
-box-shadow:0 0 0 2px rgba(249,115,22,.08);
+border-color:#ef4444;
+background:#fef2f2;
+box-shadow:0 0 0 2px rgba(239,68,68,.08);
 }
 
 .seal-row-name{
@@ -595,11 +602,11 @@ background:#22c55e;
 }
 
 .seal-status-row.is-borrowed .seal-row-status{
-color:#ea580c;
+color:#dc2626;
 }
 
 .seal-status-row.is-borrowed .seal-row-status::before{
-background:#f97316;
+background:#ef4444;
 }
 
 .seal-row-check{
