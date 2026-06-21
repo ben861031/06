@@ -1914,7 +1914,7 @@ const select =
 document.getElementById("department");
 
 select.innerHTML =
-`<option value="">請選擇</option>`;
+`<option value="">請選擇部門</option>`;
 
 departmentList.forEach(dept=>{
 
