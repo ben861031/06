@@ -708,6 +708,16 @@ padding:0 28px;
 .borrow-action-buttons .btn-gray{
 height:52px;
 padding:0 20px;
+min-width:96px;
+white-space:nowrap;
+flex:0 0 auto;
+}
+
+.borrow-action-buttons .borrow-main-action{
+width:auto;
+min-width:180px;
+white-space:nowrap;
+flex:0 0 auto;
 }
 
 .btn:disabled,
@@ -1658,12 +1668,13 @@ grid-template-columns:1fr;
 
 .borrow-action-buttons{
 width:100%;
+flex-wrap:wrap;
 }
 
 .borrow-action-buttons .btn,
 .borrow-main-action{
 flex:1;
-min-width:0;
+min-width:120px;
 }
 
 .pending-transfer-banner{
