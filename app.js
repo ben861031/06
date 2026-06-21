@@ -183,6 +183,11 @@ let departmentList = [];
 let pendingRecords = [];
 let userList = [];
 let currentPendingIndex = null;
+let pendingTransferDraft = null;
+let borrowEntryDraft = null;
+let selectedBorrowSeal = "";
+let selectedBorrowRecordId = null;
+let borrowPanelMode = "new";
 let editingPendingId = null;
 
 let loginLogs = [];
@@ -1499,22 +1504,17 @@ x => x.id === id
 
 currentPendingIndex = id;
 
-item.status = "已轉正式借用";
+pendingTransferDraft = {
+borrower:item.borrower || "",
+department:item.department || "",
+projectNo:item.projectNo || "",
+formNo:item.formNo || "",
+purpose:item.purpose || ""
+};
 
-document.getElementById("borrower").value =
-item.borrower || "";
-
-document.getElementById("projectNo").value =
-item.projectNo || "";
-
-document.getElementById("formNo").value =
-item.formNo || "";
-
-document.getElementById("purpose").value =
-item.purpose || "";
-
-document.getElementById("department").value =
-item.department || "";
+selectedBorrowSeal = "";
+selectedBorrowRecordId = null;
+borrowPanelMode = "new";
 
 const borrowMenu =
 document.querySelectorAll(".menu-item")[0];
@@ -1524,9 +1524,8 @@ showPage(
 borrowMenu
 );
 
-renderPendingTable();
-
-alert("資料已帶入借用管理，請選擇印鑑後完成借用。");
+showPendingTransferDraft();
+renderStatus();
 
 }
 
@@ -2429,20 +2428,284 @@ await loadSeals();
 
 function resetBorrowForm(){
 
-document.getElementById("borrower").value = "";
-document.getElementById("department").value = "";
+currentPendingIndex = null;
+pendingTransferDraft = null;
+borrowEntryDraft = null;
+selectedBorrowRecordId = null;
+borrowPanelMode = "new";
+
+const firstAvailable = sealList.find(seal=>
+!records.some(record=>record.seal===seal.name && !record.returnTime)
+);
+
+selectedBorrowSeal = firstAvailable?.name || "";
+
+populateBorrowForm({
+borrower:currentUser || "",
+department:"",
+projectNo:"",
+formNo:"",
+purpose:""
+});
+
+document.getElementById("seal").value = selectedBorrowSeal;
+document.getElementById("pendingTransferBanner").classList.add("hidden");
+renderBorrowPanelState();
+renderStatus();
+
+}
+
+function getBorrowFormData(){
+return {
+borrower:document.getElementById("borrower").value.trim(),
+department:document.getElementById("department").value,
+projectNo:document.getElementById("projectNo").value.trim(),
+formNo:document.getElementById("formNo").value.trim(),
+purpose:document.getElementById("purpose").value.trim()
+};
+}
+
+function populateBorrowForm(data={}){
+document.getElementById("borrower").value = data.borrower || "";
+document.getElementById("department").value = data.department || "";
+document.getElementById("projectNo").value = data.projectNo || "";
+document.getElementById("formNo").value = data.formNo || "";
+document.getElementById("purpose").value = data.purpose || "";
+}
+
+function setBorrowFormDisabled(disabled){
+[
+"borrower",
+"department",
+"projectNo",
+"formNo",
+"purpose"
+].forEach(id=>{
+const element = document.getElementById(id);
+if(element) element.disabled = disabled;
+});
+}
+
+function showPendingTransferDraft(){
+const item = pendingRecords.find(record=>record.id===currentPendingIndex);
+
+if(!item){
+cancelPendingTransfer();
+return;
+}
+
+selectedBorrowRecordId = null;
+borrowPanelMode = "new";
+selectedBorrowSeal = "";
 document.getElementById("seal").value = "";
-document.getElementById("projectNo").value = "";
-document.getElementById("formNo").value = "";
-document.getElementById("purpose").value = "";
+populateBorrowForm(pendingTransferDraft || item);
 
-document
-.querySelectorAll("#statusGrid .card")
-.forEach(card=>card.classList.remove("selected"));
+const banner = document.getElementById("pendingTransferBanner");
+banner.classList.remove("hidden");
+document.getElementById("pendingTransferLabel").textContent =
+`｜${item.formNo || item.borrower || "未命名案件"}`;
 
-document.getElementById("sealDetailContent").textContent =
-"請點選上方印鑑查看詳細資訊";
+renderBorrowPanelState();
+}
 
+function cancelPendingTransfer(){
+currentPendingIndex = null;
+pendingTransferDraft = null;
+document.getElementById("pendingTransferBanner").classList.add("hidden");
+resetBorrowForm();
+}
+
+function selectBorrowSeal(sealName){
+const active = records.find(record=>
+record.seal===sealName && !record.returnTime
+);
+
+selectedBorrowSeal = sealName;
+
+if(active){
+if(borrowPanelMode === "new"){
+borrowEntryDraft = getBorrowFormData();
+
+if(currentPendingIndex){
+pendingTransferDraft = {...borrowEntryDraft};
+}
+}
+
+selectedBorrowRecordId = active.id;
+borrowPanelMode = "read";
+populateBorrowForm(active);
+}else{
+selectedBorrowRecordId = null;
+borrowPanelMode = "new";
+
+if(currentPendingIndex && pendingTransferDraft){
+populateBorrowForm(pendingTransferDraft);
+}else if(document.getElementById("borrower").disabled){
+populateBorrowForm(
+borrowEntryDraft || {borrower:currentUser || ""}
+);
+}
+
+document.getElementById("seal").value = sealName;
+}
+
+renderBorrowPanelState();
+renderStatus();
+}
+
+function renderBorrowPanelState(){
+const title = document.getElementById("borrowPanelTitle");
+const description = document.getElementById("borrowPanelDescription");
+const badge = document.getElementById("borrowModeBadge");
+const meta = document.getElementById("borrowedMeta");
+const summary = document.getElementById("borrowSelectionSummary");
+const confirmButton = document.getElementById("confirmBorrowMainButton");
+const editButton = document.getElementById("editBorrowedButton");
+const saveButton = document.getElementById("saveBorrowedButton");
+const cancelButton = document.getElementById("cancelBorrowEditButton");
+
+[confirmButton,editButton,saveButton,cancelButton]
+.forEach(button=>button.classList.add("hidden"));
+
+if(selectedBorrowRecordId){
+const active = records.find(record=>record.id===selectedBorrowRecordId);
+
+if(!active || active.returnTime){
+selectedBorrowRecordId = null;
+borrowPanelMode = "new";
+renderBorrowPanelState();
+return;
+}
+
+title.textContent = borrowPanelMode === "edit"
+? "編輯借用資料"
+: "目前借用資料";
+description.textContent = borrowPanelMode === "edit"
+? "修改完成後請儲存變更"
+: "此印鑑目前借出中，資料預設不可修改";
+
+badge.textContent = borrowPanelMode === "edit" ? "編輯中" : "借出中";
+badge.className = borrowPanelMode === "edit"
+? "badge badge-blue"
+: "badge badge-red";
+
+meta.classList.remove("hidden");
+meta.innerHTML = `
+<div class="borrowed-meta-item">
+<span>印鑑</span>
+<b>${active.seal || "-"}</b>
+</div>
+<div class="borrowed-meta-item">
+<span>借用時間</span>
+<b>${formatDate(active.borrowTime)}</b>
+</div>
+<div class="borrowed-meta-item">
+<span>已借用時間</span>
+<b>${getBorrowDuration(active.borrowTime)}</b>
+</div>`;
+
+setBorrowFormDisabled(borrowPanelMode !== "edit");
+summary.innerHTML = `<strong>印鑑：${active.seal}</strong> ・ 借出中`;
+
+if(borrowPanelMode === "edit"){
+saveButton.classList.remove("hidden");
+cancelButton.textContent = "取消";
+cancelButton.classList.remove("hidden");
+}else if(currentPendingIndex){
+cancelButton.textContent = "返回待借用案件";
+cancelButton.classList.remove("hidden");
+}else if(!isViewerRole()){
+editButton.classList.remove("hidden");
+}
+
+lucide.createIcons();
+return;
+}
+
+title.textContent = currentPendingIndex
+? "待借用轉正式借用"
+: "借用資料";
+description.textContent = currentPendingIndex
+? "資料已帶入，請從左側手動選擇一組可借用印鑑"
+: selectedBorrowSeal
+? "請填寫借用資訊後送出"
+: "請先從左側選擇一組可借用印鑑";
+
+meta.classList.add("hidden");
+setBorrowFormDisabled(false);
+confirmButton.classList.remove("hidden");
+confirmButton.disabled = !selectedBorrowSeal;
+
+if(selectedBorrowSeal){
+badge.textContent = "可借用";
+badge.className = "badge badge-green";
+summary.innerHTML = `<strong>印鑑：${selectedBorrowSeal}</strong> ・ 可借用`;
+document.getElementById("seal").value = selectedBorrowSeal;
+}else{
+badge.className = "badge badge-green hidden";
+summary.textContent = currentPendingIndex
+? "請從左側選擇本次實際借用的印鑑"
+: "尚未選擇印鑑";
+document.getElementById("seal").value = "";
+}
+
+lucide.createIcons();
+}
+
+function startInlineBorrowEdit(){
+if(blockViewerAction()) return;
+if(!selectedBorrowRecordId) return;
+borrowPanelMode = "edit";
+renderBorrowPanelState();
+}
+
+function cancelInlineBorrowEdit(){
+if(currentPendingIndex && borrowPanelMode !== "edit"){
+showPendingTransferDraft();
+renderStatus();
+return;
+}
+
+const active = records.find(record=>record.id===selectedBorrowRecordId);
+if(!active) return;
+borrowPanelMode = "read";
+populateBorrowForm(active);
+renderBorrowPanelState();
+}
+
+async function saveInlineBorrowEdit(){
+if(blockViewerAction()) return;
+
+const before = records.find(record=>
+record.id===selectedBorrowRecordId && !record.returnTime
+);
+
+if(!before){
+alert("找不到可編輯的借用資料");
+return;
+}
+
+const after = getBorrowFormData();
+
+if(!after.borrower || !after.department || !after.projectNo || !after.formNo || !after.purpose){
+alert("請填寫必要欄位");
+return;
+}
+
+await updateDoc(doc(db,"sealRecords",before.id),after);
+
+await writeAuditLog({
+action:"update",
+category:"sealRecord",
+targetId:before.id,
+targetLabel:`${before.seal} / ${after.borrower}`,
+before,
+after:{...before,...after}
+});
+
+alert("修改成功");
+borrowPanelMode = "read";
+await loadRecords();
 }
 
 let pendingBorrowData = null;
@@ -2826,52 +3089,14 @@ r=>!r.returnTime
 const available =
 sealList.length - borrowed;
 
-const today =
-new Date();
+const borrowedElement =
+document.getElementById('borrowBorrowedCount');
 
-const todayBorrow =
-records.filter(r=>{
+const availableElement =
+document.getElementById('borrowAvailableCount');
 
-const d =
-r.borrowTime?.seconds
-? new Date(r.borrowTime.seconds*1000)
-: new Date(r.borrowTime);
-
-return d.toDateString()
-=== today.toDateString();
-
-}).length;
-
-const todayReturn =
-records.filter(r=>{
-
-if(!r.returnTime) return false;
-
-const d =
-r.returnTime?.seconds
-? new Date(r.returnTime.seconds*1000)
-: new Date(r.returnTime);
-
-return d.toDateString()
-=== today.toDateString();
-
-}).length;
-
-document.getElementById(
-'kpiBorrowed'
-).innerText = borrowed;
-
-document.getElementById(
-'kpiAvailable'
-).innerText = available;
-
-document.getElementById(
-'kpiTodayBorrow'
-).innerText = todayBorrow;
-
-document.getElementById(
-'kpiTodayReturn'
-).innerText = todayReturn;
+if(borrowedElement) borrowedElement.innerText = borrowed;
+if(availableElement) availableElement.innerText = available;
 
 }
 
@@ -2888,7 +3113,7 @@ const mins = Math.floor((diff%3600000)/60000);
 return `${days}天${hours}小時${mins}分`;
 }
 
-function showSealDetail(sealName){
+function legacyShowSealDetail(sealName){
 document.querySelectorAll('#statusGrid .card').forEach(c=>c.classList.remove('selected'));
 const target=document.querySelector(`[data-seal="${sealName}"]`);
 if(target) target.classList.add('selected');
@@ -2950,7 +3175,7 @@ el.innerHTML=`
 </div>`;
 }
 
-function renderStatus(){
+function legacyRenderStatus(){
 
 const grid =
 document.getElementById("statusGrid");
@@ -3012,6 +3237,107 @@ if(sealList.length){
 showSealDetail(sealList[0].name);
 }
 
+}
+
+/* 借用登記新版：緊湊狀態清單與左右工作台 */
+function showSealDetail(sealName){
+selectBorrowSeal(sealName);
+}
+
+function renderStatus(){
+const list = document.getElementById("statusGrid");
+if(!list) return;
+
+const keyword = (
+document.getElementById("borrowSealSearch")?.value || ""
+).trim().toLowerCase();
+
+const activeForSelected = records.find(record=>
+record.seal===selectedBorrowSeal && !record.returnTime
+);
+
+if(
+!currentPendingIndex &&
+borrowPanelMode === "new" &&
+activeForSelected
+){
+selectedBorrowSeal = "";
+document.getElementById("seal").value = "";
+}
+
+if(!currentPendingIndex && !selectedBorrowSeal){
+const firstAvailable = sealList.find(seal=>
+!records.some(record=>record.seal===seal.name && !record.returnTime)
+);
+
+if(firstAvailable){
+selectedBorrowSeal = firstAvailable.name;
+document.getElementById("seal").value = firstAvailable.name;
+
+if(!document.getElementById("borrower").value){
+document.getElementById("borrower").value = currentUser || "";
+}
+}
+}
+
+const visibleSeals = sealList.filter(seal=>
+!keyword || seal.name.toLowerCase().includes(keyword)
+);
+
+list.innerHTML = "";
+
+visibleSeals.forEach(seal=>{
+const active = records.find(record=>
+record.seal===seal.name && !record.returnTime
+);
+
+const row = document.createElement("button");
+row.type = "button";
+row.className = [
+"seal-status-row",
+active ? "is-borrowed" : "is-available",
+selectedBorrowSeal===seal.name ? "selected" : ""
+].filter(Boolean).join(" ");
+row.setAttribute("data-seal",seal.name);
+row.onclick = ()=>selectBorrowSeal(seal.name);
+
+row.innerHTML = `
+<div class="seal-row-main">
+<div class="seal-row-name">${seal.name}</div>
+${active
+? `<div class="seal-row-person">借用人：${active.borrower || "-"}</div>`
+: ""}
+</div>
+<div class="seal-row-status-wrap">
+<div class="seal-row-status">
+${active ? "借出中" : "可借用"}
+</div>
+${selectedBorrowSeal===seal.name && !active
+? `<span class="seal-row-check"><i data-lucide="check"></i></span>`
+: active
+? `<span class="btn-link">查看</span>`
+: `<i data-lucide="chevron-right"></i>`}
+</div>`;
+
+list.appendChild(row);
+});
+
+if(!visibleSeals.length){
+list.innerHTML = `<div class="seal-empty-state">找不到符合的印鑑</div>`;
+}
+
+if(selectedBorrowRecordId){
+const active = records.find(record=>
+record.id===selectedBorrowRecordId && !record.returnTime
+);
+
+if(active && borrowPanelMode !== "edit"){
+populateBorrowForm(active);
+}
+}
+
+renderBorrowPanelState();
+lucide.createIcons();
 }
 
 
@@ -3631,6 +3957,10 @@ wb,
 window.borrowSeal = borrowSeal;
 window.closeBorrowConfirmModal = closeBorrowConfirmModal;
 window.confirmBorrowSeal = confirmBorrowSeal;
+window.cancelPendingTransfer = cancelPendingTransfer;
+window.startInlineBorrowEdit = startInlineBorrowEdit;
+window.cancelInlineBorrowEdit = cancelInlineBorrowEdit;
+window.saveInlineBorrowEdit = saveInlineBorrowEdit;
 window.openReturnModal = openReturnModal;
 window.closeReturnModal = closeReturnModal;
 window.confirmReturnSeal = confirmReturnSeal;
@@ -3649,6 +3979,9 @@ window.addDepartment = addDepartment;
 window.deleteDepartment = deleteDepartment;
 window.moveDeptUp = moveDeptUp;
 window.moveDeptDown = moveDeptDown;
+
+document.getElementById("borrowSealSearch")
+.addEventListener("input",renderStatus);
 
 document.getElementById("searchInput")
 .addEventListener("input",renderTable);

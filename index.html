@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260618-v137-user-profile">
+<link rel="stylesheet" href="./styles.css?v=20260621-v138-borrow-workbench">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -141,147 +141,135 @@ transition:.15s;
 
 <div id="borrowPage">
 
-<div class="kpi-grid">
-
-<div class="kpi-card">
-<div class="kpi-title">借出中</div>
-<div class="kpi-value" id="kpiBorrowed">0</div>
-<div class="kpi-sub">目前借出的印鑑</div>
+<div class="borrow-page-heading">
+<h1>借用登記</h1>
+<div class="borrow-summary">
+<span class="summary-pill summary-pill-available">
+<b id="borrowAvailableCount">0</b> 組可借用
+</span>
+<span class="summary-pill">
+<b id="borrowBorrowedCount">0</b> 組借出
+</span>
+</div>
 </div>
 
-<div class="kpi-card">
-<div class="kpi-title">可借用</div>
-<div class="kpi-value" id="kpiAvailable">0</div>
-<div class="kpi-sub">目前可借用數量</div>
-</div>
-
-<div class="kpi-card">
-<div class="kpi-title">今日借用</div>
-<div class="kpi-value" id="kpiTodayBorrow">0</div>
-<div class="kpi-sub">今日新增借用</div>
-</div>
-
-<div class="kpi-card">
-<div class="kpi-title">今日歸還</div>
-<div class="kpi-value" id="kpiTodayReturn">0</div>
-<div class="kpi-sub">今日完成歸還</div>
-</div>
-
-</div>
-
-<div class="grid borrow-layout">
-
+<div id="pendingTransferBanner" class="pending-transfer-banner hidden">
 <div>
-
-<div class="panel">
-
-<h2 class="detail-title">
-
-<i
-data-lucide="clipboard-list"
-class="detail-title-icon">
-</i>
-
-借用申請
-
-</h2>
-
-<div style="
-color:#64748b;
-margin-bottom:24px;
-">
-請填寫借用資訊後送出申請
+<i data-lucide="import"></i>
+<span>
+正在處理待借用案件
+<b id="pendingTransferLabel">-</b>
+</span>
 </div>
+<button class="btn-link" type="button" onclick="cancelPendingTransfer()">
+取消帶入
+</button>
+</div>
+
+<div class="borrow-workbench">
+
+<section class="panel seal-status-panel">
+<div class="panel-heading-compact">
+<div>
+<h2>印鑑即時狀態</h2>
+<p>點選可借用印鑑；借出中可查看明細</p>
+</div>
+</div>
+
+<label class="seal-search" for="borrowSealSearch">
+<i data-lucide="search"></i>
+<input
+type="search"
+id="borrowSealSearch"
+placeholder="搜尋印鑑"
+autocomplete="off">
+</label>
+
+<div class="seal-status-list" id="statusGrid"></div>
+</section>
+
+<section class="panel borrow-data-panel">
+<div class="borrow-data-heading">
+<div>
+<h2 id="borrowPanelTitle">借用資料</h2>
+<p id="borrowPanelDescription">請先從左側選擇一組可借用印鑑</p>
+</div>
+<span id="borrowModeBadge" class="badge badge-green hidden">可借用</span>
+</div>
+
+<div id="borrowedMeta" class="borrowed-meta hidden"></div>
+
+<input type="hidden" id="seal">
 
 <div class="borrow-form-grid">
-
 <div class="form-group">
-<label>借用人</label>
-<input type="text" id="borrower">
+<label for="borrower">借用人</label>
+<input type="text" id="borrower" autocomplete="off">
 </div>
 
 <div class="form-group">
-<label>部門</label>
+<label for="department">部門</label>
 <select id="department"></select>
 </div>
 
 <div class="form-group">
-<label>印鑑編號</label>
-<select id="seal"></select>
+<label for="projectNo">計畫編號</label>
+<input type="text" id="projectNo" autocomplete="off">
 </div>
 
 <div class="form-group">
-<label>計畫編號</label>
-<input type="text" id="projectNo">
-</div>
-
-<div class="form-group">
-<label>表單編號</label>
-<input type="text" id="formNo">
+<label for="formNo">表單編號</label>
+<input type="text" id="formNo" autocomplete="off">
 </div>
 
 <div class="form-group form-group-purpose">
-<label>用途</label>
-<textarea id="purpose" rows="3"></textarea>
+<label for="purpose">用途</label>
+<textarea id="purpose" rows="4"></textarea>
+</div>
 </div>
 
+<div class="borrow-action-bar">
+<div id="borrowSelectionSummary" class="borrow-selection-summary">
+尚未選擇印鑑
 </div>
 
-<button class="btn btn-primary borrow-submit"
-onclick="borrowSeal()">
-確認借用
+<div class="borrow-action-buttons">
+<button
+id="cancelBorrowEditButton"
+class="btn btn-gray hidden"
+type="button"
+onclick="cancelInlineBorrowEdit()">
+取消
 </button>
 
-</div>
+<button
+id="editBorrowedButton"
+class="btn btn-gray hidden"
+type="button"
+onclick="startInlineBorrowEdit()">
+<i data-lucide="pencil"></i>
+編輯資料
+</button>
 
-</div>
+<button
+id="saveBorrowedButton"
+class="btn btn-primary borrow-main-action hidden"
+type="button"
+onclick="saveInlineBorrowEdit()">
+儲存變更
+</button>
 
-<div>
-
-<div class="panel">
-
-
-<h2 class="detail-title">
-
-<i
-data-lucide="activity"
-class="detail-title-icon">
-</i>
-
-印鑑即時狀態
-
-</h2>
-
-<div style="
-color:#64748b;
-margin-top:6px;
-margin-bottom:15px;
-">
-點選卡片可查看借用明細
-</div>
-
-
-<div class="status-grid" id="statusGrid"></div>
-
-<div id="sealDetailPanel" style="margin-top:20px;padding-top:15px;border-top:1px solid #e2e8f0;">
-<h3 class="detail-title">
-
-<i
-data-lucide="file-search"
-class="detail-title-icon">
-</i>
-
-印鑑借用明細
-
-</h3>
-<div id="sealDetailContent" style="margin-top:12px;color:#475569;">
-請點選上方印鑑查看詳細資訊
+<button
+id="confirmBorrowMainButton"
+class="btn btn-primary borrow-main-action"
+type="button"
+onclick="borrowSeal()"
+disabled>
+確認借用
+</button>
 </div>
 </div>
-
-</div>
-
-</div>
+</section>
 
 </div>
 
@@ -1281,7 +1269,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260618-v137-user-profile"></script>
+<script src="./app.js?v=20260621-v138-borrow-workbench"></script>
 
 </body>
 </html>
