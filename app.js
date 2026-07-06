@@ -1726,8 +1726,8 @@ if(pendingRecords.length===0){
 
 table.innerHTML=`
 <tr>
-<td colspan="${currentRole === "viewer" ? 6 : 7}">
-目前尚無待借用案件
+<td class="table-empty-cell" colspan="${currentRole === "viewer" ? 6 : 7}">
+目前無待借用案件
 </td>
 </tr>
 `;
@@ -1736,6 +1736,7 @@ return;
 
 }
 
+const visiblePendingRecords =
 pendingRecords
 .filter(item=>item.status!=="已借出")
 .sort((a,b)=>
@@ -1744,7 +1745,23 @@ String(b.projectNo || ""),
 "zh-Hant",
 {numeric:true,sensitivity:"base"}
 )
-)
+);
+
+if(visiblePendingRecords.length===0){
+
+table.innerHTML=`
+<tr>
+<td class="table-empty-cell" colspan="${currentRole === "viewer" ? 6 : 7}">
+目前無待借用案件
+</td>
+</tr>
+`;
+
+return;
+
+}
+
+visiblePendingRecords
 .forEach(item=>{
 
 table.innerHTML += `
@@ -3355,8 +3372,23 @@ if(!table) return;
 
 table.innerHTML = "";
 
+const activeReturnRecords =
 records
-.filter(r=>!r.returnTime)
+.filter(r=>!r.returnTime);
+
+if(activeReturnRecords.length===0){
+
+table.innerHTML = `
+<tr>
+<td class="table-empty-cell" colspan="8">目前無待歸還印鑑</td>
+</tr>
+`;
+
+return;
+
+}
+
+activeReturnRecords
 .forEach(r=>{
 
 const tr =
@@ -3612,6 +3644,21 @@ start + pageSize;
 
 const pageRecords =
 filteredRecords.slice(start,end);
+
+if(pageRecords.length===0){
+
+table.innerHTML = `
+<tr>
+<td class="table-empty-cell" colspan="${currentRole === "viewer" ? 9 : 10}">
+${records.length === 0 ? "目前無借用紀錄" : "查無借用紀錄"}
+</td>
+</tr>
+`;
+
+renderPagination(totalPages);
+return;
+
+}
 
 pageRecords.forEach(r=>{
 

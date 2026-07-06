@@ -1553,6 +1553,20 @@ cursor:pointer;
 
 }
 
+.table-empty-cell{
+
+text-align:center;
+
+color:#64748b;
+
+font-size:15px;
+
+font-weight:600;
+
+padding:30px 16px;
+
+}
+
 .hidden{
 display:none;
 }
