@@ -1079,7 +1079,7 @@ const deptSelect =
 document.getElementById("pendingDepartment");
 
 deptSelect.innerHTML =
-'<option value="">請選擇</option>';
+'<option value="">請選擇部門</option>';
 
 departmentList.forEach(dept=>{
 
@@ -1442,7 +1442,7 @@ document.getElementById(
 );
 
 deptSelect.innerHTML =
-'<option value="">請選擇</option>';
+'<option value="">請選擇部門</option>';
 
 departmentList.forEach(dept=>{
 
@@ -1738,6 +1738,13 @@ return;
 
 pendingRecords
 .filter(item=>item.status!=="已借出")
+.sort((a,b)=>
+String(a.projectNo || "").localeCompare(
+String(b.projectNo || ""),
+"zh-Hant",
+{numeric:true,sensitivity:"base"}
+)
+)
 .forEach(item=>{
 
 table.innerHTML += `

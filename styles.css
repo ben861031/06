@@ -2071,6 +2071,18 @@ z-index:9999;
 
 }
 
+.modal-helper-text{
+
+color:#64748b;
+
+font-size:14px;
+
+line-height:1.7;
+
+margin:-4px 0 18px;
+
+}
+
 .modal-footer{
 
 display:flex;
