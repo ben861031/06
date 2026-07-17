@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260717-v150-shared-members">
+<link rel="stylesheet" href="./styles.css?v=20260717-v151-system-management">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -104,12 +104,14 @@ transition:.15s;
                 <i data-lucide="chevron-down" class="top-chevron"></i>
             </button>
             <div class="top-dropdown">
+                <div class="top-dropdown-section-label">基礎設定</div>
                 <div class="menu-item" data-tooltip="印鑑維護" onclick="showPage('sealPage',this)">
                     <i data-lucide="badge-check" class="menu-icon"></i><span>印鑑維護</span>
                 </div>
                 <div class="menu-item" data-tooltip="部門維護" onclick="showPage('deptPage',this)">
                     <i data-lucide="building-2" class="menu-icon"></i><span>部門維護</span>
                 </div>
+                <div class="top-dropdown-section-label">帳號與權限</div>
                 <div class="menu-item" id="memberMenu" data-tooltip="人員管理" onclick="showPage('memberPage',this)">
                     <i data-lucide="contact-round" class="menu-icon"></i><span>人員管理</span>
                 </div>
@@ -119,6 +121,7 @@ transition:.15s;
                 <div class="menu-item" id="loginLogMenu" data-tooltip="登入紀錄" onclick="showPage('loginLogPage',this)">
                     <i data-lucide="log-in" class="menu-icon"></i><span>登入紀錄</span>
                 </div>
+                <div class="top-dropdown-section-label">系統紀錄</div>
                 <div class="menu-item" id="auditLogMenu" data-tooltip="操作紀錄" onclick="openAuditLogPage(this)">
                     <i data-lucide="history" class="menu-icon"></i><span>操作紀錄</span>
                 </div>
@@ -332,7 +335,7 @@ onclick="openPendingModal()">
 
 <div class="table-wrap">
 
-<table>
+<table class="management-table">
 
 <thead>
 <tr>
@@ -729,11 +732,11 @@ onclick="resetAuditFilter()">
 <tr>
 <th>操作時間</th>
 <th>操作者</th>
-<th>角色</th>
 <th>操作</th>
 <th>類別</th>
 <th>對象</th>
-<th>內容</th>
+<th>摘要</th>
+<th>詳情</th>
 </tr>
 </thead>
 
@@ -804,8 +807,8 @@ class="detail-title-icon">
 <input type="number" id="newOrder">
 </div>
 
-<button
-class="btn btn-green"
+<button type="button"
+class="btn btn-primary btn-inline"
 onclick="addSeal()">
 
 <i data-lucide="circle-plus"></i>
@@ -855,8 +858,8 @@ class="detail-title-icon">
 <input type="number" id="newDeptOrder">
 </div>
 
-<button
-class="btn btn-green"
+<button type="button"
+class="btn btn-primary btn-inline"
 onclick="addDepartment()">
 
 <i data-lucide="circle-plus"></i>
@@ -887,10 +890,10 @@ onclick="addDepartment()">
 <p class="page-description">維護行政、通用問卷與印鑑系統共用的人員主檔；印鑑系統角色仍請至「權限管理」另行設定。</p>
 </div>
 <div class="member-toolbar-actions">
-<button type="button" class="btn btn-gray" onclick="downloadMemberTemplate()">下載標準範本</button>
-<button type="button" class="btn btn-gray" onclick="chooseMemberImport()">匯入 Excel</button>
-<button type="button" class="btn btn-green" onclick="exportSharedMembers()">匯出名單</button>
-<button type="button" class="btn btn-primary" onclick="startNewSharedMember()">新增人員</button>
+<button type="button" class="btn btn-primary btn-inline" onclick="startNewSharedMember()"><i data-lucide="user-plus"></i><span>新增人員</span></button>
+<button type="button" class="btn btn-gray" onclick="chooseMemberImport()"><i data-lucide="file-up"></i><span>匯入 Excel</span></button>
+<button type="button" class="btn btn-gray" onclick="exportSharedMembers()"><i data-lucide="file-down"></i><span>匯出名單</span></button>
+<button type="button" class="btn btn-gray" onclick="downloadMemberTemplate()"><i data-lucide="file-spreadsheet"></i><span>下載標準範本</span></button>
 <input id="memberImportInput" class="file-input-hidden" type="file" accept=".xlsx,.xls,.csv" onchange="importSharedMembers(this.files[0]);this.value=''" aria-label="匯入人員 Excel">
 </div>
 </div>
@@ -1030,14 +1033,21 @@ class="detail-title-icon">
 
 </h2>
 
-<table>
+<div class="login-toolbar">
+<div class="form-group log-search-field"><label for="loginSearch">搜尋</label><input id="loginSearch" placeholder="姓名、部門、員工編號或 Email" oninput="filterLoginLogs()"></div>
+<label class="audit-date-field"><span>起日</span><input type="date" id="loginDateStart" onchange="filterLoginLogs()"></label>
+<label class="audit-date-field"><span>迄日</span><input type="date" id="loginDateEnd" onchange="filterLoginLogs()"></label>
+<button type="button" class="btn btn-gray" onclick="resetLoginFilter()"><i data-lucide="rotate-ccw"></i><span>重設</span></button>
+</div>
+
+<div class="table-wrap">
+<table class="management-table">
 
 <thead>
 
 <tr>
 <th>登入時間</th>
-<th>姓名</th>
-<th>Email</th>
+<th>使用者</th>
 <th>角色</th>
 </tr>
 
@@ -1048,15 +1058,9 @@ class="detail-title-icon">
 </tbody>
 
 </table>
+</div>
 
-<br>
-
-<div
-style="
-display:flex;
-justify-content:space-between;
-align-items:center;
-">
+<div class="audit-pagination-row">
 
 <div>
 
@@ -1066,11 +1070,7 @@ align-items:center;
 id="loginPageSize"
 onchange="changeLoginPageSize()">
 
-<option value="10" selected>
-10
-</option>
-
-<option value="20">
+<option value="20" selected>
 20
 </option>
 
@@ -1102,6 +1102,17 @@ hidden>
 
 </div>
 
+</div>
+
+<div id="auditDetailOverlay" class="management-modal-mask" aria-hidden="true">
+<section class="management-modal" role="dialog" aria-modal="true" aria-labelledby="auditDetailTitle">
+<div class="management-modal-head">
+<div><h2 id="auditDetailTitle">操作紀錄詳情</h2><p id="auditDetailCaption">查看這筆操作的完整異動內容。</p></div>
+<button type="button" class="management-modal-close" onclick="closeAuditDetail()" aria-label="關閉"><i data-lucide="x"></i></button>
+</div>
+<div id="auditDetailBody" class="management-modal-body"></div>
+<div class="management-modal-actions"><button type="button" class="btn btn-gray" onclick="closeAuditDetail()">關閉</button></div>
+</section>
 </div>
 
 
@@ -1374,7 +1385,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260717-v150-shared-members"></script>
+<script src="./app.js?v=20260717-v151-system-management"></script>
 
 </body>
 </html>

@@ -221,7 +221,7 @@ let loginHasMore = false;
 let loginLoading = false;
 
 let loginCurrentPage = 1;
-let loginPageSize = 10;
+let loginPageSize = 20;
 
 let auditLogs = [];
 let auditLastDoc = null;
@@ -254,6 +254,43 @@ seal:"印鑑",
 department:"部門",
 user:"使用者權限"
 };
+
+const systemRoleLabels = {
+admin:"系統管理員",
+manager:"印鑑管理員",
+user:"一般使用者",
+viewer:"檢視者"
+};
+
+function getSystemRoleLabel(role){
+return systemRoleLabels[String(role || "").toLowerCase()] || role || "未設定";
+}
+
+function renderCompactPagination(areaId,currentPage,totalPages,onChange){
+const area = document.getElementById(areaId);
+if(!area) return;
+area.innerHTML = "";
+if(totalPages <= 1) return;
+
+const pages = new Set([1,totalPages,currentPage-1,currentPage,currentPage+1]);
+let previous = 0;
+[...pages].filter(page=>page >= 1 && page <= totalPages).sort((a,b)=>a-b).forEach(page=>{
+if(previous && page - previous > 1){
+const ellipsis = document.createElement("span");
+ellipsis.className = "pagination-ellipsis";
+ellipsis.textContent = "…";
+area.appendChild(ellipsis);
+}
+const button = document.createElement("button");
+button.type = "button";
+button.className = `pagination-button${page === currentPage ? " active" : ""}`;
+button.textContent = page;
+button.setAttribute("aria-label",`第 ${page} 頁`);
+button.onclick = ()=>onChange(page);
+area.appendChild(button);
+previous = page;
+});
+}
 
 function compactAuditData(data){
 
@@ -668,58 +705,79 @@ table.innerHTML =
 pageRows.map(log=>`
 <tr>
 <td>${escapeAuditText(formatDate(log.createdAt))}</td>
-<td>
-${escapeAuditText(log.actorName || "-")}
-<div style="font-size:11px;color:#94a3b8;margin-top:4px;">
-${escapeAuditText(log.actorEmail || "")}
-</div>
+<td class="identity-cell">
+<strong>${escapeAuditText(log.actorName || "-")}</strong>
+<small>${escapeAuditText(log.actorEmail || "")}</small>
+<span class="role-badge">${escapeAuditText(getSystemRoleLabel(log.actorRole))}</span>
 </td>
-<td>${escapeAuditText(log.actorRole || "-")}</td>
 <td>
-<span class="badge badge-blue">
+<span class="badge badge-blue audit-action-${escapeAuditText(log.action || "other")}">
 ${escapeAuditText(auditActionLabels[log.action] || log.action || "-")}
 </span>
 </td>
 <td>${escapeAuditText(auditCategoryLabels[log.category] || log.category || "-")}</td>
 <td>${escapeAuditText(log.targetLabel || log.targetId || "-")}</td>
-<td class="audit-detail">${escapeAuditText(getAuditSummary(log))}</td>
+<td class="audit-summary-cell">${escapeAuditText(getAuditSummary(log))}</td>
+<td><button type="button" class="btn btn-gray btn-sm" onclick="openAuditDetail('${escapeAuditText(log.id)}')"><i data-lucide="eye"></i><span>查看詳情</span></button></td>
 </tr>
 `).join("");
 
 renderAuditPagination(totalPages);
+lucide.createIcons();
 
 }
 
 function renderAuditPagination(totalPages){
 
-const area =
-document.getElementById("auditPagination");
-
-if(!area) return;
-
-area.innerHTML = "";
-
-for(let page=1;page<=totalPages;page++){
-
-const button =
-document.createElement("button");
-
-button.className = "btn";
-button.textContent = page;
-button.style.background =
-page === auditCurrentPage ? "#2563eb" : "#e2e8f0";
-button.style.color =
-page === auditCurrentPage ? "white" : "#0f172a";
-
-button.onclick = ()=>{
+renderCompactPagination("auditPagination",auditCurrentPage,totalPages,page=>{
 auditCurrentPage = page;
 renderAuditLogs();
-};
-
-area.appendChild(button);
+});
 
 }
 
+function formatAuditDetailValue(value){
+if(value === true) return "是";
+if(value === false) return "否";
+if(value === null || value === undefined || value === "") return "-";
+if(typeof value === "object") return JSON.stringify(value,null,2);
+return String(value);
+}
+
+function renderAuditDataBlock(title,data){
+if(!data || !Object.keys(data).length){
+return `<section class="audit-data-block"><h3>${title}</h3><div class="audit-no-data">無資料</div></section>`;
+}
+return `<section class="audit-data-block"><h3>${title}</h3><dl>${Object.entries(data).map(([key,value])=>`<div class="audit-data-row"><dt>${escapeAuditText(key)}</dt><dd>${escapeAuditText(formatAuditDetailValue(value))}</dd></div>`).join("")}</dl></section>`;
+}
+
+function openAuditDetail(id){
+const log = auditLogs.find(item=>item.id === id);
+const overlay = document.getElementById("auditDetailOverlay");
+const body = document.getElementById("auditDetailBody");
+if(!log || !overlay || !body) return;
+
+document.getElementById("auditDetailCaption").textContent = `${formatDate(log.createdAt)}｜${log.actorName || "未記錄操作者"}`;
+body.innerHTML = `
+<div class="audit-detail-summary">
+<div><span>操作</span><strong>${escapeAuditText(auditActionLabels[log.action] || log.action || "-")}</strong></div>
+<div><span>類別</span><strong>${escapeAuditText(auditCategoryLabels[log.category] || log.category || "-")}</strong></div>
+<div><span>對象</span><strong>${escapeAuditText(log.targetLabel || log.targetId || "-")}</strong></div>
+<div><span>角色</span><strong>${escapeAuditText(getSystemRoleLabel(log.actorRole))}</strong></div>
+</div>
+<div class="audit-data-grid">${renderAuditDataBlock("異動前",log.before)}${renderAuditDataBlock("異動後",log.after)}</div>`;
+overlay.classList.add("open");
+overlay.setAttribute("aria-hidden","false");
+document.body.classList.add("modal-open");
+lucide.createIcons();
+}
+
+function closeAuditDetail(){
+const overlay = document.getElementById("auditDetailOverlay");
+if(!overlay) return;
+overlay.classList.remove("open");
+overlay.setAttribute("aria-hidden","true");
+document.body.classList.remove("modal-open");
 }
 
 function changeAuditPageSize(){
@@ -770,7 +828,7 @@ loginCurrentPage = 1;
 }
 
 if(table && reset){
-table.innerHTML = '<tr><td colspan="4">登入紀錄載入中...</td></tr>';
+table.innerHTML = '<tr><td colspan="3">登入紀錄載入中...</td></tr>';
 }
 
 try{
@@ -790,7 +848,7 @@ renderLoginLogs();
 
 console.error("讀取登入紀錄失敗",error);
 if(table){
-table.innerHTML = `<tr><td colspan="4">登入紀錄讀取失敗：${escapeHtml(error.message || "未知錯誤")}</td></tr>`;
+table.innerHTML = `<tr><td colspan="3">登入紀錄讀取失敗：${escapeHtml(error.message || "未知錯誤")}</td></tr>`;
 }
 
 }finally{
@@ -821,10 +879,8 @@ document.getElementById(
 
 if(!table) return;
 
-table.innerHTML = "";
-
 const sortedLogs =
-[...loginLogs]
+getFilteredLoginLogs()
 .sort((a,b)=>
 getRecordTime(b.loginTime) - getRecordTime(a.loginTime)
 );
@@ -850,30 +906,56 @@ start,
 start + loginPageSize
 );
 
-pageLogs.forEach(log=>{
+if(!pageLogs.length){
+table.innerHTML = '<tr><td colspan="3" class="table-empty-cell">目前沒有符合條件的登入紀錄</td></tr>';
+renderLoginPagination(totalPages);
+return;
+}
 
-table.innerHTML += `
-
+table.innerHTML = pageLogs.map(log=>{
+const email = normalizeEmail(log.email || "");
+const member = memberList.find(item=>memberGoogleEmail(item) === email);
+const department = memberDepartmentName(member);
+const employeeNo = memberEmployeeNo(member);
+const primaryName = member?.name || log.name || email || "未記錄";
+const identity = [department,primaryName].filter(Boolean).join(" ");
+return `
 <tr>
+<td>${escapeHtml(formatDate(log.loginTime))}</td>
+<td class="identity-cell"><strong>${escapeHtml(identity)}</strong><small>${escapeHtml([employeeNo,email].filter(Boolean).join("｜"))}</small></td>
+<td><span class="role-badge">${escapeHtml(getSystemRoleLabel(log.role))}</span></td>
+</tr>`;
+}).join("");
 
-<td>${formatDate(log.loginTime)}</td>
+renderLoginPagination(totalPages);
+lucide.createIcons();
+}
 
-<td>${escapeHtml(log.name || "-")}</td>
-
-<td>${escapeHtml(log.email || "-")}</td>
-
-<td>${escapeHtml(log.role || "-")}</td>
-
-</tr>
-
-`;
-
+function getFilteredLoginLogs(){
+const keyword = (document.getElementById("loginSearch")?.value || "").trim().toLowerCase();
+const startDate = document.getElementById("loginDateStart")?.value || "";
+const endDate = document.getElementById("loginDateEnd")?.value || "";
+return [...loginLogs].filter(log=>{
+const email = normalizeEmail(log.email || "");
+const member = memberList.find(item=>memberGoogleEmail(item) === email);
+const keywordMatch = !keyword || [
+log.name,email,log.role,getSystemRoleLabel(log.role),member?.name,memberDepartmentName(member),memberEmployeeNo(member)
+].some(value=>String(value || "").toLowerCase().includes(keyword));
+return keywordMatch && matchesDateRange(log.loginTime,startDate,endDate);
 });
+}
 
-renderLoginPagination(
-totalPages
-);
+function filterLoginLogs(){
+loginCurrentPage = 1;
+renderLoginLogs();
+}
 
+function resetLoginFilter(){
+document.getElementById("loginSearch").value = "";
+document.getElementById("loginDateStart").value = "";
+document.getElementById("loginDateEnd").value = "";
+loginCurrentPage = 1;
+renderLoginLogs();
 }
 
 function changeLoginPageSize(){
@@ -898,45 +980,10 @@ function renderLoginPagination(
 totalPages
 ){
 
-const area =
-document.getElementById(
-"loginPagination"
-);
-
-if(!area) return;
-
-area.innerHTML = "";
-
-if(totalPages <= 1) return;
-
-for(
-let i=1;
-i<=totalPages;
-i++
-){
-
-const btn =
-document.createElement(
-"button"
-);
-
-btn.className = "btn";
-
-btn.innerText = i;
-
-btn.style.marginLeft = "5px";
-
-btn.onclick = ()=>{
-
-loginCurrentPage = i;
-
+renderCompactPagination("loginPagination",loginCurrentPage,totalPages,page=>{
+loginCurrentPage = page;
 renderLoginLogs();
-
-};
-
-area.appendChild(btn);
-
-}
+});
 
 }
 
@@ -1102,10 +1149,10 @@ area.innerHTML = '<div class="table-empty-cell">查無符合條件的人員</div
 return;
 }
 
-area.innerHTML = `<div class="table-wrap"><table><thead><tr><th>部門</th><th>姓名</th><th>員工編號</th><th>Google 帳號</th><th>狀態</th><th>操作</th></tr></thead><tbody>${filtered.map(member=>{
+area.innerHTML = `<div class="table-wrap"><table class="management-table"><thead><tr><th>部門</th><th>姓名</th><th>員工編號</th><th>Google 帳號</th><th>狀態</th><th>操作</th></tr></thead><tbody>${filtered.map(member=>{
 const active = member.active !== false;
 const email = memberGoogleEmail(member);
-return `<tr><td>${escapeHtml(memberDepartmentName(member) || "未設定")}</td><td><b>${escapeHtml(member.name || "")}</b></td><td>${escapeHtml(memberEmployeeNo(member))}</td><td>${email ? escapeHtml(email) : '<span class="muted-text">未設定</span>'}</td><td><span class="status-badge ${active ? 'status-active' : 'status-inactive'}">${active ? '啟用' : '停用'}</span></td><td class="operation-cell"><button class="btn btn-gray" type="button" onclick="editSharedMember('${member.id}')">修改</button><button class="btn ${active ? 'btn-gray' : 'btn-green'}" type="button" onclick="toggleSharedMember('${member.id}',${active ? 'false' : 'true'})">${active ? '停用' : '啟用'}</button><button class="btn btn-danger" type="button" onclick="deleteSharedMember('${member.id}')">刪除</button></td></tr>`;
+return `<tr><td>${escapeHtml(memberDepartmentName(member) || "未設定")}</td><td><b>${escapeHtml(member.name || "")}</b></td><td>${escapeHtml(memberEmployeeNo(member))}</td><td>${email ? escapeHtml(email) : '<span class="muted-text">未設定</span>'}</td><td><span class="status-badge ${active ? 'status-active' : 'status-inactive'}">${active ? '啟用' : '停用'}</span></td><td class="operation-cell"><button class="btn btn-gray btn-sm" type="button" onclick="editSharedMember('${member.id}')">修改</button><button class="btn ${active ? 'btn-gray' : 'btn-primary'} btn-sm btn-inline" type="button" onclick="toggleSharedMember('${member.id}',${active ? 'false' : 'true'})">${active ? '停用' : '啟用'}</button><button class="btn btn-danger-outline btn-sm" type="button" onclick="deleteSharedMember('${member.id}')">刪除</button></td></tr>`;
 }).join("")}</tbody></table></div>`;
 }
 
@@ -2601,47 +2648,23 @@ function renderDepartmentMaintenance(){
 const area =
 document.getElementById("deptListArea");
 
-area.innerHTML = "";
+if(!area) return;
+if(!departmentList.length){
+area.innerHTML = '<div class="table-empty-cell">尚未建立部門</div>';
+return;
+}
 
-departmentList.forEach(dept=>{
-
-const div =
-document.createElement("div");
-
-div.className =
-"maintenance-item";
-
-div.innerHTML = `
-
-<div>
-<strong>${dept.name}</strong>
-<br>
-排序：${dept.sortOrder}
-</div>
-
-<div class="maintenance-actions">
-
-<button class="btn btn-gray"
-onclick="moveDeptUp('${dept.id}')">
-⬆
-</button>
-
-<button class="btn btn-gray"
-onclick="moveDeptDown('${dept.id}')">
-⬇
-</button>
-
-<button class="btn btn-red"
-onclick="deleteDepartment('${dept.id}')">
-刪除
-</button>
-
-</div>
-`;
-
-area.appendChild(div);
-
-});
+area.innerHTML = `<div class="table-wrap"><table class="management-table master-table"><thead><tr><th>部門名稱</th><th>顯示順序</th><th>操作</th></tr></thead><tbody>${departmentList.map((dept,index)=>`
+<tr>
+<td class="master-name-cell"><strong>${escapeHtml(dept.name || "未命名部門")}</strong></td>
+<td><span class="master-order-badge">${escapeHtml(dept.sortOrder ?? index + 1)}</span></td>
+<td class="operation-cell master-actions">
+<button type="button" class="icon-button" title="上移" aria-label="上移 ${escapeHtml(dept.name || "部門")}" onclick="moveDeptUp('${dept.id}')" ${index === 0 ? "disabled" : ""}><i data-lucide="arrow-up"></i></button>
+<button type="button" class="icon-button" title="下移" aria-label="下移 ${escapeHtml(dept.name || "部門")}" onclick="moveDeptDown('${dept.id}')" ${index === departmentList.length - 1 ? "disabled" : ""}><i data-lucide="arrow-down"></i></button>
+<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteDepartment('${dept.id}')">刪除</button>
+</td>
+</tr>`).join("")}</tbody></table></div>`;
+lucide.createIcons();
 
 }
 
@@ -2791,6 +2814,8 @@ if(blockViewerAction()) return;
 const department =
 departmentList.find(item=>item.id===id);
 
+if(!confirm(`確定刪除部門「${department?.name || id}」？\n若仍有人員使用此部門，建議先確認人員資料後再刪除。`)) return;
+
 await deleteDoc(doc(db,"departments",id));
 
 await writeAuditLog({
@@ -2886,47 +2911,23 @@ function renderSealMaintenance(){
 const area =
 document.getElementById("sealListArea");
 
-area.innerHTML = "";
+if(!area) return;
+if(!sealList.length){
+area.innerHTML = '<div class="table-empty-cell">尚未建立印鑑</div>';
+return;
+}
 
-sealList.forEach(seal=>{
-
-const div =
-document.createElement("div");
-
-div.className =
-"maintenance-item";
-
-div.innerHTML = `
-
-<div>
-<strong>${seal.name}</strong>
-<br>
-排序：${seal.sortOrder}
-</div>
-
-<div class="maintenance-actions">
-
-<button class="btn btn-gray"
-onclick="moveUp('${seal.id}')">
-⬆
-</button>
-
-<button class="btn btn-gray"
-onclick="moveDown('${seal.id}')">
-⬇
-</button>
-
-<button class="btn btn-red"
-onclick="deleteSeal('${seal.id}')">
-刪除
-</button>
-
-</div>
-`;
-
-area.appendChild(div);
-
-});
+area.innerHTML = `<div class="table-wrap"><table class="management-table master-table"><thead><tr><th>印鑑名稱</th><th>顯示順序</th><th>操作</th></tr></thead><tbody>${sealList.map((seal,index)=>`
+<tr>
+<td class="master-name-cell"><strong>${escapeHtml(seal.name || "未命名印鑑")}</strong></td>
+<td><span class="master-order-badge">${escapeHtml(seal.sortOrder ?? index + 1)}</span></td>
+<td class="operation-cell master-actions">
+<button type="button" class="icon-button" title="上移" aria-label="上移 ${escapeHtml(seal.name || "印鑑")}" onclick="moveUp('${seal.id}')" ${index === 0 ? "disabled" : ""}><i data-lucide="arrow-up"></i></button>
+<button type="button" class="icon-button" title="下移" aria-label="下移 ${escapeHtml(seal.name || "印鑑")}" onclick="moveDown('${seal.id}')" ${index === sealList.length - 1 ? "disabled" : ""}><i data-lucide="arrow-down"></i></button>
+<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteSeal('${seal.id}')">刪除</button>
+</td>
+</tr>`).join("")}</tbody></table></div>`;
+lucide.createIcons();
 
 }
 
@@ -3075,6 +3076,8 @@ if(blockViewerAction()) return;
 
 const seal =
 sealList.find(item=>item.id===id);
+
+if(!confirm(`確定刪除印鑑「${seal?.name || id}」？\n歷史借用紀錄會保留，但後續將無法再選擇此印鑑。`)) return;
 
 await deleteDoc(doc(db,"seals",id));
 
