@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260717-v149-read-permission">
+<link rel="stylesheet" href="./styles.css?v=20260717-v150-shared-members">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -109,6 +109,9 @@ transition:.15s;
                 </div>
                 <div class="menu-item" data-tooltip="部門維護" onclick="showPage('deptPage',this)">
                     <i data-lucide="building-2" class="menu-icon"></i><span>部門維護</span>
+                </div>
+                <div class="menu-item" id="memberMenu" data-tooltip="人員管理" onclick="showPage('memberPage',this)">
+                    <i data-lucide="contact-round" class="menu-icon"></i><span>人員管理</span>
                 </div>
                 <div class="menu-item" id="permissionMenu" data-tooltip="權限管理" onclick="showPage('permissionPage',this)">
                     <i data-lucide="users" class="menu-icon"></i><span>權限管理</span>
@@ -872,6 +875,52 @@ onclick="addDepartment()">
 
 </div>
 
+<!-- 共用人員管理 -->
+
+<div id="memberPage" class="hidden">
+
+<div class="panel">
+
+<div class="member-toolbar">
+<div>
+<h2 class="detail-title"><i data-lucide="contact-round" class="detail-title-icon"></i>人員管理</h2>
+<p class="page-description">維護行政、通用問卷與印鑑系統共用的人員主檔；印鑑系統角色仍請至「權限管理」另行設定。</p>
+</div>
+<div class="member-toolbar-actions">
+<button type="button" class="btn btn-gray" onclick="downloadMemberTemplate()">下載標準範本</button>
+<button type="button" class="btn btn-gray" onclick="chooseMemberImport()">匯入 Excel</button>
+<button type="button" class="btn btn-green" onclick="exportSharedMembers()">匯出名單</button>
+<button type="button" class="btn btn-primary" onclick="startNewSharedMember()">新增人員</button>
+<input id="memberImportInput" class="file-input-hidden" type="file" accept=".xlsx,.xls,.csv" onchange="importSharedMembers(this.files[0]);this.value=''" aria-label="匯入人員 Excel">
+</div>
+</div>
+
+<div id="memberEditor" class="member-editor hidden">
+<div class="member-editor-head"><h3 id="memberEditorTitle">新增人員</h3><span id="memberEditorBadge" class="member-mode-badge">新增模式</span></div>
+<div class="member-form-grid">
+<div class="form-group"><label for="memberDepartment">部門 *</label><select id="memberDepartment"></select></div>
+<div class="form-group"><label for="memberName">姓名 *</label><input id="memberName"></div>
+<div class="form-group"><label for="memberEmployeeNo">員工編號 *</label><input id="memberEmployeeNo"></div>
+<div class="form-group"><label for="memberGoogleEmail">Google 帳號</label><input id="memberGoogleEmail" type="email" placeholder="name@gmail.com"></div>
+<div class="form-group"><label for="memberStatus">狀態</label><select id="memberStatus"><option value="true">啟用</option><option value="false">停用</option></select></div>
+</div>
+<div class="member-editor-actions"><button id="memberSaveButton" type="button" class="btn btn-primary" onclick="saveSharedMember()">新增人員</button><button type="button" class="btn btn-gray" onclick="cancelSharedMemberEdit()">取消</button></div>
+</div>
+
+<div id="memberImportResult" class="member-import-result" role="status" aria-live="polite"></div>
+
+<div class="member-search-row">
+<div class="form-group"><label for="memberSearch">搜尋</label><input id="memberSearch" placeholder="姓名、部門、員工編號或 Google 帳號" oninput="renderSharedMemberTable()"></div>
+<div class="form-group"><label for="memberStatusFilter">狀態</label><select id="memberStatusFilter" onchange="renderSharedMemberTable()"><option value="all">全部</option><option value="active">啟用</option><option value="inactive">停用</option></select></div>
+</div>
+
+<div id="memberSummary" class="member-summary"></div>
+<div id="memberTableArea"></div>
+
+</div>
+
+</div>
+
 <!-- 權限管理 -->
 
 <div id="permissionPage" class="hidden">
@@ -940,6 +989,25 @@ onclick="addWhitelistUser()">
 
 </div>
 
+</div>
+
+<div id="memberImportModeMask" class="member-modal-mask" role="dialog" aria-modal="true" aria-labelledby="memberImportModeTitle">
+<section class="member-modal member-import-mode-dialog">
+<div class="member-modal-head"><div><h2 id="memberImportModeTitle">選擇人員匯入方式</h2><p>請依 Excel 的範圍選擇，避免把未列入的同仁誤判為離職。</p></div><button type="button" class="member-modal-close" onclick="closeMemberImportMode()" aria-label="關閉">×</button></div>
+<div class="member-import-mode-choices">
+<label class="member-import-mode-choice"><input type="radio" name="memberImportMode" value="partial" checked><span><b>部分名單更新</b><small>只新增或更新 Excel 內的人員，不檢查其他既有人員。</small></span></label>
+<label class="member-import-mode-choice"><input type="radio" name="memberImportMode" value="full"><span><b>完整名單核對</b><small>列出本次未出現的啟用人員，再由您決定是否停用。</small></span></label>
+</div>
+<div class="member-modal-actions"><button type="button" class="btn btn-gray" onclick="closeMemberImportMode()">取消</button><button type="button" class="btn btn-primary" onclick="continueMemberImport()">選擇 Excel</button></div>
+</section>
+</div>
+
+<div id="memberImportReviewMask" class="member-modal-mask" role="dialog" aria-modal="true" aria-labelledby="memberImportReviewTitle">
+<section class="member-modal member-import-review-dialog">
+<div class="member-modal-head"><div><h2 id="memberImportReviewTitle">確認人員名單差異</h2><p id="memberImportReviewCaption"></p></div><button type="button" class="member-modal-close" onclick="closeMemberImportReview()" aria-label="關閉">×</button></div>
+<div id="memberImportReviewBody" class="member-import-review-body"></div>
+<div class="member-modal-actions"><button type="button" class="btn btn-gray" onclick="closeMemberImportReview()">取消</button><button id="confirmMemberImportButton" type="button" class="btn btn-primary" onclick="confirmSharedMemberImport()">匯入名單</button></div>
+</section>
 </div>
 
 <div id="loginLogPage"
@@ -1306,7 +1374,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260717-v149-read-permission"></script>
+<script src="./app.js?v=20260717-v150-shared-members"></script>
 
 </body>
 </html>
