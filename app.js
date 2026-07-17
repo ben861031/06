@@ -42,11 +42,16 @@ collection,
 addDoc,
 getDocs,
 getDoc,
+setDoc,
 updateDoc,
 deleteDoc,
 doc,
 query,
-where
+where,
+orderBy,
+limit,
+startAfter,
+Timestamp
 } = await import(
 "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js"
 );
@@ -83,6 +88,10 @@ let currentRole = "";
 
 function normalizeRole(role){
 return String(role || "").trim().toLowerCase();
+}
+
+function normalizeEmail(email){
+return String(email || "").trim().toLowerCase();
 }
 
 function isAdminRole(){
@@ -182,6 +191,9 @@ let sealList = [];
 let departmentList = [];
 let pendingRecords = [];
 let userList = [];
+let memberList = [];
+let memberAccountList = [];
+let legacyUserList = [];
 let currentPendingIndex = null;
 let pendingTransferDraft = null;
 let borrowEntryDraft = null;
@@ -191,13 +203,27 @@ let borrowPanelMode = "new";
 let editingPendingId = null;
 
 let loginLogs = [];
+let loginLastDoc = null;
+let loginHasMore = false;
+let loginLoading = false;
 
 let loginCurrentPage = 1;
 let loginPageSize = 10;
 
 let auditLogs = [];
+let auditLastDoc = null;
+let auditHasMore = false;
+let auditLoading = false;
 let auditCurrentPage = 1;
 let auditPageSize = 25;
+
+const LOG_BATCH_SIZE = 100;
+const HISTORY_BATCH_SIZE = 100;
+let historyRecords = [];
+let historyLastDoc = null;
+let historyHasMore = false;
+let historyLoading = false;
+let historyLoaded = false;
 
 const auditActionLabels = {
 borrow:"借用",
@@ -254,7 +280,7 @@ await addDoc(
 collection(db,"auditLogs"),
 {
 actorName:currentUser || "系統使用者",
-actorEmail:currentUserEmail || "",
+actorEmail:normalizeEmail(currentUserEmail),
 actorRole:currentRole || "",
 action,
 category,
@@ -396,14 +422,47 @@ return parts.join("；") || "-";
 
 }
 
-async function loadAuditLogs(){
+function buildAuditLogQuery(){
+
+const constraints = [];
+const startDate = document.getElementById("auditDateStart")?.value || "";
+const endDate = document.getElementById("auditDateEnd")?.value || "";
+
+if(startDate){
+constraints.push(where("createdAt",">=",Timestamp.fromDate(new Date(`${startDate}T00:00:00`))));
+}
+
+if(endDate){
+const exclusiveEnd = new Date(`${endDate}T00:00:00`);
+exclusiveEnd.setDate(exclusiveEnd.getDate() + 1);
+constraints.push(where("createdAt","<",Timestamp.fromDate(exclusiveEnd)));
+}
+
+constraints.push(orderBy("createdAt","desc"));
+if(auditLastDoc) constraints.push(startAfter(auditLastDoc));
+constraints.push(limit(LOG_BATCH_SIZE));
+
+return query(collection(db,"auditLogs"),...constraints);
+
+}
+
+async function loadAuditLogs(reset = true){
 
 const table =
 document.getElementById("auditLogTable");
 
 if(!isAdminRole()){
 
-if(table){
+if(auditLoading) return;
+
+if(reset){
+auditLogs = [];
+auditLastDoc = null;
+auditHasMore = false;
+auditCurrentPage = 1;
+}
+
+if(table && reset){
 table.innerHTML = `
 <tr>
 <td colspan="7">
@@ -417,7 +476,14 @@ return;
 
 }
 
-if(table){
+if(reset){
+auditLogs = [];
+auditLastDoc = null;
+auditHasMore = false;
+auditCurrentPage = 1;
+}
+
+if(table && reset){
 table.innerHTML = `
 <tr>
 <td colspan="7">操作紀錄載入中...</td>
@@ -427,10 +493,8 @@ table.innerHTML = `
 
 try{
 
-const snapshot =
-await getDocs(collection(db,"auditLogs"));
-
-auditLogs = [];
+auditLoading = true;
+const snapshot = await getDocs(buildAuditLogQuery());
 
 snapshot.forEach(docSnap=>{
 auditLogs.push({
@@ -438,6 +502,9 @@ id:docSnap.id,
 ...docSnap.data()
 });
 });
+
+auditLastDoc = snapshot.docs[snapshot.docs.length - 1] || auditLastDoc;
+auditHasMore = snapshot.size === LOG_BATCH_SIZE;
 
 auditLogs.sort((a,b)=>{
 
@@ -467,8 +534,23 @@ table.innerHTML = `
 `;
 }
 
+}finally{
+auditLoading = false;
+renderAuditLoadMore();
 }
 
+}
+
+async function loadMoreAuditLogs(){
+await loadAuditLogs(false);
+}
+
+function renderAuditLoadMore(){
+const button = document.getElementById("auditLoadMoreButton");
+if(!button) return;
+button.hidden = !auditHasMore;
+button.disabled = auditLoading;
+button.textContent = auditLoading ? "載入中..." : "再載入 100 筆";
 }
 
 async function openAuditLogPage(el){
@@ -647,29 +729,74 @@ document.getElementById("auditDateStart").value = "";
 document.getElementById("auditDateEnd").value = "";
 
 auditCurrentPage = 1;
-renderAuditLogs();
+loadAuditLogs(true);
 
 }
 
-async function loadLoginLogs(){
+function buildLoginLogQuery(){
 
-const snapshot =
-await getDocs(
-collection(db,"loginLogs")
-);
+const constraints = [orderBy("loginTime","desc")];
+if(loginLastDoc) constraints.push(startAfter(loginLastDoc));
+constraints.push(limit(LOG_BATCH_SIZE));
 
+return query(collection(db,"loginLogs"),...constraints);
+
+}
+
+async function loadLoginLogs(reset = true){
+
+if(!isAdminRole() || loginLoading) return;
+
+const table = document.getElementById("loginLogTable");
+
+if(reset){
 loginLogs = [];
+loginLastDoc = null;
+loginHasMore = false;
+loginCurrentPage = 1;
+}
+
+if(table && reset){
+table.innerHTML = '<tr><td colspan="4">登入紀錄載入中...</td></tr>';
+}
+
+try{
+
+loginLoading = true;
+const snapshot = await getDocs(buildLoginLogQuery());
 
 snapshot.forEach(docSnap=>{
-
-loginLogs.push(
-docSnap.data()
-);
-
+loginLogs.push({id:docSnap.id,...docSnap.data()});
 });
 
+loginLastDoc = snapshot.docs[snapshot.docs.length - 1] || loginLastDoc;
+loginHasMore = snapshot.size === LOG_BATCH_SIZE;
 renderLoginLogs();
 
+}catch(error){
+
+console.error("讀取登入紀錄失敗",error);
+if(table){
+table.innerHTML = `<tr><td colspan="4">登入紀錄讀取失敗：${escapeHtml(error.message || "未知錯誤")}</td></tr>`;
+}
+
+}finally{
+loginLoading = false;
+renderLoginLoadMore();
+}
+
+}
+
+async function loadMoreLoginLogs(){
+await loadLoginLogs(false);
+}
+
+function renderLoginLoadMore(){
+const button = document.getElementById("loginLoadMoreButton");
+if(!button) return;
+button.hidden = !loginHasMore;
+button.disabled = loginLoading;
+button.textContent = loginLoading ? "載入中..." : "再載入 100 筆";
 }
 
 function renderLoginLogs(){
@@ -718,11 +845,11 @@ table.innerHTML += `
 
 <td>${formatDate(log.loginTime)}</td>
 
-<td>${log.name}</td>
+<td>${escapeHtml(log.name || "-")}</td>
 
-<td>${log.email}</td>
+<td>${escapeHtml(log.email || "-")}</td>
 
-<td>${log.role}</td>
+<td>${escapeHtml(log.role || "-")}</td>
 
 </tr>
 
@@ -802,26 +929,88 @@ area.appendChild(btn);
 
 async function loadUsers(){
 
-const snapshot =
-await getDocs(
-collection(db,"users")
+if(!isAdminRole()) return;
+
+const area = document.getElementById("userListArea");
+if(area) area.innerHTML = '<div class="table-empty-cell">權限與共用人員資料載入中...</div>';
+
+try{
+
+const [memberSnapshot,accountSnapshot,permissionSnapshot,legacySnapshot] =
+await Promise.all([
+getDocs(collection(db,"members")),
+getDocs(collection(db,"memberAccounts")),
+getDocs(collection(db,"sealPermissions")),
+getDocs(collection(db,"users"))
+]);
+
+memberList = memberSnapshot.docs.map(docSnap=>({id:docSnap.id,...docSnap.data()}));
+memberAccountList = accountSnapshot.docs.map(docSnap=>({id:docSnap.id,...docSnap.data()}));
+legacyUserList = legacySnapshot.docs.map(docSnap=>({id:docSnap.id,...docSnap.data()}));
+
+const accountByMember = new Map();
+memberAccountList.forEach(account=>{
+const memberId = account.memberId || account.id;
+if(memberId) accountByMember.set(memberId,account);
+});
+
+userList = permissionSnapshot.docs.map(docSnap=>{
+const permission = {id:docSnap.id,...docSnap.data()};
+const email = normalizeEmail(permission.email || docSnap.id);
+const member = memberList.find(item=>
+item.id === permission.memberId ||
+normalizeEmail(accountByMember.get(item.id)?.email) === email
 );
 
-userList = [];
-
-snapshot.forEach(docSnap=>{
-
-userList.push({
-
+return {
+...permission,
 id:docSnap.id,
-...docSnap.data()
-
+email,
+memberId:permission.memberId || member?.id || "",
+departmentName:member?.department || member?.departmentName || permission.departmentName || "",
+employeeName:member?.name || permission.employeeName || permission.name || "",
+employeeNo:member?.employeeNo || member?.empNo || ""
+};
 });
 
+memberList.sort((a,b)=>{
+const departmentCompare = String(a.department || a.departmentName || "")
+.localeCompare(String(b.department || b.departmentName || ""),"zh-Hant");
+if(departmentCompare) return departmentCompare;
+return String(a.employeeNo || a.empNo || "")
+.localeCompare(String(b.employeeNo || b.empNo || ""),"zh-Hant",{numeric:true});
 });
 
+renderPermissionMemberOptions();
 renderUserList();
 
+}catch(error){
+console.error("讀取共用人員與印鑑權限失敗",error);
+if(area) area.innerHTML = `<div class="table-empty-cell">權限資料讀取失敗：${escapeHtml(error.message || "未知錯誤")}</div>`;
+}
+
+}
+
+function memberAccountFor(memberId){
+return memberAccountList.find(account=>(account.memberId || account.id) === memberId);
+}
+
+function renderPermissionMemberOptions(){
+const select = document.getElementById("newUserMember");
+if(!select) return;
+
+const assignedEmails = new Set(userList.map(user=>normalizeEmail(user.email)));
+const options = memberList
+.filter(member=>member.active !== false)
+.map(member=>({member,account:memberAccountFor(member.id)}))
+.filter(item=>normalizeEmail(item.account?.email) && !assignedEmails.has(normalizeEmail(item.account?.email)));
+
+select.innerHTML = '<option value="">請選擇共用人員</option>' + options.map(({member,account})=>{
+const department = member.department || member.departmentName || "未設定部門";
+const employeeNo = member.employeeNo || member.empNo || "";
+const label = [department,member.name,employeeNo ? `（${employeeNo}）` : ""].filter(Boolean).join(" ");
+return `<option value="${escapeHtml(member.id)}" data-email="${escapeHtml(normalizeEmail(account.email))}">${escapeHtml(label)}</option>`;
+}).join("");
 }
 async function loadPendingRecords(){
 
@@ -908,6 +1097,18 @@ localStorage.setItem(
     pageId
 );
 
+if(pageId === "historyPage" && !historyLoaded){
+loadHistoryRecords(true);
+}
+
+if(pageId === "permissionPage" && isAdminRole()){
+loadUsers();
+}
+
+if(pageId === "loginLogPage" && isAdminRole()){
+loadLoginLogs(true);
+}
+
 }
 
 window.showPage = showPage;
@@ -915,6 +1116,10 @@ window.loadAuditLogs = loadAuditLogs;
 window.openAuditLogPage = openAuditLogPage;
 window.changeAuditPageSize = changeAuditPageSize;
 window.resetAuditFilter = resetAuditFilter;
+window.loadMoreAuditLogs = loadMoreAuditLogs;
+window.loadLoginLogs = loadLoginLogs;
+window.loadMoreLoginLogs = loadMoreLoginLogs;
+window.loadMoreHistoryRecords = loadMoreHistoryRecords;
 
 function restoreLastPage(){
 
@@ -1255,63 +1460,49 @@ async function addWhitelistUser(){
 
 if(blockViewerAction()) return;
 
-const email =
-document.getElementById(
-"newUserEmail"
-).value.trim();
+const memberId = document.getElementById("newUserMember")?.value || "";
+const role = normalizeRole(document.getElementById("newUserRole")?.value || "user");
+const member = memberList.find(item=>item.id === memberId);
+const account = memberAccountFor(memberId);
+const email = normalizeEmail(account?.email);
 
-const departmentName =
-(document.getElementById("newUserDepartment")?.value || "")
-.trim();
+if(!member || !email){
 
-const employeeName =
-(document.getElementById("newUserName")?.value || "")
-.trim();
-
-if(!email){
-
-alert("請輸入Email");
+alert("請選擇已有 Google 帳號的共用人員");
 return;
 
 }
 
 const newUserData = {
 email,
-departmentName,
-employeeName,
-role:"user",
-enabled:true
+memberId,
+role:["admin","viewer"].includes(role) ? role : "user",
+enabled:true,
+createdAt:new Date(),
+createdByEmail:normalizeEmail(currentUserEmail),
+updatedAt:new Date(),
+updatedByEmail:normalizeEmail(currentUserEmail)
 };
 
-const newUserRef =
-await addDoc(
-collection(db,"users"),
-newUserData
-);
+await setDoc(doc(db,"sealPermissions",email),newUserData,{merge:true});
 
 await writeAuditLog({
 action:"permission",
 category:"user",
-targetId:newUserRef.id,
-targetLabel:email,
+targetId:email,
+targetLabel:getUserDisplayName({
+departmentName:member.department || member.departmentName,
+employeeName:member.name,
+email
+}),
 after:newUserData
 });
 
-document.getElementById(
-"newUserEmail"
-).value = "";
+document.getElementById("newUserMember").value = "";
 
-if(document.getElementById("newUserDepartment")){
-document.getElementById("newUserDepartment").value = "";
-}
+alert("印鑑系統權限已新增");
 
-if(document.getElementById("newUserName")){
-document.getElementById("newUserName").value = "";
-}
-
-alert("新增成功");
-
-loadUsers();
+await loadUsers();
 
 }
 
@@ -1336,7 +1527,7 @@ if(!confirm("確定刪除？"))
 return;
 
 await deleteDoc(
-doc(db,"users",id)
+doc(db,"sealPermissions",id)
 );
 
 await writeAuditLog({
@@ -1348,7 +1539,7 @@ before:user,
 after:{deleted:true}
 });
 
-loadUsers();
+await loadUsers();
 
 }
 
@@ -1366,9 +1557,11 @@ const user =
 userList.find(item=>item.id===id);
 
 await updateDoc(
-doc(db,"users",id),
+doc(db,"sealPermissions",id),
 {
-enabled:!enabled
+enabled:!enabled,
+updatedAt:new Date(),
+updatedByEmail:normalizeEmail(currentUserEmail)
 }
 );
 
@@ -1384,7 +1577,7 @@ enabled:!enabled
 }
 });
 
-loadUsers();
+await loadUsers();
 
 }
 
@@ -1402,9 +1595,11 @@ const user =
 userList.find(item=>item.id===id);
 
 await updateDoc(
-doc(db,"users",id),
+doc(db,"sealPermissions",id),
 {
-role
+role,
+updatedAt:new Date(),
+updatedByEmail:normalizeEmail(currentUserEmail)
 }
 );
 
@@ -1420,7 +1615,7 @@ role
 }
 });
 
-loadUsers();
+await loadUsers();
 
 }
 
@@ -1596,6 +1791,53 @@ loadUsers();
 
 window.updateUserProfile = updateUserProfile;
 
+async function migrateLegacySealPermissions(){
+
+if(!isAdminRole()) return;
+
+const existing = new Set(userList.map(user=>normalizeEmail(user.email)));
+const accountsByEmail = new Map(
+memberAccountList.map(account=>[normalizeEmail(account.email),account])
+);
+const candidates = legacyUserList.filter(user=>{
+const email = normalizeEmail(user.email);
+return email && user.enabled !== false && accountsByEmail.has(email) && !existing.has(email);
+});
+
+if(!candidates.length){
+alert("沒有可匯入的舊權限；未對應共用人員的帳號不會自動授權");
+return;
+}
+
+if(!confirm(`找到 ${candidates.length} 筆可對應共用人員的舊權限，確定匯入印鑑系統權限嗎？`)) return;
+
+for(const legacy of candidates){
+const email = normalizeEmail(legacy.email);
+const account = accountsByEmail.get(email);
+const role = ["admin","viewer"].includes(normalizeRole(legacy.role))
+? normalizeRole(legacy.role)
+: "user";
+
+await setDoc(doc(db,"sealPermissions",email),{
+email,
+memberId:account.memberId || account.id,
+role,
+enabled:true,
+migratedFromLegacyUsers:true,
+createdAt:new Date(),
+createdByEmail:normalizeEmail(currentUserEmail),
+updatedAt:new Date(),
+updatedByEmail:normalizeEmail(currentUserEmail)
+},{merge:true});
+}
+
+alert(`已匯入 ${candidates.length} 筆印鑑系統權限`);
+await loadUsers();
+
+}
+
+window.migrateLegacySealPermissions = migrateLegacySealPermissions;
+
 function renderUserList(){
 
 const area =
@@ -1607,12 +1849,16 @@ if(!area) return;
 
 area.innerHTML = "";
 
+if(!userList.length){
+area.innerHTML = '<div class="table-empty-cell">目前尚未設定印鑑系統權限</div>';
+return;
+}
+
 userList.forEach(user=>{
 
 const email = escapeHtml(user.email || "");
-const departmentName = escapeHtml(user.departmentName || "");
-const employeeName = escapeHtml(user.employeeName || user.name || "");
 const displayName = escapeHtml(getUserDisplayName(user));
+const employeeNo = escapeHtml(user.employeeNo || "");
 
 area.innerHTML += `
 
@@ -1622,28 +1868,11 @@ area.innerHTML += `
 
 <div class="user-identity-row">
 <strong>${displayName}</strong>
+${employeeNo ? `<span class="user-email-text">員編 ${employeeNo}</span>` : ""}
 <span class="user-email-text">${email}</span>
 </div>
 
 <div class="user-profile-grid">
-
-<label class="user-profile-field">
-<span>部門名稱</span>
-<input
-    type="text"
-    id="userDepartment_${user.id}"
-    value="${departmentName}"
-    placeholder="例如：行政部">
-</label>
-
-<label class="user-profile-field">
-<span>員工姓名</span>
-<input
-    type="text"
-    id="userName_${user.id}"
-    value="${employeeName}"
-    placeholder="例如：蔡雨鑫">
-</label>
 
 <div class="user-profile-field">
 <span>角色</span>
@@ -1685,12 +1914,6 @@ ${user.enabled
 
 <button
 class="btn btn-gray"
-onclick="updateUserProfile('${user.id}')">
-儲存資料
-</button>
-
-<button
-class="btn btn-gray"
 onclick="toggleUser('${user.id}',${user.enabled})">
 
 ${user.enabled ? "停用" : "啟用"}
@@ -1712,6 +1935,8 @@ onclick="deleteUser('${user.id}')">
 `;
 
 });
+
+lucide.createIcons();
 
 }
 
@@ -3063,6 +3288,7 @@ currentReturningId = null;
 alert("已歸還");
 
 await loadRecords();
+if(historyLoaded) await loadHistoryRecords(true);
 
 }catch(error){
 
@@ -3081,13 +3307,18 @@ confirmButton.textContent = "確認歸還";
 async function loadRecords(){
 
 const querySnapshot =
-await getDocs(collection(db,"sealRecords"));
+await getDocs(
+query(
+collection(db,"sealRecords"),
+where("returnTime","==",null)
+)
+);
 
-records = [];
+const activeRecords = [];
 
 querySnapshot.forEach((docSnap)=>{
 
-records.push({
+activeRecords.push({
 
 id:docSnap.id,
 ...docSnap.data()
@@ -3096,11 +3327,87 @@ id:docSnap.id,
 
 });
 
+const combined = new Map();
+historyRecords.forEach(record=>combined.set(record.id,record));
+activeRecords.forEach(record=>combined.set(record.id,record));
+records = [...combined.values()];
+
 renderTable();
 renderReturnTable();
 renderStatus();
 updateKPI();
 
+}
+
+function buildHistoryQuery(){
+
+const constraints = [
+where("returnTime","!=",null),
+orderBy("returnTime","desc")
+];
+
+if(historyLastDoc) constraints.push(startAfter(historyLastDoc));
+constraints.push(limit(HISTORY_BATCH_SIZE));
+
+return query(collection(db,"sealRecords"),...constraints);
+
+}
+
+async function loadHistoryRecords(reset = true){
+
+if(historyLoading) return;
+
+if(reset){
+historyRecords = [];
+historyLastDoc = null;
+historyHasMore = false;
+historyLoaded = false;
+currentPage = 1;
+}
+
+try{
+
+historyLoading = true;
+renderHistoryLoadMore();
+
+const snapshot = await getDocs(buildHistoryQuery());
+const known = new Map(historyRecords.map(record=>[record.id,record]));
+
+snapshot.forEach(docSnap=>{
+known.set(docSnap.id,{id:docSnap.id,...docSnap.data()});
+});
+
+historyRecords = [...known.values()];
+historyLastDoc = snapshot.docs[snapshot.docs.length - 1] || historyLastDoc;
+historyHasMore = snapshot.size === HISTORY_BATCH_SIZE;
+historyLoaded = true;
+
+const activeRecords = records.filter(record=>!record.returnTime);
+records = [...historyRecords,...activeRecords];
+renderTable();
+
+}catch(error){
+
+console.error("讀取歷史借用紀錄失敗",error);
+alert(`歷史借用紀錄讀取失敗：${error.message || "未知錯誤"}`);
+
+}finally{
+historyLoading = false;
+renderHistoryLoadMore();
+}
+
+}
+
+async function loadMoreHistoryRecords(){
+await loadHistoryRecords(false);
+}
+
+function renderHistoryLoadMore(){
+const button = document.getElementById("historyLoadMoreButton");
+if(!button) return;
+button.hidden = !historyHasMore && !historyLoading;
+button.disabled = historyLoading;
+button.textContent = historyLoading ? "載入中..." : "再載入 100 筆歷史紀錄";
 }
 
 function updateKPI(){
@@ -4079,7 +4386,11 @@ renderAuditLogs();
 document.getElementById(id)
 .addEventListener("change",()=>{
 auditCurrentPage = 1;
+if(id === "auditDateStart" || id === "auditDateEnd"){
+loadAuditLogs(true);
+}else{
 renderAuditLogs();
+}
 });
 
 });
@@ -4140,32 +4451,51 @@ return;
 
 }
 
-const snapshot =
-await getDocs(collection(db,"users"));
+const email = normalizeEmail(user.email);
+const [sealPermissionSnapshot,globalUserSnapshot] = await Promise.all([
+getDoc(doc(db,"sealPermissions",email)),
+getDoc(doc(db,"users",user.uid))
+]);
 
 let allow = false;
 let loginUserData = null;
-
-snapshot.forEach(docSnap=>{
-
-const data = docSnap.data();
+let memberData = null;
 
 if(
-data.email === user.email &&
-data.enabled === true
+globalUserSnapshot.exists() &&
+normalizeRole(globalUserSnapshot.data().role) === "admin" &&
+globalUserSnapshot.data().enabled !== false
 ){
-
 allow = true;
-loginUserData = {
-id:docSnap.id,
-...data
-};
-
-currentRole = normalizeRole(data.role);
-
+currentRole = "admin";
+loginUserData = {id:globalUserSnapshot.id,...globalUserSnapshot.data()};
 }
 
-});
+if(
+!allow &&
+sealPermissionSnapshot.exists() &&
+sealPermissionSnapshot.data().enabled !== false
+){
+allow = true;
+loginUserData = {id:sealPermissionSnapshot.id,...sealPermissionSnapshot.data()};
+currentRole = normalizeRole(loginUserData.role) || "user";
+}
+
+if(!allow){
+const legacySnapshot = await getDocs(
+query(
+collection(db,"users"),
+where("email","==",user.email),
+limit(1)
+)
+);
+
+if(!legacySnapshot.empty && legacySnapshot.docs[0].data().enabled === true){
+allow = true;
+loginUserData = {id:legacySnapshot.docs[0].id,...legacySnapshot.docs[0].data()};
+currentRole = normalizeRole(loginUserData.role) || "user";
+}
+}
 
 if(!allow){
 
@@ -4177,9 +4507,29 @@ return;
 
 }
 
-currentUser =
-getUserDisplayName(loginUserData || {
-name:user.displayName,
+let memberId = loginUserData?.memberId || "";
+
+if(!memberId){
+const accountSnapshot = await getDocs(
+query(
+collection(db,"memberAccounts"),
+where("email","==",email),
+limit(1)
+)
+);
+if(!accountSnapshot.empty){
+memberId = accountSnapshot.docs[0].data().memberId || accountSnapshot.docs[0].id;
+}
+}
+
+if(memberId){
+const memberSnapshot = await getDoc(doc(db,"members",memberId));
+if(memberSnapshot.exists()) memberData = {id:memberSnapshot.id,...memberSnapshot.data()};
+}
+
+currentUser = getUserDisplayName({
+departmentName:memberData?.department || memberData?.departmentName || loginUserData?.departmentName,
+employeeName:memberData?.name || loginUserData?.employeeName || loginUserData?.name || user.displayName,
 email:user.email
 });
 
@@ -4207,7 +4557,7 @@ await addDoc(
 collection(db,"loginLogs"),
 {
 name:currentUser,
-email:user.email,
+email:normalizeEmail(user.email),
 role:currentRole,
 loginTime:new Date()
 });
@@ -4250,9 +4600,7 @@ await Promise.all([
     loadDepartments(),
     loadSeals(),
     loadRecords(),
-    loadPendingRecords(),
-    loadUsers(),
-    loadLoginLogs()
+    loadPendingRecords()
 ]);
 
 }

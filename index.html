@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260621-v148-empty-state">
+<link rel="stylesheet" href="./styles.css?v=20260717-v149-read-permission">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -113,7 +113,7 @@ transition:.15s;
                 <div class="menu-item" id="permissionMenu" data-tooltip="權限管理" onclick="showPage('permissionPage',this)">
                     <i data-lucide="users" class="menu-icon"></i><span>權限管理</span>
                 </div>
-                <div class="menu-item" id="loginLogMenu" data-tooltip="登入紀錄" onclick="showPage('loginLogPage',this); loadLoginLogs();">
+                <div class="menu-item" id="loginLogMenu" data-tooltip="登入紀錄" onclick="showPage('loginLogPage',this)">
                     <i data-lucide="log-in" class="menu-icon"></i><span>登入紀錄</span>
                 </div>
                 <div class="menu-item" id="auditLogMenu" data-tooltip="操作紀錄" onclick="openAuditLogPage(this)">
@@ -646,6 +646,15 @@ style="padding:8px;border-radius:8px;">
 style="display:flex;gap:8px;flex-wrap:wrap;">
 </div>
 
+<button
+type="button"
+id="historyLoadMoreButton"
+class="btn btn-gray"
+onclick="loadMoreHistoryRecords()"
+hidden>
+再載入 100 筆歷史紀錄
+</button>
+
 </div>
 
 <!-- 借用紀錄頁結束 -->
@@ -743,7 +752,17 @@ onclick="resetAuditFilter()">
 </select>
 </div>
 
+<div class="log-pagination-actions">
+<button
+type="button"
+id="auditLoadMoreButton"
+class="btn btn-gray"
+onclick="loadMoreAuditLogs()"
+hidden>
+再載入 100 筆
+</button>
 <div id="auditPagination"></div>
+</div>
 
 </div>
 
@@ -870,40 +889,29 @@ class="detail-title-icon">
 
 </h2>
 
-<p class="page-description">新增可登入系統的帳號並設定角色，並維護部門與員工姓名供辨識</p>
+<p class="page-description">從三套系統共用人員名單選擇成員，再設定此人於印鑑系統的獨立角色與啟用狀態</p>
 
 <div class="compact-create-row compact-create-row-user">
 
 <div class="form-group">
 
-<label>Email</label>
+<label>共用人員</label>
 
-<input
-type="email"
-id="newUserEmail"
-placeholder="請輸入可登入帳號">
-
-</div>
-
-<div class="form-group">
-
-<label>部門名稱</label>
-
-<input
-type="text"
-id="newUserDepartment"
-placeholder="例如：行政部">
+<select id="newUserMember">
+<option value="">請選擇共用人員</option>
+</select>
 
 </div>
 
 <div class="form-group">
 
-<label>員工姓名</label>
+<label>印鑑系統角色</label>
 
-<input
-type="text"
-id="newUserName"
-placeholder="例如：蔡雨鑫">
+<select id="newUserRole">
+<option value="user">User－可辦理借用與歸還</option>
+<option value="viewer">Viewer－僅可瀏覽紀錄</option>
+<option value="admin">Admin－可管理系統與權限</option>
+</select>
 
 </div>
 
@@ -914,11 +922,18 @@ onclick="addWhitelistUser()">
 <i data-lucide="circle-plus"></i>
 
 <span>
-新增白名單
+新增權限
 </span>
 
 </button>
 
+</div>
+
+<div class="permission-migration-row">
+<span>首次切換新版權限時，可將仍能對應共用人員的舊白名單一次匯入。</span>
+<button type="button" class="btn btn-gray" onclick="migrateLegacySealPermissions()">
+匯入舊權限
+</button>
 </div>
 
 <div id="userListArea"></div>
@@ -1003,7 +1018,17 @@ onchange="changeLoginPageSize()">
 
 </div>
 
+<div class="log-pagination-actions">
+<button
+type="button"
+id="loginLoadMoreButton"
+class="btn btn-gray"
+onclick="loadMoreLoginLogs()"
+hidden>
+再載入 100 筆
+</button>
 <div id="loginPagination"></div>
+</div>
 
 </div>
 
@@ -1281,7 +1306,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260621-v148-empty-state"></script>
+<script src="./app.js?v=20260717-v149-read-permission"></script>
 
 </body>
 </html>

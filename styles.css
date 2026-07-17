@@ -2800,3 +2800,60 @@ color:#2563eb !important;
 background:#eff6ff;
 color:#2563eb;
 }
+
+/* v14.9：共用人員權限與分批載入 */
+.compact-create-row-user{
+grid-template-columns:minmax(280px,1.5fr) minmax(260px,1fr) auto;
+}
+
+.compact-create-row-user select{
+width:100%;
+height:46px;
+border:1px solid #cbd5e1;
+border-radius:10px;
+padding:0 12px;
+background:#fff;
+color:#0f172a;
+font:inherit;
+}
+
+.permission-migration-row{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:16px;
+margin:4px 0 18px;
+padding:14px 16px;
+border:1px solid #dbe4f0;
+border-radius:10px;
+background:#f8fafc;
+color:#64748b;
+font-size:14px;
+}
+
+.user-profile-grid{
+grid-template-columns:minmax(160px,220px) auto;
+}
+
+.log-pagination-actions{
+display:flex;
+align-items:center;
+justify-content:flex-end;
+gap:10px;
+flex-wrap:wrap;
+}
+
+#historyLoadMoreButton{
+margin-left:auto;
+}
+
+@media(max-width:760px){
+.permission-migration-row{
+align-items:stretch;
+flex-direction:column;
+}
+
+.permission-migration-row .btn{
+width:100%;
+}
+}
