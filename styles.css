@@ -2927,6 +2927,7 @@ width:100%;
     min-width:172px;
     height:46px;
     align-self:start;
+    margin-top:27px;
 }
 
 .permission-migration-details{
@@ -2963,14 +2964,15 @@ width:100%;
 }
 
 .permission-table{
-    min-width:920px;
+    min-width:980px;
 }
 
-.permission-table th:nth-child(1){width:28%}
-.permission-table th:nth-child(2){width:12%}
-.permission-table th:nth-child(3){width:24%}
-.permission-table th:nth-child(4){width:13%}
-.permission-table th:nth-child(5){width:23%}
+.permission-table th:nth-child(1){width:14%}
+.permission-table th:nth-child(2){width:16%}
+.permission-table th:nth-child(3){width:12%}
+.permission-table th:nth-child(4){width:22%}
+.permission-table th:nth-child(5){width:12%}
+.permission-table th:nth-child(6){width:24%}
 
 .permission-role-cell{
     display:grid;
@@ -3040,6 +3042,7 @@ width:100%;
     }
     .permission-submit-button{
         width:max-content;
+        margin-top:27px;
     }
 }
 
@@ -3052,6 +3055,7 @@ width:100%;
     }
     .permission-submit-button{
         width:100%;
+        margin-top:0;
     }
 }
 

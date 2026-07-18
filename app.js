@@ -2400,7 +2400,8 @@ const memberNotice = user.memberActive === false
 : "";
 
 return `<tr>
-<td><div class="identity-cell"><strong>${department} ${name}</strong>${memberNotice}</div></td>
+<td>${department}</td>
+<td><div class="identity-cell"><strong>${name}</strong>${memberNotice}</div></td>
 <td>${employeeNo}</td>
 <td>
 <div class="permission-role-cell">
@@ -2409,7 +2410,6 @@ return `<tr>
 <option value="viewer" ${role === "viewer" ? "selected" : ""}>檢視者</option>
 <option value="admin" ${role === "admin" ? "selected" : ""}>系統管理員</option>
 </select>
-<small>${escapeHtml(permissionRoleDescription(role))}</small>
 </div>
 </td>
 <td>
@@ -2430,7 +2430,7 @@ ${isLastEnabledSealAdmin(user) ? '<small>唯一啟用管理員</small>' : ""}
 
 area.innerHTML = `<div class="table-wrap permission-table-wrap">
 <table class="management-table permission-table">
-<thead><tr><th>成員</th><th>員工編號</th><th>角色</th><th>狀態</th><th>操作</th></tr></thead>
+<thead><tr><th>部門</th><th>姓名</th><th>員工編號</th><th>角色</th><th>狀態</th><th>操作</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>
 </div>`;

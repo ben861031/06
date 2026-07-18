@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<link rel="stylesheet" href="./styles.css?v=20260718-v153-mobile-header">
+<link rel="stylesheet" href="./styles.css?v=20260718-v154-permission-layout">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -118,10 +118,10 @@ transition:.15s;
                 <div class="menu-item" id="permissionMenu" data-tooltip="權限管理" onclick="showPage('permissionPage',this)">
                     <i data-lucide="users" class="menu-icon"></i><span>權限管理</span>
                 </div>
+                <div class="top-dropdown-section-label">系統紀錄</div>
                 <div class="menu-item" id="loginLogMenu" data-tooltip="登入紀錄" onclick="showPage('loginLogPage',this)">
                     <i data-lucide="log-in" class="menu-icon"></i><span>登入紀錄</span>
                 </div>
-                <div class="top-dropdown-section-label">系統紀錄</div>
                 <div class="menu-item" id="auditLogMenu" data-tooltip="操作紀錄" onclick="openAuditLogPage(this)">
                     <i data-lucide="history" class="menu-icon"></i><span>操作紀錄</span>
                 </div>
@@ -1392,7 +1392,7 @@ onclick="confirmReturnSeal()">
 
 
 
-<script src="./app.js?v=20260717-v151-system-management"></script>
+<script src="./app.js?v=20260718-v154-permission-layout"></script>
 
 </body>
 </html>
