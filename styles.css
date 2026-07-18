@@ -2996,6 +2996,13 @@ width:100%;
     text-align:center;
 }
 
+.permission-table td:nth-child(2) .identity-cell{
+    width:100%;
+    align-items:center;
+    justify-items:center;
+    text-align:center;
+}
+
 .permission-role-cell{
     display:grid;
     gap:6px;
