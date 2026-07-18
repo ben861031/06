@@ -97,6 +97,28 @@ function normalizeEmail(email){
 return String(email || "").trim().toLowerCase();
 }
 
+function permissionRoleLabel(role){
+const normalized = normalizeRole(role);
+if(normalized === "admin") return "系統管理員";
+if(normalized === "viewer") return "檢視者";
+return "一般使用者";
+}
+
+function permissionRoleDescription(role){
+const normalized = normalizeRole(role);
+if(normalized === "admin") return "可管理借用作業、系統設定、人員與權限。";
+if(normalized === "viewer") return "僅可瀏覽待借用管理與借用紀錄。";
+return "可辦理印鑑借用與歸還。";
+}
+
+function enabledSealAdminCount(){
+return userList.filter(user=>normalizeRole(user.role) === "admin" && user.enabled !== false).length;
+}
+
+function isLastEnabledSealAdmin(user){
+return normalizeRole(user?.role) === "admin" && user?.enabled !== false && enabledSealAdminCount() <= 1;
+}
+
 function isAdminRole(){
 return normalizeRole(currentRole) === "admin";
 }
@@ -1062,8 +1084,15 @@ email,
 memberId:permission.memberId || member?.id || "",
 departmentName:member?.department || member?.departmentName || permission.departmentName || "",
 employeeName:member?.name || permission.employeeName || permission.name || "",
-employeeNo:member?.employeeNo || member?.empNo || ""
+employeeNo:member?.employeeNo || member?.empNo || "",
+memberActive:member ? member.active !== false : null
 };
+});
+
+userList.sort((a,b)=>{
+const departmentCompare = String(a.departmentName || "").localeCompare(String(b.departmentName || ""),"zh-Hant");
+if(departmentCompare) return departmentCompare;
+return String(a.employeeNo || "").localeCompare(String(b.employeeNo || ""),"zh-Hant",{numeric:true});
 });
 
 renderPermissionMemberOptions();
@@ -1089,11 +1118,18 @@ select.innerHTML = '<option value="">請選擇共用人員</option>' + options.m
 const department = memberDepartmentName(member) || "未設定部門";
 const employeeNo = memberEmployeeNo(member);
 const assigned = Boolean(email && assignedEmails.has(email));
-const unavailableReason = !email ? "（未設定 Google 帳號）" : assigned ? "（已設定印鑑權限）" : "";
-const label = [department,member.name,employeeNo ? `（${employeeNo}）` : "",unavailableReason].filter(Boolean).join(" ");
-return `<option value="${escapeHtml(member.id)}" data-email="${escapeHtml(email)}" ${!email || assigned ? "disabled" : ""}>${escapeHtml(label)}</option>`;
+const unavailableReason = !email ? "（未設定 Google 帳號）" : assigned ? "（目前已有權限，可更新）" : "";
+const label = [`${department} ${member.name || "未設定姓名"}`,employeeNo ? `員編 ${employeeNo}` : "",unavailableReason].filter(Boolean).join("｜");
+return `<option value="${escapeHtml(member.id)}" data-email="${escapeHtml(email)}" ${!email ? "disabled" : ""}>${escapeHtml(label)}</option>`;
 }).join("");
 }
+
+function updateNewPermissionRoleHelp(role){
+const help = document.getElementById("newUserRoleHelp");
+if(help) help.textContent = permissionRoleDescription(role);
+}
+
+window.updateNewPermissionRoleHelp = updateNewPermissionRoleHelp;
 
 function populateMemberDepartmentOptions(){
 const select = document.getElementById("memberDepartment");
@@ -1928,6 +1964,7 @@ const memberId = document.getElementById("newUserMember")?.value || "";
 const role = normalizeRole(document.getElementById("newUserRole")?.value || "user");
 const member = memberList.find(item=>item.id === memberId);
 const email = memberGoogleEmail(member);
+const existing = userList.find(item=>normalizeEmail(item.email) === email);
 
 if(!member || !email){
 
@@ -1941,18 +1978,23 @@ email,
 memberId,
 role:["admin","viewer"].includes(role) ? role : "user",
 enabled:true,
-createdAt:new Date(),
-createdByEmail:normalizeEmail(currentUserEmail),
 updatedAt:new Date(),
 updatedByEmail:normalizeEmail(currentUserEmail)
 };
 
-await setDoc(doc(db,"sealPermissions",email),newUserData,{merge:true});
+if(!existing){
+newUserData.createdAt = new Date();
+newUserData.createdByEmail = normalizeEmail(currentUserEmail);
+}
+
+const permissionId = existing?.id || email;
+
+await setDoc(doc(db,"sealPermissions",permissionId),newUserData,{merge:true});
 
 await writeAuditLog({
 action:"permission",
 category:"user",
-targetId:email,
+targetId:permissionId,
 targetLabel:getUserDisplayName({
 departmentName:member.department || member.departmentName,
 employeeName:member.name,
@@ -1963,7 +2005,7 @@ after:newUserData
 
 document.getElementById("newUserMember").value = "";
 
-alert("印鑑系統權限已新增");
+alert(existing ? "印鑑系統權限已更新並啟用" : "印鑑系統權限已新增");
 
 await loadUsers();
 
@@ -1979,9 +2021,9 @@ if(blockViewerAction()) return;
 const user =
 userList.find(u=>u.id===id);
 
-if(user?.role === "admin"){
+if(isLastEnabledSealAdmin(user)){
 
-alert("管理員不可刪除");
+alert("至少必須保留一位啟用中的系統管理員，無法移除此權限");
 return;
 
 }
@@ -2018,6 +2060,11 @@ if(blockViewerAction()) return;
 
 const user =
 userList.find(item=>item.id===id);
+
+if(enabled && isLastEnabledSealAdmin(user)){
+alert("至少必須保留一位啟用中的系統管理員，無法停用此帳號");
+return;
+}
 
 await updateDoc(
 doc(db,"sealPermissions",id),
@@ -2057,10 +2104,20 @@ if(blockViewerAction()) return;
 const user =
 userList.find(item=>item.id===id);
 
+const nextRole = ["admin","viewer"].includes(normalizeRole(role))
+? normalizeRole(role)
+: "user";
+
+if(isLastEnabledSealAdmin(user) && nextRole !== "admin"){
+alert("至少必須保留一位啟用中的系統管理員，無法變更此帳號的角色");
+await loadUsers();
+return;
+}
+
 await updateDoc(
 doc(db,"sealPermissions",id),
 {
-role,
+role:nextRole,
 updatedAt:new Date(),
 updatedByEmail:normalizeEmail(currentUserEmail)
 }
@@ -2074,7 +2131,7 @@ targetLabel:user?.email || id,
 before:user,
 after:{
 ...user,
-role
+role:nextRole
 }
 });
 
@@ -2084,6 +2141,14 @@ await loadUsers();
 
 window.changeRole =
 changeRole;
+
+async function updatePermissionRole(id,selectId){
+const select = document.getElementById(selectId);
+if(!select) return;
+await changeRole(id,select.value);
+}
+
+window.updatePermissionRole = updatePermissionRole;
 
 async function editPending(id){
 
@@ -2316,91 +2381,59 @@ if(!area) return;
 area.innerHTML = "";
 
 if(!userList.length){
-area.innerHTML = '<div class="table-empty-cell">目前尚未設定印鑑系統權限</div>';
+area.innerHTML = '<div class="permission-empty-state"><i data-lucide="user-round-plus"></i><strong>尚未設定印鑑系統權限</strong><span>請從上方共用人員名單選擇成員並設定角色。</span></div>';
+lucide.createIcons();
 return;
 }
 
-userList.forEach(user=>{
-
+const rows = userList.map((user,index)=>{
+const role = normalizeRole(user.role);
+const department = escapeHtml(user.departmentName || "未設定部門");
+const name = escapeHtml(user.employeeName || "未對應共用人員");
+const employeeNo = escapeHtml(user.employeeNo || "未設定");
 const email = escapeHtml(user.email || "");
-const displayName = escapeHtml(getUserDisplayName(user));
-const employeeNo = escapeHtml(user.employeeNo || "");
+const selectId = `permissionRole_${index}`;
+const memberNotice = user.memberActive === false
+? '<small class="permission-member-warning">共用人員已停用</small>'
+: user.memberActive === null
+? `<small class="permission-member-warning">未對應共用人員${email ? `｜${email}` : ""}</small>`
+: "";
 
-area.innerHTML += `
-
-<div class="maintenance-item user-maintenance-item">
-
-<div class="user-maintenance-main">
-
-<div class="user-identity-row">
-<strong>${displayName}</strong>
-${employeeNo ? `<span class="user-email-text">員編 ${employeeNo}</span>` : ""}
-<span class="user-email-text">${email}</span>
-</div>
-
-<div class="user-profile-grid">
-
-<div class="user-profile-field">
-<span>角色</span>
-<select onchange="changeRole('${user.id}',this.value)">
-
-<option value="admin"
-${user.role==="admin"?"selected":""}>
-Admin
-</option>
-
-<option value="user"
-${user.role==="user"?"selected":""}>
-User
-</option>
-
-<option value="viewer"
-${user.role==="viewer"?"selected":""}>
-Viewer
-</option>
-
+return `<tr>
+<td><div class="identity-cell"><strong>${department} ${name}</strong>${memberNotice}</div></td>
+<td>${employeeNo}</td>
+<td>
+<div class="permission-role-cell">
+<select id="${selectId}" aria-label="${department} ${name} 的印鑑系統角色">
+<option value="user" ${role === "user" ? "selected" : ""}>一般使用者</option>
+<option value="viewer" ${role === "viewer" ? "selected" : ""}>檢視者</option>
+<option value="admin" ${role === "admin" ? "selected" : ""}>系統管理員</option>
 </select>
+<small>${escapeHtml(permissionRoleDescription(role))}</small>
 </div>
-
-<div class="user-profile-status">
-${user.enabled
-
-? '<span class="badge badge-green">啟用</span>'
-
-: '<span class="badge badge-red">停用</span>'
-
-}
+</td>
+<td>
+<div class="permission-status-stack">
+<span class="status-badge ${user.enabled !== false ? "status-active" : "status-inactive"}">${user.enabled !== false ? "啟用" : "停用"}</span>
+${isLastEnabledSealAdmin(user) ? '<small>唯一啟用管理員</small>' : ""}
 </div>
-
+</td>
+<td>
+<div class="operation-cell permission-operation-cell">
+<button type="button" class="btn btn-gray btn-sm" onclick="updatePermissionRole('${user.id}','${selectId}')">更新</button>
+<button type="button" class="btn btn-gray btn-sm" onclick="toggleUser('${user.id}',${user.enabled !== false})">${user.enabled !== false ? "停用" : "啟用"}</button>
+<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteUser('${user.id}')">移除</button>
 </div>
+</td>
+</tr>`;
+}).join("");
 
-</div>
-
-<div class="user-maintenance-actions">
-
-<button
-class="btn btn-gray"
-onclick="toggleUser('${user.id}',${user.enabled})">
-
-${user.enabled ? "停用" : "啟用"}
-
-</button>
-
-<button
-class="btn btn-red"
-onclick="deleteUser('${user.id}')">
-
-刪除
-
-</button>
-
-</div>
-
-</div>
-
-`;
-
-});
+area.innerHTML = `<div class="table-wrap permission-table-wrap">
+<table class="management-table permission-table">
+<thead><tr><th>成員</th><th>員工編號</th><th>角色</th><th>狀態</th><th>操作</th></tr></thead>
+<tbody>${rows}</tbody>
+</table>
+</div>`;
 
 lucide.createIcons();
 

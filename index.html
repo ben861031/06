@@ -943,11 +943,13 @@ class="detail-title-icon">
 
 <p class="page-description">從三套系統共用人員名單選擇成員，再設定此人於印鑑系統的獨立角色與啟用狀態</p>
 
+<div class="permission-create-card">
+
 <div class="compact-create-row compact-create-row-user">
 
 <div class="form-group">
 
-<label>共用人員</label>
+<label for="newUserMember">共用人員</label>
 
 <select id="newUserMember">
 <option value="">請選擇共用人員</option>
@@ -957,36 +959,41 @@ class="detail-title-icon">
 
 <div class="form-group">
 
-<label>印鑑系統角色</label>
+<label for="newUserRole">印鑑系統角色</label>
 
-<select id="newUserRole">
-<option value="user">User－可辦理借用與歸還</option>
-<option value="viewer">Viewer－僅可瀏覽紀錄</option>
-<option value="admin">Admin－可管理系統與權限</option>
+<select id="newUserRole" onchange="updateNewPermissionRoleHelp(this.value)">
+<option value="user">一般使用者</option>
+<option value="viewer">檢視者</option>
+<option value="admin">系統管理員</option>
 </select>
+
+<small id="newUserRoleHelp" class="permission-role-help">可辦理印鑑借用與歸還。</small>
 
 </div>
 
 <button
-class="btn btn-green"
+class="btn btn-primary permission-submit-button"
 onclick="addWhitelistUser()">
 
 <i data-lucide="circle-plus"></i>
 
 <span>
-新增權限
+新增／更新權限
 </span>
 
 </button>
 
 </div>
 
-<div class="permission-migration-row">
-<span>首次切換新版權限時，可將仍能對應共用人員的舊白名單一次匯入。</span>
-<button type="button" class="btn btn-gray" onclick="migrateLegacySealPermissions()">
-匯入舊權限
-</button>
 </div>
+
+<details class="permission-migration-details">
+<summary>舊權限移轉</summary>
+<div class="permission-migration-row">
+<span>僅供首次切換新版權限時使用；系統只會匯入可對應共用人員的舊白名單。</span>
+<button type="button" class="btn btn-gray btn-inline" onclick="migrateLegacySealPermissions()">匯入舊權限</button>
+</div>
+</details>
 
 <div id="userListArea"></div>
 
