@@ -80,7 +80,7 @@ measurementId: "G-7RKPNF7BK9"
 
 };
 
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig, "seal-management");
 const db = getFirestore(app);
 
 const auth = getAuth(app);
