@@ -1332,8 +1332,32 @@ await loadMemberManagement(true);
 if(isAdminRole()) await loadUsers(true);
 }
 
+const externalScriptLoads = new Map();
+
+function loadExternalScript(src,isReady){
+if(isReady()) return Promise.resolve();
+if(externalScriptLoads.has(src)) return externalScriptLoads.get(src);
+const promise = new Promise((resolve,reject)=>{
+const script = document.createElement("script");
+script.src = src;
+script.async = true;
+script.onload = ()=>isReady() ? resolve() : reject(new Error(`元件載入後仍無法使用：${src}`));
+script.onerror = ()=>reject(new Error(`無法載入外部元件：${src}`));
+document.head.appendChild(script);
+}).catch(error=>{
+externalScriptLoads.delete(src);
+throw error;
+});
+externalScriptLoads.set(src,promise);
+return promise;
+}
+
 function xlsxReady(){
 return typeof XLSX !== "undefined" && XLSX?.utils && typeof XLSX.writeFile === "function";
+}
+
+async function ensureXlsx(){
+await loadExternalScript("https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js",xlsxReady);
 }
 
 function memberWorkbook(rows,sheetName="人員名單"){
@@ -1344,13 +1368,13 @@ XLSX.utils.book_append_sheet(workbook,sheet,sheetName);
 return workbook;
 }
 
-function downloadMemberTemplate(){
-if(!xlsxReady()) return alert("Excel 元件尚未載入完成，請重新整理後再試");
+async function downloadMemberTemplate(){
+try{await ensureXlsx();}catch(error){console.error(error);return alert("Excel 元件載入失敗，請確認網路後再試");}
 XLSX.writeFile(memberWorkbook([{"部門":"行政部","姓名":"王小明","員工編號":"7901","Google帳號":"example@gmail.com","狀態":"啟用"}],"匯入範本"),"人員匯入標準範本.xlsx");
 }
 
-function exportSharedMembers(){
-if(!xlsxReady()) return alert("Excel 元件尚未載入完成，請重新整理後再試");
+async function exportSharedMembers(){
+try{await ensureXlsx();}catch(error){console.error(error);return alert("Excel 元件載入失敗，請確認網路後再試");}
 const rows = memberList.map(member=>({"部門":memberDepartmentName(member),"姓名":member.name || "","員工編號":memberEmployeeNo(member),"Google帳號":memberGoogleEmail(member),"狀態":member.active === false ? "停用" : "啟用"}));
 XLSX.writeFile(memberWorkbook(rows),"共用人員名單.xlsx");
 }
@@ -1429,7 +1453,7 @@ updateMemberImportConfirmLabel();
 
 async function importSharedMembers(file){
 if(!file) return;
-if(!xlsxReady()) return alert("Excel 元件尚未載入完成，請重新整理後再試");
+try{await ensureXlsx();}catch(error){console.error(error);return alert("Excel 元件載入失敗，請確認網路後再試");}
 const result = document.getElementById("memberImportResult");
 result.className = "member-import-result";
 result.textContent = `正在讀取 ${file.name}...`;
@@ -4737,9 +4761,11 @@ loadRecords();
 }
 
 
-function exportExcel(){
+async function exportExcel(){
 
 if(blockViewerAction()) return;
+
+try{await ensureXlsx();}catch(error){console.error(error);return alert("Excel 元件載入失敗，請確認網路後再試");}
 
 const borrowStart =
 document.getElementById("borrowDateStart").value;
@@ -5069,19 +5095,19 @@ currentUser
 
 if(!sessionStorage.getItem("loginLogged")){
 
-await addDoc(
+sessionStorage.setItem(
+"loginLogged",
+"true"
+);
+
+addDoc(
 collection(db,"loginLogs"),
 {
 name:currentUser,
 email:normalizeEmail(user.email),
 role:currentRole,
 loginTime:new Date()
-});
-
-sessionStorage.setItem(
-"loginLogged",
-"true"
-);
+}).catch(error=>console.warn("登入紀錄寫入失敗",error));
 
 }
 
@@ -5102,37 +5128,6 @@ document.getElementById(
 applyRoleAccess();
 restoreLastPage();
 
-if(isViewerRole()){
-
-await Promise.all([
-    loadSeals(),
-    loadRecords(),
-    loadPendingRecords()
-]);
-
-}else{
-
-await Promise.all([
-    loadDepartments(),
-    loadSeals(),
-    loadRecords(),
-    loadPendingRecords()
-]);
-
-}
-
-document.getElementById(
-"systemArea"
-).style.display="block";
-
-requestAnimationFrame(()=>{
-
-document.getElementById(
-"systemArea"
-).style.opacity="1";
-
-});
-
 if(!isAdminRole()){
 
 document.getElementById(
@@ -5152,6 +5147,23 @@ document.getElementById(
 if(!currentIsSystemAdmin){
 document.getElementById("memberMenu").style.display = "none";
 }
+
+const systemArea = document.getElementById("systemArea");
+systemArea.style.display="block";
+
+requestAnimationFrame(()=>{
+systemArea.style.opacity="1";
+});
+
+const initialDataLoads = isViewerRole()
+? [loadSeals(),loadRecords(),loadPendingRecords()]
+: [loadDepartments(),loadSeals(),loadRecords(),loadPendingRecords()];
+
+Promise.allSettled(initialDataLoads).then(results=>{
+results.forEach(result=>{
+if(result.status === "rejected") console.error("初始資料載入失敗",result.reason);
+});
+});
 
 
 });
@@ -5224,6 +5236,16 @@ window.showCalendarPage = async function(element) {
 
     if (!historyLoaded) {
         await loadHistoryRecords(true);
+    }
+    try{
+        await loadExternalScript(
+            "https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js",
+            ()=>typeof FullCalendar !== "undefined"
+        );
+    }catch(error){
+        console.error(error);
+        alert("行事曆元件載入失敗，請確認網路後再試。");
+        return;
     }
     if (!sealCalendar) {
         initSealCalendar();
