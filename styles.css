@@ -1712,6 +1712,8 @@ display:none;align-items:center;justify-content:center;z-index:9999;
 }
 .edit-modal{
 background:white;width:90%;max-width:600px;border-radius:16px;padding:20px;
+max-height:calc(100vh - 40px);
+overflow-y:auto;
 }
 
 
@@ -3794,4 +3796,70 @@ body.modal-open{
         font-size:14px;
         padding:0 8px;
     }
+}
+
+/* 印鑑借用行事曆 */
+#calendarPage {
+    padding-bottom: 40px;
+}
+.seal-calendar{
+    min-height:600px;
+}
+.active-record-switcher{
+    width:100%;
+    margin-bottom:10px;
+    background:#eef2ff;
+    padding:10px 12px;
+    border-radius:8px;
+    color:#3730a3;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+}
+.active-record-switcher select{
+    flex:1;
+    min-width:180px;
+    padding:7px 10px;
+    border-radius:6px;
+    border:1px solid #c7d2fe;
+    font-size:14px;
+    background:#fff;
+}
+.fc-theme-standard td, .fc-theme-standard th {
+    border-color: #e2e8f0;
+}
+.fc-event {
+    cursor: pointer;
+    border: none;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+.fc-event-title {
+    font-weight: 500;
+}
+.fc .fc-toolbar-title {
+    font-size: 1.25rem;
+    color: #1e293b;
+    font-weight: 700;
+}
+.fc .fc-button-primary {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+.fc .fc-button-primary:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+}
+@media (max-width: 768px){
+    .seal-calendar{min-height:480px;}
+    .fc .fc-toolbar{align-items:stretch;flex-direction:column;gap:10px;}
+    .fc .fc-toolbar-chunk{display:flex;justify-content:center;}
+    .fc .fc-toolbar-title{font-size:1.05rem;}
+    .fc .fc-button{font-size:.82rem;padding:.35em .55em;}
 }

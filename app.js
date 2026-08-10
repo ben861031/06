@@ -235,6 +235,7 @@ let borrowEntryDraft = null;
 let selectedBorrowSeal = "";
 let selectedBorrowRecordId = null;
 let borrowPanelMode = "new";
+let concurrentBorrowMode = false;
 let editingPendingId = null;
 
 let loginLogs = [];
@@ -1522,6 +1523,7 @@ id:docSnap.id,
 });
 
 renderPendingTable();
+if(typeof loadCalendarEvents === 'function') loadCalendarEvents();
 
 }
 
@@ -1574,7 +1576,7 @@ el = document.querySelector(
 
 document
 .querySelectorAll(
-"#borrowPage,#pendingPage,#returnPage,#historyPage,#sealPage,#deptPage,#memberPage,#permissionPage,#loginLogPage,#auditLogPage"
+"#borrowPage,#pendingPage,#returnPage,#historyPage,#sealPage,#deptPage,#memberPage,#permissionPage,#loginLogPage,#auditLogPage,#calendarPage"
 )
 .forEach(page=>page.classList.add("hidden"));
 
@@ -1596,7 +1598,6 @@ localStorage.setItem(
 if(pageId === "historyPage" && !historyLoaded){
 loadHistoryRecords(true);
 }
-
 if(pageId === "permissionPage" && isAdminRole()){
 loadUsers();
 }
@@ -1797,6 +1798,8 @@ ${dept.name}
 });
 
 document.getElementById("pendingBorrower").value = "";
+document.getElementById("pendingExpectedBorrowTime").value = "";
+document.getElementById("pendingExpectedReturnTime").value = "";
 document.getElementById("pendingDepartment").value = "";
 document.getElementById("pendingProjectNo").value = "";
 document.getElementById("pendingFormNo").value = "";
@@ -1877,22 +1880,12 @@ pendingRecords.find(
 item=>item.id===editingPendingId
 );
 
-await updateDoc(
-doc(
-db,
-"pendingRecords",
-editingPendingId
-),
-{
-
-borrower,
-department,
-projectNo,
-formNo,
-purpose
-
-}
-);
+const expectedBorrowTime = parseDateTimeLocal(document.getElementById("pendingExpectedBorrowTime")?.value);
+const expectedReturnTime = parseDateTimeLocal(document.getElementById("pendingExpectedReturnTime")?.value);
+const updateData = { borrower, department, projectNo, formNo, purpose };
+if(expectedBorrowTime) updateData.expectedBorrowTime = expectedBorrowTime; else updateData.expectedBorrowTime = deleteField();
+if(expectedReturnTime) updateData.expectedReturnTime = expectedReturnTime; else updateData.expectedReturnTime = deleteField();
+await updateDoc(doc(db,"pendingRecords",editingPendingId), updateData);
 
 await writeAuditLog({
 action:"update",
@@ -1906,27 +1899,20 @@ department,
 projectNo,
 formNo,
 purpose,
+expectedBorrowTime:expectedBorrowTime || null,
+expectedReturnTime:expectedReturnTime || null,
 status:before?.status || "待借用"
 }
 });
 
 }else{
 
-const newPendingRef =
-await addDoc(
-collection(db,"pendingRecords"),
-{
-
-borrower,
-department,
-projectNo,
-formNo,
-purpose,
-status:"待借用",
-createTime:new Date()
-
-}
-);
+const createData = { borrower, department, projectNo, formNo, purpose, status:"待借用", createTime:new Date() };
+const expectedBorrowTime = parseDateTimeLocal(document.getElementById("pendingExpectedBorrowTime")?.value);
+const expectedReturnTime = parseDateTimeLocal(document.getElementById("pendingExpectedReturnTime")?.value);
+if(expectedBorrowTime) createData.expectedBorrowTime = expectedBorrowTime;
+if(expectedReturnTime) createData.expectedReturnTime = expectedReturnTime;
+const newPendingRef = await addDoc(collection(db,"pendingRecords"), createData);
 
 await writeAuditLog({
 action:"create",
@@ -1939,6 +1925,8 @@ department,
 projectNo,
 formNo,
 purpose,
+expectedBorrowTime:expectedBorrowTime || null,
+expectedReturnTime:expectedReturnTime || null,
 status:"待借用"
 }
 });
@@ -2191,8 +2179,9 @@ item.projectNo || "";
 document.getElementById("pendingFormNo").value =
 item.formNo || "";
 
-document.getElementById("pendingPurpose").value =
-item.purpose || "";
+document.getElementById("pendingPurpose").value = item.purpose || "";
+document.getElementById("pendingExpectedBorrowTime").value = formatDateTimeLocal(item.expectedBorrowTime);
+document.getElementById("pendingExpectedReturnTime").value = formatDateTimeLocal(item.expectedReturnTime);
 
 document.querySelector(
 "#pendingOverlay h2"
@@ -2232,12 +2221,14 @@ borrower:item.borrower || "",
 department:item.department || "",
 projectNo:item.projectNo || "",
 formNo:item.formNo || "",
-purpose:item.purpose || ""
+purpose:item.purpose || "",
+expectedReturnTime: item.expectedReturnTime || null
 };
 
 selectedBorrowSeal = "";
 selectedBorrowRecordId = null;
 borrowPanelMode = "new";
+concurrentBorrowMode = false;
 
 const borrowMenu =
 document.querySelectorAll(".menu-item")[0];
@@ -2550,6 +2541,28 @@ onclick="convertPending('${item.id}')">
 
 lucide.createIcons();
 
+}
+
+
+function formatDateTimeLocal(date){
+if(!date) return "";
+let d = date;
+if(date.seconds) d = new Date(date.seconds * 1000);
+else if(!(date instanceof Date)) d = new Date(date);
+if(isNaN(d.getTime())) return "";
+const pad = n => String(n).padStart(2, '0');
+return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function parseDateTimeLocal(value){
+if(!value) return null;
+// Ensure value has seconds if it's from datetime-local
+let safeValue = value;
+if (safeValue.length === 16 && safeValue.includes('T')) {
+    safeValue += ':00';
+}
+const d = new Date(safeValue);
+if(isNaN(d.getTime())) return null;
+return Timestamp.fromDate(d);
 }
 
 function formatDate(date){
@@ -3137,6 +3150,7 @@ pendingTransferDraft = null;
 borrowEntryDraft = null;
 selectedBorrowRecordId = null;
 borrowPanelMode = "new";
+concurrentBorrowMode = false;
 
 const firstAvailable = sealList.find(seal=>
 !records.some(record=>record.seal===seal.name && !record.returnTime)
@@ -3160,12 +3174,14 @@ renderStatus();
 }
 
 function getBorrowFormData(){
+const ert = parseDateTimeLocal(document.getElementById("expectedReturnTime")?.value);
 return {
 borrower:document.getElementById("borrower").value.trim(),
 department:document.getElementById("department").value,
 projectNo:document.getElementById("projectNo").value.trim(),
 formNo:document.getElementById("formNo").value.trim(),
-purpose:document.getElementById("purpose").value.trim()
+purpose:document.getElementById("purpose").value.trim(),
+expectedReturnTime:ert
 };
 }
 
@@ -3175,6 +3191,7 @@ document.getElementById("department").value = data.department || "";
 document.getElementById("projectNo").value = data.projectNo || "";
 document.getElementById("formNo").value = data.formNo || "";
 document.getElementById("purpose").value = data.purpose || "";
+document.getElementById("expectedReturnTime").value = formatDateTimeLocal(data.expectedReturnTime);
 }
 
 function setBorrowFormDisabled(disabled){
@@ -3183,7 +3200,8 @@ function setBorrowFormDisabled(disabled){
 "department",
 "projectNo",
 "formNo",
-"purpose"
+"purpose",
+"expectedReturnTime"
 ].forEach(id=>{
 const element = document.getElementById(id);
 if(element) element.disabled = disabled;
@@ -3220,39 +3238,42 @@ resetBorrowForm();
 }
 
 function selectBorrowSeal(sealName){
-const active = records.find(record=>
+const activeRecords = records.filter(record=>
 record.seal===sealName && !record.returnTime
 );
 
 selectedBorrowSeal = sealName;
-
-if(active){
-if(borrowPanelMode === "new"){
-borrowEntryDraft = getBorrowFormData();
+concurrentBorrowMode = false;
 
 if(currentPendingIndex){
-pendingTransferDraft = {...borrowEntryDraft};
-}
-}
-
-selectedBorrowRecordId = active.id;
+selectedBorrowRecordId = null;
+borrowPanelMode = "new";
+populateBorrowForm(pendingTransferDraft || {});
+document.getElementById("seal").value = sealName;
+}else if(activeRecords.length){
+selectedBorrowRecordId = activeRecords[0].id;
 borrowPanelMode = "read";
-populateBorrowForm(active);
+populateBorrowForm(activeRecords[0]);
 }else{
 selectedBorrowRecordId = null;
 borrowPanelMode = "new";
-
-if(currentPendingIndex && pendingTransferDraft){
-populateBorrowForm(pendingTransferDraft);
-}else if(document.getElementById("borrower").disabled){
-populateBorrowForm(
-borrowEntryDraft || {borrower:""}
-);
-}
-
+populateBorrowForm(borrowEntryDraft || {});
 document.getElementById("seal").value = sealName;
 }
 
+renderBorrowPanelState();
+renderStatus();
+}
+
+function startConcurrentBorrow(){
+if(blockViewerAction()) return;
+if(!selectedBorrowSeal) return;
+
+selectedBorrowRecordId = null;
+borrowPanelMode = "new";
+concurrentBorrowMode = true;
+populateBorrowForm({});
+document.getElementById("seal").value = selectedBorrowSeal;
 renderBorrowPanelState();
 renderStatus();
 }
@@ -3268,7 +3289,8 @@ const editButton = document.getElementById("editBorrowedButton");
 const saveButton = document.getElementById("saveBorrowedButton");
 const cancelButton = document.getElementById("cancelBorrowEditButton");
 
-[confirmButton,editButton,saveButton,cancelButton]
+const concurrentButton = document.getElementById("concurrentBorrowButton");
+[confirmButton,editButton,saveButton,cancelButton,concurrentButton].filter(Boolean)
 .forEach(button=>button.classList.add("hidden"));
 
 if(selectedBorrowRecordId){
@@ -3281,27 +3303,39 @@ renderBorrowPanelState();
 return;
 }
 
-title.textContent = borrowPanelMode === "edit"
-? "編輯借用資料"
-: "目前借用資料";
+const activeRecords = records.filter(record=>record.seal===active.seal && !record.returnTime);
+
+title.textContent = borrowPanelMode === "edit" ? "編輯借用資料" : "目前借用資料";
 description.textContent = borrowPanelMode === "edit"
 ? "修改完成後請儲存變更"
-: "此印鑑目前借出中，資料預設不可修改";
+: "此印鑑目前借出中；如需登記另一位借用人，請使用新增同印鑑借用";
+badge.className = "badge badge-red";
+badge.textContent = "借出中";
+badge.classList.remove("hidden");
 
-badge.textContent = borrowPanelMode === "edit" ? "編輯中" : "借出中";
-badge.className = borrowPanelMode === "edit"
-? "badge badge-blue"
-: "badge badge-red";
+let switcherHtml = '';
+if (activeRecords.length > 1) {
+    switcherHtml = `<div class="active-record-switcher">
+        <i data-lucide="layers"></i> 同印鑑有 ${activeRecords.length} 筆借出中：
+        <select onchange="switchActiveRecord(this.value)">
+            ${activeRecords.map((r, idx) => `<option value="${r.id}" ${r.id === selectedBorrowRecordId ? 'selected' : ''}>[${idx+1}] ${escapeHtml(r.borrower)}</option>`).join('')}
+        </select>
+    </div>`;
+}
 
 meta.classList.remove("hidden");
-meta.innerHTML = `
+meta.innerHTML = switcherHtml + `
 <div class="borrowed-meta-item">
 <span>印鑑</span>
-<b>${active.seal || "-"}</b>
+<b>${escapeHtml(active.seal || "-")}</b>
 </div>
 <div class="borrowed-meta-item">
 <span>借用時間</span>
 <b>${formatDate(active.borrowTime)}</b>
+</div>
+<div class="borrowed-meta-item">
+<span>預計歸還</span>
+<b>${active.expectedReturnTime ? formatDate(active.expectedReturnTime) : "未設定"}</b>
 </div>
 <div class="borrowed-meta-item">
 <span>已借用時間</span>
@@ -3320,6 +3354,7 @@ cancelButton.textContent = "返回待借用案件";
 cancelButton.classList.remove("hidden");
 }else if(!isViewerRole()){
 editButton.classList.remove("hidden");
+if(concurrentButton) concurrentButton.classList.remove("hidden");
 }
 
 lucide.createIcons();
@@ -3328,9 +3363,13 @@ return;
 
 title.textContent = currentPendingIndex
 ? "待借用轉正式借用"
+: concurrentBorrowMode
+? "新增同印鑑借用"
 : "借用資料";
 description.textContent = currentPendingIndex
 ? "資料已帶入，請從左側手動選擇一組可借用印鑑"
+: concurrentBorrowMode
+? `正在為「${selectedBorrowSeal}」新增另一筆借用資料`
 : selectedBorrowSeal
 ? "請填寫借用資訊後送出"
 : "請先從左側選擇一組可借用印鑑";
@@ -3396,7 +3435,11 @@ alert("請填寫必要欄位");
 return;
 }
 
-await updateDoc(doc(db,"sealRecords",before.id),after);
+const updateData = {
+...after,
+expectedReturnTime:after.expectedReturnTime || deleteField()
+};
+await updateDoc(doc(db,"sealRecords",before.id),updateData);
 
 await writeAuditLog({
 action:"update",
@@ -3460,7 +3503,7 @@ r.seal === seal &&
 
 );
 
-if(exists){
+if(exists && !concurrentBorrowMode){
 
 alert(`印鑑 ${seal} 目前借出中，無法重複借用`);
 
@@ -3475,9 +3518,11 @@ department,
 projectNo,
 formNo,
 purpose,
+expectedReturnTime: parseDateTimeLocal(document.getElementById("expectedReturnTime")?.value),
+allowConcurrent:concurrentBorrowMode,
 pendingId:currentPendingIndex
 };
-
+document.getElementById("borrowConfirmExpectedReturnTime").textContent = document.getElementById("expectedReturnTime")?.value ? formatDate(parseDateTimeLocal(document.getElementById("expectedReturnTime")?.value)) : "-";
 document.getElementById("borrowConfirmSeal").textContent =
 seal;
 
@@ -3525,7 +3570,7 @@ r.seal === data.seal &&
 !r.returnTime
 );
 
-if(exists){
+if(exists && !data.allowConcurrent){
 alert(`印鑑 ${data.seal} 目前借出中，無法重複借用`);
 closeBorrowConfirmModal();
 await loadRecords();
@@ -3550,6 +3595,7 @@ department:data.department,
 projectNo:data.projectNo,
 formNo:data.formNo,
 purpose:data.purpose,
+expectedReturnTime: data.expectedReturnTime || null,
 borrowTime:new Date(),
 returnTime:null
 
@@ -3567,6 +3613,7 @@ department:data.department,
 projectNo:data.projectNo,
 formNo:data.formNo,
 purpose:data.purpose,
+expectedReturnTime:data.expectedReturnTime || null,
 status:"借出中"
 }
 });
@@ -3791,6 +3838,7 @@ renderTable();
 renderReturnTable();
 renderStatus();
 updateKPI();
+if(typeof loadCalendarEvents === 'function') loadCalendarEvents();
 
 }
 
@@ -3840,7 +3888,7 @@ historyLoaded = true;
 const activeRecords = records.filter(record=>!record.returnTime);
 records = [...historyRecords,...activeRecords];
 renderTable();
-
+if(typeof loadCalendarEvents === 'function') loadCalendarEvents();
 }catch(error){
 
 console.error("讀取歷史借用紀錄失敗",error);
@@ -4070,39 +4118,38 @@ const visibleSeals = sealList.filter(seal=>
 list.innerHTML = "";
 
 visibleSeals.forEach(seal=>{
-const active = records.find(record=>
-record.seal===seal.name && !record.returnTime
-);
+  const activeRecords = records.filter(record=>
+  record.seal===seal.name && !record.returnTime
+  );
+  const active = activeRecords.length > 0;
 
-const row = document.createElement("button");
-row.type = "button";
-row.className = [
-"seal-status-row",
-active ? "is-borrowed" : "is-available",
-selectedBorrowSeal===seal.name ? "selected" : ""
-].filter(Boolean).join(" ");
-row.setAttribute("data-seal",seal.name);
-row.onclick = ()=>selectBorrowSeal(seal.name);
+  const row = document.createElement("button");
+  row.type = "button";
+  row.className = [
+  "seal-status-row",
+  active ? "is-borrowed" : "is-available",
+  selectedBorrowSeal===seal.name ? "selected" : ""
+  ].filter(Boolean).join(" ");
+  row.setAttribute("data-seal",seal.name);
+  row.onclick = ()=>selectBorrowSeal(seal.name);
 
-row.innerHTML = `
-<div class="seal-row-main">
-<div class="seal-row-name">${seal.name}</div>
-${active
-? `<div class="seal-row-person">借用人：${active.borrower || "-"}</div>`
-: ""}
-</div>
-<div class="seal-row-status-wrap">
-<div class="seal-row-status">
-${active ? "借出中" : "可借用"}
-</div>
-${selectedBorrowSeal===seal.name && !active
-? `<span class="seal-row-check"><i data-lucide="check"></i></span>`
-: active
-? `<i data-lucide="chevron-right"></i>`
-: `<i data-lucide="chevron-right"></i>`}
-</div>`;
+  row.innerHTML = `
+  <div class="seal-row-main">
+  <div class="seal-row-name">${seal.name}</div>
+  ${active
+  ? `<div class="seal-row-person">借用人：${escapeHtml(activeRecords.map(r=>r.borrower).join(', '))}</div>`
+  : ""}
+  </div>
+  <div class="seal-row-status-wrap">
+  <div class="seal-row-status">
+  ${active ? "借出中" : "可借用"}
+  </div>
+  ${selectedBorrowSeal===seal.name && !active
+  ? `<span class="seal-row-check"><i data-lucide="check"></i></span>`
+  : `<i data-lucide="chevron-right"></i>`}
+  </div>`;
 
-list.appendChild(row);
+  list.appendChild(row);
 });
 
 if(!visibleSeals.length){
@@ -4614,6 +4661,7 @@ document.getElementById('editBorrower').value=r.borrower||'';
 document.getElementById('editDepartment').value=r.department||'';
 document.getElementById('editProjectNo').value=r.projectNo||'';
 document.getElementById('editFormNo').value=r.formNo||'';
+document.getElementById('editExpectedReturnTime').value=formatDateTimeLocal(r.expectedReturnTime);
 document.getElementById('editPurpose').value=r.purpose||'';
 
 document.getElementById('editOverlay').style.display='flex';
@@ -4632,12 +4680,16 @@ borrower:document.getElementById('editBorrower').value,
 department:document.getElementById('editDepartment').value,
 projectNo:document.getElementById('editProjectNo').value,
 formNo:document.getElementById('editFormNo').value,
-purpose:document.getElementById('editPurpose').value
+purpose:document.getElementById('editPurpose').value,
+expectedReturnTime:parseDateTimeLocal(document.getElementById('editExpectedReturnTime').value)
 };
 
 await updateDoc(
 doc(db,"sealRecords",id),
-after
+{
+...after,
+expectedReturnTime:after.expectedReturnTime || deleteField()
+}
 );
 
 await writeAuditLog({
@@ -5156,6 +5208,156 @@ sidebar.classList.contains("collapsed")
 
 }
 
+
+let sealCalendar = null;
+
+window.showCalendarPage = async function(element) {
+    if(typeof showPage === 'function') {
+        showPage('calendarPage', element);
+    } else {
+        // Fallback manually toggling classes if showPage is not globally accessible here
+        document.querySelectorAll('.main > div').forEach(el => el.classList.add('hidden'));
+        document.getElementById('calendarPage').classList.remove('hidden');
+        document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
+    }
+
+    if (!historyLoaded) {
+        await loadHistoryRecords(true);
+    }
+    if (!sealCalendar) {
+        initSealCalendar();
+    }
+    loadCalendarEvents();
+};
+
+function initSealCalendar() {
+    const calendarEl = document.getElementById('sealCalendar');
+    if (!calendarEl) return;
+    if (typeof FullCalendar === 'undefined') {
+        alert("FullCalendar 套件載入中或載入失敗，請稍後再試。");
+        return;
+    }
+    sealCalendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'zh-tw',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,dayGridWeek,listWeek'
+        },
+        displayEventTime: false,
+        buttonText: {
+            today: '今天',
+            month: '月視表',
+            week: '週視表',
+            list: '列表'
+        },
+        height: 'auto',
+        events: [],
+        eventClick: function(info) {
+            const props = info.event.extendedProps;
+            alert(`借用詳情：\n印鑑：${props.seal}\n借用人：${props.borrower}\n狀態：${props.status}\n借出時間：${props.borrowTime || '無'}\n歸還時間：${props.returnTime || '無'}`);
+        }
+    });
+    sealCalendar.render();
+}
+
+function loadCalendarEvents() {
+    if (!sealCalendar) return;
+    const events = [];
+    
+    function toSafeDateString(val) {
+        if(!val) return null;
+        let d;
+        if(val.seconds) d = new Date(val.seconds * 1000);
+        else if (val instanceof Date) d = val;
+        else d = new Date(val);
+        if(isNaN(d.getTime())) return null;
+        const pad = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':00';
+    }
+
+    (typeof records !== 'undefined' ? records : []).forEach(r => {
+        const isReturned = !!r.returnTime;
+
+        let startStr = toSafeDateString(r.borrowTime || r.createdAt);
+        let endStr = isReturned ? toSafeDateString(r.returnTime) : toSafeDateString(r.expectedReturnTime);
+        
+        if (startStr) {
+            if(!endStr) {
+                let d = new Date(startStr);
+                d.setHours(d.getHours() + 1);
+                endStr = toSafeDateString(d);
+            }
+            events.push({
+                id: 'record_' + r.id,
+                title: '[' + (isReturned ? '已歸還' : '借出中') + '] ' + r.seal + ' - ' + r.borrower,
+                start: startStr,
+                end: endStr,
+                backgroundColor: isReturned ? '#e0e7ff' : '#ef4444',
+                borderColor: isReturned ? '#a5b4fc' : '#ef4444',
+                textColor: isReturned ? '#3730a3' : '#ffffff',
+                classNames: isReturned ? ['fc-event-past'] : [],
+                extendedProps: {
+                    seal: r.seal,
+                    borrower: r.borrower,
+                    status: isReturned ? '已歸還' : '借出中',
+                    borrowTime: formatDate(r.borrowTime || r.createdAt),
+                    returnTime: r.returnTime ? formatDate(r.returnTime) : (r.expectedReturnTime ? formatDate(r.expectedReturnTime) + " (預計)" : "未定")
+                }
+            });
+        }
+    });
+
+    (typeof pendingRecords !== 'undefined' ? pendingRecords : []).forEach(p => {
+        if(p.status === '已借出' || p.status === '已取消' || p.status === '已拒絕') return;
+
+        let startStr = toSafeDateString(p.expectedBorrowTime);
+        let endStr = toSafeDateString(p.expectedReturnTime);
+        
+        if (!startStr && endStr) {
+             let d = new Date(endStr);
+             d.setHours(d.getHours() - 1);
+             startStr = toSafeDateString(d);
+        }
+        
+        if (startStr) {
+            if(!endStr) {
+                let d = new Date(startStr);
+                d.setHours(d.getHours() + 1);
+                endStr = toSafeDateString(d);
+            }
+            events.push({
+                id: 'pending_' + p.id,
+                title: '[預約待借用] ' + p.borrower,
+                start: startStr,
+                end: endStr,
+                color: '#3b82f6',
+                extendedProps: {
+                    seal: '尚未選擇 (預約中)',
+                    borrower: p.borrower,
+                    status: '待借用'
+                }
+            });
+        }
+    });
+    
+    sealCalendar.getEventSources().forEach(source => source.remove());
+    sealCalendar.addEventSource(events);
+}
+
+window.switchActiveRecord = function(recordId) {
+selectedBorrowRecordId = recordId;
+const active = records.find(record=>record.id===selectedBorrowRecordId);
+if(active) {
+borrowPanelMode = "read";
+concurrentBorrowMode = false;
+populateBorrowForm(active);
+}
+renderBorrowPanelState();
+};
+window.startConcurrentBorrow = startConcurrentBorrow;
 })().catch(error=>{
 
 console.error("系統初始化失敗",error);

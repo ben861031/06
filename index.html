@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>印鑑借用管理系統</title>
+<title>印鑑借用管理系統 v15.8</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
-    <link rel="stylesheet" href="./styles.css?v=20260718-v156-permission-name-center">
+    <link rel="stylesheet" href="./styles.css?v=20260810-v158-external-integration">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -31,12 +32,14 @@ style="
 background:white;
 padding:40px;
 width:420px;
+max-width:calc(100% - 32px);
+box-sizing:border-box;
 border-radius:20px;
 text-align:center;
 box-shadow:0 10px 30px rgba(0,0,0,.08);
 ">
 
-<h1>印鑑借用管理系統</h1>
+<h1 style="font-size:clamp(22px,6vw,32px);white-space:nowrap;">印鑑借用管理系統</h1>
 
 <br>
 
@@ -87,6 +90,9 @@ transition:.15s;
                 </div>
                 <div class="menu-item" data-tooltip="待借用管理" onclick="showPage('pendingPage',this)">
                     <i data-lucide="clock-3" class="menu-icon"></i><span>待借用管理</span>
+                </div>
+                <div class="menu-item" data-tooltip="印鑑行事曆" onclick="showCalendarPage(this)">
+                    <i data-lucide="calendar-days" class="menu-icon"></i><span>印鑑行事曆</span>
                 </div>
                 <div class="menu-item" data-tooltip="歸還作業" onclick="showPage('returnPage',this)">
                     <i data-lucide="rotate-ccw" class="menu-icon"></i><span>歸還作業</span>
@@ -242,6 +248,11 @@ autocomplete="off">
 <label for="purpose">用途</label>
 <textarea id="purpose" rows="4" placeholder="請簡述借用用途"></textarea>
 </div>
+
+<div class="form-group">
+<label for="expectedReturnTime">預計歸還時間</label>
+<input type="datetime-local" id="expectedReturnTime">
+</div>
 </div>
 
 <div class="borrow-action-bar">
@@ -274,6 +285,7 @@ type="button"
 onclick="saveInlineBorrowEdit()">
 儲存變更
 </button>
+<button id="concurrentBorrowButton" class="btn btn-secondary borrow-main-action hidden" type="button" onclick="startConcurrentBorrow()"><i data-lucide="plus-circle"></i> 新增同印鑑借用</button>
 
 <button
 id="confirmBorrowMainButton"
@@ -365,6 +377,23 @@ onclick="openPendingModal()">
 
 </div>
 
+</div>
+
+<!-- 印鑑行事曆 -->
+<div id="calendarPage" class="hidden">
+<div class="panel">
+<div class="page-heading">
+<div class="page-heading-main">
+<h2 class="detail-title">
+<i data-lucide="calendar-days" class="detail-title-icon"></i>
+印鑑行事曆
+</h2>
+<p class="page-description">查看各印鑑之借用排程與預計歸還時間</p>
+</div>
+</div>
+<div class="section-divider"></div>
+<div id="sealCalendar" class="seal-calendar"></div>
+</div>
 </div>
 
 <!-- 歸還作業 -->
@@ -1147,6 +1176,7 @@ class="detail-title-icon">
 <div class="form-group"><label>部門</label><input id="editDepartment"></div>
 <div class="form-group"><label>計畫編號</label><input id="editProjectNo"></div>
 <div class="form-group"><label>表單編號</label><input id="editFormNo"></div>
+<div class="form-group"><label>預計歸還時間</label><input type="datetime-local" id="editExpectedReturnTime"></div>
 <div class="form-group"><label>用途</label><textarea id="editPurpose"></textarea></div>
 <div class="modal-footer">
 
@@ -1204,6 +1234,16 @@ class="detail-title-icon">
 <div class="form-group">
 <label>表單編號</label>
 <input id="pendingFormNo" placeholder="請輸入表單編號" autocomplete="off">
+</div>
+
+<div class="form-group">
+<label>預計借用時間</label>
+<input type="datetime-local" id="pendingExpectedBorrowTime">
+</div>
+
+<div class="form-group">
+<label>預計歸還時間</label>
+<input type="datetime-local" id="pendingExpectedReturnTime">
 </div>
 
 <div class="form-group">
@@ -1279,6 +1319,11 @@ class="detail-title-icon">
 <div class="return-confirm-item">
 <div class="return-confirm-label">表單編號</div>
 <div class="return-confirm-value" id="borrowConfirmFormNo">-</div>
+</div>
+
+<div class="return-confirm-item">
+<div class="return-confirm-label">預計歸還時間</div>
+<div class="return-confirm-value" id="borrowConfirmExpectedReturnTime">-</div>
 </div>
 
 <div class="return-confirm-item return-confirm-purpose">
@@ -1392,7 +1437,7 @@ onclick="confirmReturnSeal()">
 
 
 
-    <script src="./app.js?v=20260719-v157-auth-isolation"></script>
+    <script src="./app.js?v=20260810-v158-external-integration"></script>
 
 </body>
 </html>
