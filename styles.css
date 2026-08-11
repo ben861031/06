@@ -3806,12 +3806,14 @@ body.modal-open{
     min-height:600px;
 }
 .active-record-switcher{
+    grid-column: 1 / -1;
     width:100%;
     margin-bottom:10px;
-    background:#eef2ff;
+    background:#ffedd5;
     padding:10px 12px;
     border-radius:8px;
-    color:#3730a3;
+    border: 1px solid #fdba74;
+    color:#9a3412;
     font-weight:700;
     display:flex;
     align-items:center;
@@ -3823,9 +3825,10 @@ body.modal-open{
     min-width:180px;
     padding:7px 10px;
     border-radius:6px;
-    border:1px solid #c7d2fe;
+    border:1px solid #fdba74;
     font-size:14px;
     background:#fff;
+    color:#7c2d12;
 }
 .fc-theme-standard td, .fc-theme-standard th {
     border-color: #e2e8f0;
