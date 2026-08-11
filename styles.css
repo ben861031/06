@@ -934,6 +934,27 @@ transform:translateY(-1px);
 
 }
 
+.btn-secondary{
+background:#eff6ff;
+color:#2563eb;
+border:1px solid #bfdbfe;
+box-shadow:0 2px 6px rgba(37,99,235,.06);
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:8px;
+}
+.btn-secondary:hover{
+background:#dbeafe;
+border-color:#93c5fd;
+transform:translateY(-1px);
+}
+.btn-secondary svg{
+width:18px;
+height:18px;
+stroke-width:2.3;
+}
+
 .kpi-grid{
 
 display:grid;
