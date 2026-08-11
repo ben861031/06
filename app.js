@@ -3350,10 +3350,6 @@ if (activeRecords.length > 1) {
 meta.classList.remove("hidden");
 meta.innerHTML = switcherHtml + `
 <div class="borrowed-meta-item">
-<span>印鑑</span>
-<b>${escapeHtml(active.seal || "-")}</b>
-</div>
-<div class="borrowed-meta-item">
 <span>借用時間</span>
 <b>${formatDate(active.borrowTime)}</b>
 </div>
