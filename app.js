@@ -4119,6 +4119,7 @@ record.seal===selectedBorrowSeal && !record.returnTime
 if(
 !currentPendingIndex &&
 borrowPanelMode === "new" &&
+!concurrentBorrowMode &&
 activeForSelected
 ){
 selectedBorrowSeal = "";

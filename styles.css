@@ -722,6 +722,7 @@ flex:0 0 180px;
 }
 
 .borrow-action-buttons .borrow-main-action{
+height:52px;
 width:180px;
 min-width:180px;
 white-space:nowrap;
