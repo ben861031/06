@@ -729,6 +729,30 @@ white-space:nowrap;
 flex:0 0 180px;
 }
 
+.borrow-action-buttons .btn-secondary{
+background:#eff6ff;
+color:#2563eb;
+border:1px solid #bfdbfe;
+box-shadow:0 2px 6px rgba(37,99,235,.06);
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:8px;
+}
+
+.borrow-action-buttons .btn-secondary:hover{
+background:#dbeafe;
+color:#1d4ed8;
+border-color:#93c5fd;
+transform:translateY(-1px);
+}
+
+.borrow-action-buttons .btn-secondary svg{
+width:18px;
+height:18px;
+stroke-width:2.3;
+}
+
 .btn:disabled,
 .btn-primary:disabled{
 cursor:not-allowed;
@@ -933,27 +957,6 @@ border-color:#94a3b8;
 
 transform:translateY(-1px);
 
-}
-
-.btn-secondary{
-background:#eff6ff;
-color:#2563eb;
-border:1px solid #bfdbfe;
-box-shadow:0 2px 6px rgba(37,99,235,.06);
-display:inline-flex;
-align-items:center;
-justify-content:center;
-gap:8px;
-}
-.btn-secondary:hover{
-background:#dbeafe;
-border-color:#93c5fd;
-transform:translateY(-1px);
-}
-.btn-secondary svg{
-width:18px;
-height:18px;
-stroke-width:2.3;
 }
 
 .kpi-grid{
@@ -3828,13 +3831,13 @@ body.modal-open{
     min-height:600px;
 }
 .active-record-switcher{
-    grid-column: 1 / -1;
+    grid-column:1 / -1;
     width:100%;
     margin-bottom:10px;
     background:#ffedd5;
     padding:10px 12px;
     border-radius:8px;
-    border: 1px solid #fdba74;
+    border:1px solid #fdba74;
     color:#9a3412;
     font-weight:700;
     display:flex;
