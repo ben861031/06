@@ -3350,10 +3350,6 @@ if (activeRecords.length > 1) {
 meta.classList.remove("hidden");
 meta.innerHTML = switcherHtml + `
 <div class="borrowed-meta-item">
-<span>印鑑</span>
-<b>${escapeHtml(active.seal || "-")}</b>
-</div>
-<div class="borrowed-meta-item">
 <span>借用時間</span>
 <b>${formatDate(active.borrowTime)}</b>
 </div>
@@ -3528,11 +3524,14 @@ r.seal === seal &&
 );
 
 if(exists && !concurrentBorrowMode){
+    const activeSameSeal = records.filter(r => r.seal === seal && !r.returnTime);
+    if (!activeSameSeal.every(r => r.borrower === borrower)) {
 
 alert(`印鑑 ${seal} 目前借出中，無法重複借用`);
 
 return;
 
+    }
 }
 
 pendingBorrowData = {
@@ -3595,10 +3594,13 @@ r.seal === data.seal &&
 );
 
 if(exists && !data.allowConcurrent){
+    const activeSameSeal = records.filter(r => r.seal === data.seal && !r.returnTime);
+    if (!activeSameSeal.every(r => r.borrower === data.borrower)) {
 alert(`印鑑 ${data.seal} 目前借出中，無法重複借用`);
 closeBorrowConfirmModal();
 await loadRecords();
 return;
+    }
 }
 
 const confirmButton =
