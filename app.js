@@ -227,6 +227,9 @@ let legacyUserList = [];
 let sharedPeopleLoaded = false;
 let memberEditorMode = "view";
 let editingSharedMemberId = null;
+let baseDataEditType = "";
+let baseDataEditId = "";
+let activeBaseDataSection = "seal";
 let pendingMemberImport = null;
 let memberImportMode = "partial";
 let currentPendingIndex = null;
@@ -567,17 +570,15 @@ table.innerHTML = `
 try{
 
 auditLoading = true;
-const snapshot = await getDocs(buildAuditLogQuery());
-
-snapshot.forEach(docSnap=>{
-auditLogs.push({
-id:docSnap.id,
-...docSnap.data()
-});
-});
-
+const loadingStatus = document.getElementById("auditLoadingStatus");
+if(loadingStatus) loadingStatus.hidden = false;
+let snapshot;
+do{
+snapshot = await getDocs(buildAuditLogQuery());
+snapshot.forEach(docSnap=>auditLogs.push({id:docSnap.id,...docSnap.data()}));
 auditLastDoc = snapshot.docs[snapshot.docs.length - 1] || auditLastDoc;
 auditHasMore = snapshot.size === LOG_BATCH_SIZE;
+}while(auditHasMore);
 
 auditLogs.sort((a,b)=>{
 
@@ -609,21 +610,10 @@ table.innerHTML = `
 
 }finally{
 auditLoading = false;
-renderAuditLoadMore();
+const loadingStatus = document.getElementById("auditLoadingStatus");
+if(loadingStatus) loadingStatus.hidden = true;
 }
 
-}
-
-async function loadMoreAuditLogs(){
-await loadAuditLogs(false);
-}
-
-function renderAuditLoadMore(){
-const button = document.getElementById("auditLoadMoreButton");
-if(!button) return;
-button.hidden = !auditHasMore;
-button.disabled = auditLoading;
-button.textContent = auditLoading ? "載入中..." : "再載入 100 筆";
 }
 
 async function openAuditLogPage(el){
@@ -695,8 +685,7 @@ if(!table) return;
 
 const filtered = getFilteredAuditLogs();
 
-document.getElementById("auditCount").textContent =
-`(${filtered.length}筆)`;
+updateAuditActiveFilters();
 
 const totalPages =
 Math.ceil(filtered.length / auditPageSize);
@@ -715,7 +704,7 @@ if(pageRows.length === 0){
 
 table.innerHTML = `
 <tr>
-<td colspan="7">目前沒有符合條件的操作紀錄</td>
+<td class="table-empty-cell" colspan="7">目前沒有符合條件的操作紀錄</td>
 </tr>
 `;
 
@@ -827,6 +816,37 @@ loadAuditLogs(true);
 
 }
 
+function renderActiveFilterChips(areaId,items,clearHandler){
+const area = document.getElementById(areaId);
+if(!area) return;
+area.innerHTML = items.map(item=>`<button type="button" class="active-filter-chip" onclick="${clearHandler}('${item.key}')"><span>${escapeHtml(item.label)}</span><i data-lucide="x"></i></button>`).join("");
+area.hidden = items.length === 0;
+if(items.length) lucide.createIcons();
+}
+
+function updateAuditActiveFilters(){
+const items = [];
+const search = document.getElementById("auditSearch")?.value?.trim();
+const action = document.getElementById("auditActionFilter")?.value;
+const start = document.getElementById("auditDateStart")?.value;
+const end = document.getElementById("auditDateEnd")?.value;
+if(search) items.push({key:"search",label:`關鍵字：${search}`});
+if(action) items.push({key:"action",label:`操作：${auditActionLabels[action] || action}`});
+if(start) items.push({key:"start",label:`起日：${start}`});
+if(end) items.push({key:"end",label:`迄日：${end}`});
+renderActiveFilterChips("auditActiveFilters",items,"clearAuditFilter");
+}
+
+function clearAuditFilter(key){
+const map = {search:"auditSearch",action:"auditActionFilter",start:"auditDateStart",end:"auditDateEnd"};
+const target = document.getElementById(map[key]);
+if(target) target.value = "";
+auditCurrentPage = 1;
+if(key === "start" || key === "end") loadAuditLogs(true); else renderAuditLogs();
+}
+
+window.clearAuditFilter = clearAuditFilter;
+
 function buildLoginLogQuery(){
 
 const constraints = [orderBy("loginTime","desc")];
@@ -857,14 +877,15 @@ table.innerHTML = '<tr><td colspan="3">登入紀錄載入中...</td></tr>';
 try{
 
 loginLoading = true;
-const snapshot = await getDocs(buildLoginLogQuery());
-
-snapshot.forEach(docSnap=>{
-loginLogs.push({id:docSnap.id,...docSnap.data()});
-});
-
+const loadingStatus = document.getElementById("loginLoadingStatus");
+if(loadingStatus) loadingStatus.hidden = false;
+let snapshot;
+do{
+snapshot = await getDocs(buildLoginLogQuery());
+snapshot.forEach(docSnap=>loginLogs.push({id:docSnap.id,...docSnap.data()}));
 loginLastDoc = snapshot.docs[snapshot.docs.length - 1] || loginLastDoc;
 loginHasMore = snapshot.size === LOG_BATCH_SIZE;
+}while(loginHasMore);
 renderLoginLogs();
 
 }catch(error){
@@ -876,21 +897,10 @@ table.innerHTML = `<tr><td colspan="3">登入紀錄讀取失敗：${escapeHtml(e
 
 }finally{
 loginLoading = false;
-renderLoginLoadMore();
+const loadingStatus = document.getElementById("loginLoadingStatus");
+if(loadingStatus) loadingStatus.hidden = true;
 }
 
-}
-
-async function loadMoreLoginLogs(){
-await loadLoginLogs(false);
-}
-
-function renderLoginLoadMore(){
-const button = document.getElementById("loginLoadMoreButton");
-if(!button) return;
-button.hidden = !loginHasMore;
-button.disabled = loginLoading;
-button.textContent = loginLoading ? "載入中..." : "再載入 100 筆";
 }
 
 function renderLoginLogs(){
@@ -908,10 +918,7 @@ getFilteredLoginLogs()
 getRecordTime(b.loginTime) - getRecordTime(a.loginTime)
 );
 
-document.getElementById(
-"loginCount"
-).innerText =
-`(${sortedLogs.length}筆)`;
+updateLoginActiveFilters();
 
 const totalPages =
 Math.ceil(
@@ -980,6 +987,27 @@ document.getElementById("loginDateEnd").value = "";
 loginCurrentPage = 1;
 renderLoginLogs();
 }
+
+function updateLoginActiveFilters(){
+const items = [];
+const search = document.getElementById("loginSearch")?.value?.trim();
+const start = document.getElementById("loginDateStart")?.value;
+const end = document.getElementById("loginDateEnd")?.value;
+if(search) items.push({key:"search",label:`關鍵字：${search}`});
+if(start) items.push({key:"start",label:`起日：${start}`});
+if(end) items.push({key:"end",label:`迄日：${end}`});
+renderActiveFilterChips("loginActiveFilters",items,"clearLoginFilter");
+}
+
+function clearLoginFilter(key){
+const map = {search:"loginSearch",start:"loginDateStart",end:"loginDateEnd"};
+const target = document.getElementById(map[key]);
+if(target) target.value = "";
+loginCurrentPage = 1;
+renderLoginLogs();
+}
+
+window.clearLoginFilter = clearLoginFilter;
 
 function changeLoginPageSize(){
 
@@ -1097,6 +1125,7 @@ return String(a.employeeNo || "").localeCompare(String(b.employeeNo || ""),"zh-H
 });
 
 renderPermissionMemberOptions();
+await detectLegacyPermissionCandidates();
 renderUserList();
 
 }catch(error){
@@ -1119,7 +1148,7 @@ select.innerHTML = '<option value="">請選擇共用人員</option>' + options.m
 const department = memberDepartmentName(member) || "未設定部門";
 const employeeNo = memberEmployeeNo(member);
 const assigned = Boolean(email && assignedEmails.has(email));
-const unavailableReason = !email ? "（未設定 Google 帳號）" : assigned ? "（目前已有權限，可更新）" : "";
+const unavailableReason = !email ? "（未設定 Google 帳號）" : assigned ? "（已有權限，請於名單調整）" : "";
 const label = [`${department} ${member.name || "未設定姓名"}`,employeeNo ? `員編 ${employeeNo}` : "",unavailableReason].filter(Boolean).join("｜");
 return `<option value="${escapeHtml(member.id)}" data-email="${escapeHtml(email)}" ${!email ? "disabled" : ""}>${escapeHtml(label)}</option>`;
 }).join("");
@@ -1130,17 +1159,56 @@ const help = document.getElementById("newUserRoleHelp");
 if(help) help.textContent = permissionRoleDescription(role);
 }
 
+function openPermissionCreateModal(){
+if(blockViewerAction()) return;
+const overlay = document.getElementById("permissionCreateOverlay");
+if(!overlay) return;
+renderPermissionMemberOptions();
+const memberSelect = document.getElementById("newUserMember");
+const roleSelect = document.getElementById("newUserRole");
+if(memberSelect) memberSelect.value = "";
+if(roleSelect) roleSelect.value = "user";
+updateNewPermissionRoleHelp("user");
+overlay.classList.remove("hidden");
+overlay.setAttribute("aria-hidden","false");
+document.body.classList.add("modal-open");
+requestAnimationFrame(()=>memberSelect?.focus());
+}
+
+function closePermissionCreateModal(){
+const overlay = document.getElementById("permissionCreateOverlay");
+overlay?.classList.add("hidden");
+overlay?.setAttribute("aria-hidden","true");
+document.body.classList.remove("modal-open");
+}
+
+window.openAuditDetail = openAuditDetail;
+window.closeAuditDetail = closeAuditDetail;
+
 window.updateNewPermissionRoleHelp = updateNewPermissionRoleHelp;
+window.openPermissionCreateModal = openPermissionCreateModal;
+window.closePermissionCreateModal = closePermissionCreateModal;
 
 function populateMemberDepartmentOptions(){
 const select = document.getElementById("memberDepartment");
-if(!select) return;
+const filter = document.getElementById("memberDepartmentFilter");
+const availableDepartments = departmentList.filter(department=>department.active !== false);
+if(select){
 const current = select.value;
-select.innerHTML = '<option value="">請選擇部門</option>' + departmentList.map(department=>{
+select.innerHTML = '<option value="">請選擇部門</option>' + availableDepartments.map(department=>{
 const name = department.name || department.departmentName || department.department || "";
 return `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
 }).join("");
 if(current && [...select.options].some(option=>option.value === current)) select.value = current;
+}
+if(filter){
+const currentFilter = filter.value;
+filter.innerHTML = '<option value="all">全部部門</option>' + departmentList.map(department=>{
+const name = department.name || department.departmentName || department.department || "";
+return `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+}).join("");
+if(currentFilter && [...filter.options].some(option=>option.value === currentFilter)) filter.value = currentFilter;
+}
 }
 
 async function loadMemberManagement(force=false){
@@ -1164,10 +1232,12 @@ if(!area || !summary) return;
 
 const search = normalizeEmail(document.getElementById("memberSearch")?.value || "");
 const status = document.getElementById("memberStatusFilter")?.value || "all";
+const departmentFilter = document.getElementById("memberDepartmentFilter")?.value || "all";
 const filtered = memberList.filter(member=>{
 const active = member.active !== false;
 if(status === "active" && !active) return false;
 if(status === "inactive" && active) return false;
+if(departmentFilter !== "all" && memberDepartmentName(member) !== departmentFilter) return false;
 if(!search) return true;
 return [memberDepartmentName(member),member.name,memberEmployeeNo(member),memberGoogleEmail(member)]
 .some(value=>String(value || "").toLowerCase().includes(search));
@@ -1189,7 +1259,7 @@ return;
 area.innerHTML = `<div class="table-wrap"><table class="management-table"><thead><tr><th>部門</th><th>姓名</th><th>員工編號</th><th>Google 帳號</th><th>狀態</th><th>操作</th></tr></thead><tbody>${filtered.map(member=>{
 const active = member.active !== false;
 const email = memberGoogleEmail(member);
-return `<tr><td>${escapeHtml(memberDepartmentName(member) || "未設定")}</td><td><b>${escapeHtml(member.name || "")}</b></td><td>${escapeHtml(memberEmployeeNo(member))}</td><td>${email ? escapeHtml(email) : '<span class="muted-text">未設定</span>'}</td><td><span class="status-badge ${active ? 'status-active' : 'status-inactive'}">${active ? '啟用' : '停用'}</span></td><td class="operation-cell"><button class="btn btn-gray btn-sm" type="button" onclick="editSharedMember('${member.id}')">修改</button><button class="btn ${active ? 'btn-gray' : 'btn-primary'} btn-sm btn-inline" type="button" onclick="toggleSharedMember('${member.id}',${active ? 'false' : 'true'})">${active ? '停用' : '啟用'}</button><button class="btn btn-danger-outline btn-sm" type="button" onclick="deleteSharedMember('${member.id}')">刪除</button></td></tr>`;
+return `<tr class="${active ? '' : 'is-inactive'}"><td>${escapeHtml(memberDepartmentName(member) || "未設定")}</td><td><b>${escapeHtml(member.name || "")}</b></td><td>${escapeHtml(memberEmployeeNo(member))}</td><td>${email ? escapeHtml(email) : '<span class="account-missing-badge">尚未設定</span>'}</td><td><span class="status-badge ${active ? 'status-active' : 'status-inactive'}">${active ? '啟用' : '停用'}</span></td><td><div class="operation-cell"><button class="btn btn-gray btn-sm" type="button" onclick="editSharedMember('${member.id}')">修改</button><button class="btn ${active ? 'btn-gray' : 'btn-primary'} btn-sm btn-inline" type="button" onclick="toggleSharedMember('${member.id}',${active ? 'false' : 'true'})">${active ? '停用' : '啟用'}</button><button class="btn btn-danger-outline btn-sm" type="button" onclick="deleteSharedMember('${member.id}')">刪除</button></div></td></tr>`;
 }).join("")}</tbody></table></div>`;
 }
 
@@ -1207,10 +1277,11 @@ if(!currentIsSystemAdmin) return alert("此功能僅限系統管理員");
 memberEditorMode = "new";
 editingSharedMemberId = null;
 document.getElementById("memberEditorTitle").textContent = "新增人員";
-document.getElementById("memberEditorBadge").textContent = "新增模式";
-document.getElementById("memberSaveButton").textContent = "新增人員";
+document.getElementById("memberSaveButton").textContent = "新增";
 fillSharedMemberForm(null);
 document.getElementById("memberEditor").classList.remove("hidden");
+document.getElementById("memberEditor").setAttribute("aria-hidden","false");
+document.body.classList.add("modal-open");
 document.getElementById("memberName").focus();
 }
 
@@ -1221,18 +1292,21 @@ if(!member) return alert("找不到這筆人員資料");
 memberEditorMode = "edit";
 editingSharedMemberId = id;
 document.getElementById("memberEditorTitle").textContent = `修改人員：${member.name || ""}`;
-document.getElementById("memberEditorBadge").textContent = "編輯模式";
 document.getElementById("memberSaveButton").textContent = "儲存變更";
 fillSharedMemberForm(member);
 const editor = document.getElementById("memberEditor");
 editor.classList.remove("hidden");
-editor.scrollIntoView({behavior:"smooth",block:"start"});
+editor.setAttribute("aria-hidden","false");
+document.body.classList.add("modal-open");
+document.getElementById("memberName").focus();
 }
 
 function cancelSharedMemberEdit(){
 memberEditorMode = "view";
 editingSharedMemberId = null;
 document.getElementById("memberEditor")?.classList.add("hidden");
+document.getElementById("memberEditor")?.setAttribute("aria-hidden","true");
+document.body.classList.remove("modal-open");
 }
 
 async function migrateSealPermissionEmail(memberId,oldEmail,newEmail){
@@ -1300,7 +1374,7 @@ console.error("儲存共用人員失敗",error);
 alert(`人員資料儲存失敗：${error.message || "請檢查 Firestore 規則與網路"}`);
 }finally{
 saveButton.disabled = false;
-if(memberEditorMode !== "view") saveButton.textContent = memberEditorMode === "new" ? "新增人員" : "儲存變更";
+if(memberEditorMode !== "view") saveButton.textContent = memberEditorMode === "new" ? "新增" : "儲存變更";
 }
 }
 
@@ -1552,14 +1626,15 @@ if(typeof loadCalendarEvents === 'function') loadCalendarEvents();
 }
 
 let currentPage = 1;
-let pageSize = 10;
+let pageSize = 20;
 
 function showPage(pageId,el){
 
 const adminPages = [
 "permissionPage",
 "loginLogPage",
-"auditLogPage"
+"auditLogPage",
+"baseDataPage"
 ];
 
 if(pageId === "memberPage" && !currentIsSystemAdmin){
@@ -1600,7 +1675,7 @@ el = document.querySelector(
 
 document
 .querySelectorAll(
-"#borrowPage,#pendingPage,#returnPage,#historyPage,#sealPage,#deptPage,#memberPage,#permissionPage,#loginLogPage,#auditLogPage,#calendarPage"
+"#borrowPage,#pendingPage,#returnPage,#historyPage,#baseDataPage,#memberPage,#permissionPage,#loginLogPage,#auditLogPage,#calendarPage"
 )
 .forEach(page=>page.classList.add("hidden"));
 
@@ -1634,17 +1709,48 @@ if(pageId === "loginLogPage" && isAdminRole()){
 loadLoginLogs(true);
 }
 
+if(pageId === "baseDataPage" && isAdminRole()){
+showBaseDataSection(activeBaseDataSection);
+}
+
+}
+
+function openBaseDataPage(el){
+showPage("baseDataPage",el);
+showBaseDataSection(activeBaseDataSection);
+}
+
+function showBaseDataSection(type="seal",button=null){
+activeBaseDataSection = type === "department" ? "department" : "seal";
+const isSeal = activeBaseDataSection === "seal";
+document.getElementById("baseDataSealSection")?.classList.toggle("hidden",!isSeal);
+document.getElementById("baseDataDepartmentSection")?.classList.toggle("hidden",isSeal);
+document.querySelectorAll(".base-data-tab").forEach(tab=>{
+const selected = tab.id === (isSeal ? "baseDataSealTab" : "baseDataDeptTab");
+tab.classList.toggle("active",selected);
+tab.setAttribute("aria-selected",String(selected));
+});
+if(button && !button.classList.contains("active")) button.classList.add("active");
+updateBaseDataCreateAction();
+}
+
+function updateBaseDataCreateAction(){
+const isSeal = activeBaseDataSection !== "department";
+const button = document.getElementById("baseDataCreateButton");
+if(!button) return;
+button.innerHTML = `<i data-lucide="circle-plus"></i><span>新增${isSeal ? "印鑑" : "部門"}</span>`;
+button.setAttribute("aria-label",`新增${isSeal ? "印鑑" : "部門"}`);
+lucide.createIcons();
 }
 
 window.showPage = showPage;
+window.openBaseDataPage = openBaseDataPage;
+window.showBaseDataSection = showBaseDataSection;
 window.loadAuditLogs = loadAuditLogs;
 window.openAuditLogPage = openAuditLogPage;
 window.changeAuditPageSize = changeAuditPageSize;
 window.resetAuditFilter = resetAuditFilter;
-window.loadMoreAuditLogs = loadMoreAuditLogs;
 window.loadLoginLogs = loadLoginLogs;
-window.loadMoreLoginLogs = loadMoreLoginLogs;
-window.loadMoreHistoryRecords = loadMoreHistoryRecords;
 
 function restoreLastPage(){
 
@@ -1688,9 +1794,9 @@ function restoreLastPage(){
     const targetMenu =
     lastPage === "auditLogPage"
     ? document.getElementById("auditLogMenu")
-    : document.querySelector(
-        `[onclick*="${lastPage}"]`
-    );
+    : lastPage === "baseDataPage"
+    ? document.getElementById("baseDataMenu")
+    : document.querySelector(`[onclick*="${lastPage}"]`);
 
     if(targetMenu){
 
@@ -1726,20 +1832,8 @@ function toggleAdvancedFilter(){
 const panel =
 document.getElementById("advancedFilter");
 
-const text =
-document.getElementById("filterToggleText");
-
 panel.classList.toggle("show");
-
-if(panel.classList.contains("show")){
-
-text.innerHTML = "收合篩選";
-
-}else{
-
-text.innerHTML = "進階篩選";
-
-}
+updateHistoryFilterSummary();
 
 }
 
@@ -1811,7 +1905,7 @@ document.getElementById("pendingDepartment");
 deptSelect.innerHTML =
 '<option value="">請選擇部門</option>';
 
-departmentList.forEach(dept=>{
+departmentList.filter(dept=>dept.active !== false).forEach(dept=>{
 
 deptSelect.innerHTML += `
 <option value="${dept.name}">
@@ -1829,6 +1923,13 @@ document.getElementById("pendingProjectNo").value = "";
 document.getElementById("pendingFormNo").value = "";
 document.getElementById("pendingPurpose").value = "";
 editingPendingId = null;
+
+const pendingSaveButton = document.getElementById("pendingSaveButton");
+if(pendingSaveButton){
+pendingSaveButton.textContent = "新增";
+pendingSaveButton.classList.remove("btn-green");
+pendingSaveButton.classList.add("btn-primary");
+}
 
 document.querySelector(
 "#pendingOverlay h2"
@@ -1883,6 +1984,8 @@ document.getElementById("pendingFormNo")
 const purpose =
 document.getElementById("pendingPurpose")
 .value.trim();
+
+const wasEditing = Boolean(editingPendingId);
 
 if(
 !borrower ||
@@ -1985,6 +2088,11 @@ return;
 
 }
 
+if(existing){
+alert("此同仁已有印鑑系統權限，請直接於下方名單調整角色或啟用狀態。");
+return;
+}
+
 const newUserData = {
 email,
 memberId,
@@ -1994,12 +2102,10 @@ updatedAt:new Date(),
 updatedByEmail:normalizeEmail(currentUserEmail)
 };
 
-if(!existing){
 newUserData.createdAt = new Date();
 newUserData.createdByEmail = normalizeEmail(currentUserEmail);
-}
 
-const permissionId = existing?.id || email;
+const permissionId = email;
 
 await setDoc(doc(db,"sealPermissions",permissionId),newUserData,{merge:true});
 
@@ -2015,9 +2121,9 @@ email
 after:newUserData
 });
 
-document.getElementById("newUserMember").value = "";
+closePermissionCreateModal();
 
-alert(existing ? "印鑑系統權限已更新並啟用" : "印鑑系統權限已新增");
+alert("印鑑系統權限已新增");
 
 await loadUsers();
 
@@ -2035,7 +2141,7 @@ userList.find(u=>u.id===id);
 
 if(isLastEnabledSealAdmin(user)){
 
-alert("至少必須保留一位啟用中的系統管理員，無法移除此權限");
+alert("此位人員為唯一系統管理員，不可刪除。");
 return;
 
 }
@@ -2179,7 +2285,7 @@ document.getElementById(
 deptSelect.innerHTML =
 '<option value="">請選擇部門</option>';
 
-departmentList.forEach(dept=>{
+departmentList.filter(dept=>dept.active !== false).forEach(dept=>{
 
 deptSelect.innerHTML += `
 <option value="${dept.name}">
@@ -2206,6 +2312,13 @@ item.formNo || "";
 document.getElementById("pendingPurpose").value = item.purpose || "";
 document.getElementById("pendingExpectedBorrowTime").value = formatDateTimeLocal(item.expectedBorrowTime);
 document.getElementById("pendingExpectedReturnTime").value = formatDateTimeLocal(item.expectedReturnTime);
+
+const pendingSaveButton = document.getElementById("pendingSaveButton");
+if(pendingSaveButton){
+pendingSaveButton.textContent = "儲存變更";
+pendingSaveButton.classList.remove("btn-green");
+pendingSaveButton.classList.add("btn-primary");
+}
 
 document.querySelector(
 "#pendingOverlay h2"
@@ -2384,6 +2497,29 @@ await loadUsers();
 
 window.migrateLegacySealPermissions = migrateLegacySealPermissions;
 
+async function detectLegacyPermissionCandidates(){
+const details = document.getElementById("permissionMigrationDetails");
+if(!details) return;
+try{
+const legacySnapshot = await getDocs(collection(db,"users"));
+legacyUserList = legacySnapshot.docs.map(docSnap=>({id:docSnap.id,...docSnap.data()}));
+const existing = new Set(userList.map(user=>normalizeEmail(user.email)));
+const memberEmails = new Set(memberList.map(memberGoogleEmail).filter(Boolean));
+const count = legacyUserList.filter(user=>{
+const email = normalizeEmail(user.email);
+return email && user.enabled !== false && memberEmails.has(email) && !existing.has(email);
+}).length;
+details.hidden = count === 0;
+if(count){
+const summary = details.querySelector("summary");
+if(summary) summary.textContent = `偵測到 ${count} 筆舊權限可移轉`;
+}
+}catch(error){
+details.hidden = true;
+console.warn("檢查舊權限移轉資料失敗",error);
+}
+}
+
 function renderUserList(){
 
 const area =
@@ -2395,32 +2531,53 @@ if(!area) return;
 
 area.innerHTML = "";
 
+const keyword = (document.getElementById("permissionSearch")?.value || "").trim().toLowerCase();
+const roleFilter = document.getElementById("permissionRoleFilter")?.value || "all";
+const statusFilter = document.getElementById("permissionStatusFilter")?.value || "all";
+const filteredUsers = userList.filter(user=>{
+const role = normalizeRole(user.role);
+const enabled = user.enabled !== false;
+if(roleFilter !== "all" && role !== roleFilter) return false;
+if(statusFilter === "active" && !enabled) return false;
+if(statusFilter === "inactive" && enabled) return false;
+if(!keyword) return true;
+return [user.departmentName,user.employeeName,user.employeeNo,user.email,getSystemRoleLabel(role)]
+.some(value=>String(value || "").toLowerCase().includes(keyword));
+});
+
 if(!userList.length){
 area.innerHTML = '<div class="permission-empty-state"><i data-lucide="user-round-plus"></i><strong>尚未設定印鑑系統權限</strong><span>請從上方共用人員名單選擇成員並設定角色。</span></div>';
 lucide.createIcons();
 return;
 }
 
-const rows = userList.map((user,index)=>{
+if(!filteredUsers.length){
+area.innerHTML = '<div class="permission-empty-state"><i data-lucide="search-x"></i><strong>查無符合條件的權限</strong><span>請調整搜尋文字、角色或狀態篩選。</span></div>';
+lucide.createIcons();
+return;
+}
+
+const rows = filteredUsers.map((user,index)=>{
 const role = normalizeRole(user.role);
 const department = escapeHtml(user.departmentName || "未設定部門");
 const name = escapeHtml(user.employeeName || "未對應共用人員");
 const employeeNo = escapeHtml(user.employeeNo || "未設定");
 const email = escapeHtml(user.email || "");
 const selectId = `permissionRole_${index}`;
+const saveId = `permissionSave_${index}`;
 const memberNotice = user.memberActive === false
 ? '<small class="permission-member-warning">共用人員已停用</small>'
 : user.memberActive === null
 ? `<small class="permission-member-warning">未對應共用人員${email ? `｜${email}` : ""}</small>`
 : "";
 
-return `<tr>
+return `<tr id="permissionRow_${index}" class="${user.enabled === false ? 'is-inactive' : ''}">
 <td>${department}</td>
 <td><div class="identity-cell"><strong>${name}</strong>${memberNotice}</div></td>
 <td>${employeeNo}</td>
 <td>
 <div class="permission-role-cell">
-<select id="${selectId}" aria-label="${department} ${name} 的印鑑系統角色">
+<select id="${selectId}" data-original-role="${role}" onchange="markPermissionDirty('${selectId}','${saveId}','permissionRow_${index}')" aria-label="${department} ${name} 的印鑑系統角色">
 <option value="user" ${role === "user" ? "selected" : ""}>一般使用者</option>
 <option value="viewer" ${role === "viewer" ? "selected" : ""}>檢視者</option>
 <option value="admin" ${role === "admin" ? "selected" : ""}>系統管理員</option>
@@ -2430,14 +2587,13 @@ return `<tr>
 <td>
 <div class="permission-status-stack">
 <span class="status-badge ${user.enabled !== false ? "status-active" : "status-inactive"}">${user.enabled !== false ? "啟用" : "停用"}</span>
-${isLastEnabledSealAdmin(user) ? '<small>唯一啟用管理員</small>' : ""}
 </div>
 </td>
 <td>
 <div class="operation-cell permission-operation-cell">
-<button type="button" class="btn btn-gray btn-sm" onclick="updatePermissionRole('${user.id}','${selectId}')">更新</button>
-<button type="button" class="btn btn-gray btn-sm" onclick="toggleUser('${user.id}',${user.enabled !== false})">${user.enabled !== false ? "停用" : "啟用"}</button>
-<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteUser('${user.id}')">移除</button>
+<button id="${saveId}" type="button" class="btn btn-primary btn-sm" onclick="updatePermissionRole('${user.id}','${selectId}')" disabled>儲存變更</button>
+<button type="button" class="btn btn-gray btn-sm" onclick="toggleUser('${user.id}',${user.enabled !== false})">${user.enabled !== false ? "停用權限" : "啟用權限"}</button>
+<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteUser('${user.id}')">移除權限</button>
 </div>
 </td>
 </tr>`;
@@ -2453,6 +2609,29 @@ area.innerHTML = `<div class="table-wrap permission-table-wrap">
 lucide.createIcons();
 
 }
+
+function markPermissionDirty(selectId,saveId,rowId){
+const select = document.getElementById(selectId);
+const save = document.getElementById(saveId);
+const row = document.getElementById(rowId);
+if(!select || !save) return;
+const dirty = select.value !== select.dataset.originalRole;
+save.disabled = !dirty;
+row?.classList.toggle("permission-dirty",dirty);
+}
+
+function resetPermissionFilters(){
+const search = document.getElementById("permissionSearch");
+const role = document.getElementById("permissionRoleFilter");
+const status = document.getElementById("permissionStatusFilter");
+if(search) search.value = "";
+if(role) role.value = "all";
+if(status) status.value = "all";
+renderUserList();
+}
+
+window.markPermissionDirty = markPermissionDirty;
+window.resetPermissionFilters = resetPermissionFilters;
 
 function renderPendingTable(){
 
@@ -2527,34 +2706,11 @@ ${currentRole === "viewer"
 
 ? ""
 
-: `
-<button
-class="action-btn edit-btn tooltip"
-data-tip="修改"
-onclick="editPending('${item.id}')">
-
-<i data-lucide="pencil"></i>
-
-</button>
-
-<button
-class="action-btn delete-btn tooltip"
-data-tip="刪除"
-onclick="deletePending('${item.id}')">
-
-<i data-lucide="trash-2"></i>
-
-</button>
-
-<button
-class="action-btn convert-btn tooltip"
-data-tip="轉正式借用"
-onclick="convertPending('${item.id}')">
-
-<i data-lucide="arrow-right-circle"></i>
-
-</button>
-`
+: `<div class="pending-text-actions">
+<button type="button" class="btn btn-primary-outline btn-sm" onclick="convertPending('${item.id}')">借用</button>
+<button type="button" class="btn btn-gray btn-sm" onclick="editPending('${item.id}')">編輯</button>
+<button type="button" class="btn btn-danger-outline btn-sm" onclick="deletePending('${item.id}')">刪除</button>
+</div>`
 }
 
 </td>
@@ -2678,7 +2834,8 @@ departmentList.push({
 
 id:docSnap.id,
 name:data.name,
-sortOrder:Number(data.sortOrder || 999)
+sortOrder:Number(data.sortOrder || 999),
+active:data.active !== false
 
 });
 
@@ -2701,7 +2858,7 @@ document.getElementById("department");
 select.innerHTML =
 `<option value="">請選擇部門</option>`;
 
-departmentList.forEach(dept=>{
+departmentList.filter(dept=>dept.active !== false).forEach(dept=>{
 
 select.innerHTML += `
 <option value="${dept.name}">
@@ -2724,15 +2881,23 @@ area.innerHTML = '<div class="table-empty-cell">尚未建立部門</div>';
 return;
 }
 
-area.innerHTML = `<div class="table-wrap"><table class="management-table master-table"><thead><tr><th>部門名稱</th><th>顯示順序</th><th>操作</th></tr></thead><tbody>${departmentList.map((dept,index)=>`
-<tr>
-<td class="master-name-cell"><strong>${escapeHtml(dept.name || "未命名部門")}</strong></td>
+const countBadge = document.getElementById("departmentCountBadge");
+if(countBadge) countBadge.textContent = `${departmentList.filter(item=>item.active !== false).length} 個啟用`;
+
+area.innerHTML = `<div class="table-wrap"><table class="management-table master-table"><thead><tr><th>部門名稱</th><th>狀態</th><th>顯示順序</th><th>調整順序</th><th>操作</th></tr></thead><tbody>${departmentList.map((dept,index)=>`
+<tr class="${dept.active === false ? 'is-inactive' : ''}">
+<td><div class="master-name-cell"><strong>${escapeHtml(dept.name || "未命名部門")}</strong></div></td>
+<td><span class="status-badge ${dept.active === false ? 'status-inactive' : 'status-active'}">${dept.active === false ? '停用' : '啟用'}</span></td>
 <td><span class="master-order-badge">${escapeHtml(dept.sortOrder ?? index + 1)}</span></td>
-<td class="operation-cell master-actions">
+<td><div class="master-order-actions">
 <button type="button" class="icon-button" title="上移" aria-label="上移 ${escapeHtml(dept.name || "部門")}" onclick="moveDeptUp('${dept.id}')" ${index === 0 ? "disabled" : ""}><i data-lucide="arrow-up"></i></button>
 <button type="button" class="icon-button" title="下移" aria-label="下移 ${escapeHtml(dept.name || "部門")}" onclick="moveDeptDown('${dept.id}')" ${index === departmentList.length - 1 ? "disabled" : ""}><i data-lucide="arrow-down"></i></button>
+</div></td>
+<td><div class="operation-cell master-actions">
+<button type="button" class="btn btn-gray btn-sm" onclick="openBaseDataEdit('department','${dept.id}')">修改</button>
+<button type="button" class="btn btn-gray btn-sm" onclick="toggleBaseDataActive('department','${dept.id}',${dept.active !== false})">${dept.active === false ? '啟用' : '停用'}</button>
 <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteDepartment('${dept.id}')">刪除</button>
-</td>
+</div></td>
 </tr>`).join("")}</tbody></table></div>`;
 lucide.createIcons();
 
@@ -2830,52 +2995,138 @@ await loadDepartments();
 }
 
 async function addDepartment(){
+return saveBaseDataCreate("department");
+}
 
+async function isBaseDataReferenced(type,name){
+if(!name) return false;
+const checks = type === "seal"
+? [["sealRecords","seal"]]
+: [["sealRecords","department"],["pendingRecords","department"],["members","department"]];
+for(const [collectionName,field] of checks){
+const snapshot = await getDocs(query(collection(db,collectionName),where(field,"==",name),limit(1)));
+if(!snapshot.empty) return true;
+}
+return false;
+}
+
+function openBaseDataEdit(type,id){
+const list = type === "seal" ? sealList : departmentList;
+const item = list.find(entry=>entry.id === id);
+const overlay = document.getElementById("baseDataEditOverlay");
+if(!item || !overlay) return;
+baseDataEditType = type;
+baseDataEditId = id;
+document.getElementById("baseDataEditTitle").textContent = type === "seal" ? "修改印鑑" : "修改部門";
+document.getElementById("baseDataEditCaption").textContent = "已被使用的名稱為保護歷史資料將無法改名，但仍可調整顯示順序。";
+document.getElementById("baseDataEditName").value = item.name || "";
+document.getElementById("baseDataEditOrder").value = item.sortOrder || "";
+overlay.classList.add("open");
+overlay.setAttribute("aria-hidden","false");
+document.body.classList.add("modal-open");
+document.getElementById("baseDataEditName").focus();
+}
+
+function closeBaseDataEdit(){
+const overlay = document.getElementById("baseDataEditOverlay");
+overlay?.classList.remove("open");
+overlay?.setAttribute("aria-hidden","true");
+document.body.classList.remove("modal-open");
+baseDataEditType = "";
+baseDataEditId = "";
+}
+
+function openBaseDataCreate(type=activeBaseDataSection){
 if(blockViewerAction()) return;
-
-const name =
-document.getElementById("newDept")
-.value.trim();
-
-const order =
-parseInt(
-document.getElementById("newDeptOrder").value
-);
-
-if(!name || isNaN(order)){
-
-alert("請完整填寫");
-return;
-
+const createType = type === "department" ? "department" : "seal";
+const isSeal = createType === "seal";
+const overlay = document.getElementById("baseDataCreateOverlay");
+if(!overlay) return;
+overlay.dataset.type = createType;
+document.getElementById("baseDataCreateTitle").textContent = `新增${isSeal ? "印鑑" : "部門"}`;
+document.getElementById("baseDataCreateCaption").textContent = isSeal
+? "建立新的印鑑，完成後即可於借用登記選擇。"
+: "建立新的部門，完成後即可於借用與人員資料中選擇。";
+document.getElementById("baseDataCreateNameLabel").textContent = `${isSeal ? "印鑑" : "部門"}名稱`;
+const nameInput = document.getElementById("baseDataCreateName");
+const orderInput = document.getElementById("baseDataCreateOrder");
+const saveButton = document.getElementById("baseDataCreateSaveButton");
+if(nameInput){
+nameInput.value = "";
+nameInput.placeholder = isSeal ? "例如：大小章(1)" : "例如：行政部";
+}
+if(orderInput) orderInput.value = "";
+if(saveButton) saveButton.innerHTML = `<span>新增</span>`;
+overlay.classList.add("open");
+overlay.setAttribute("aria-hidden","false");
+document.body.classList.add("modal-open");
+lucide.createIcons();
+requestAnimationFrame(()=>nameInput?.focus());
 }
 
-const newDepartmentRef =
-await addDoc(collection(db,"departments"),{
-
-name:name,
-sortOrder:order
-
-});
-
-await writeAuditLog({
-action:"create",
-category:"department",
-targetId:newDepartmentRef.id,
-targetLabel:name,
-after:{
-name,
-sortOrder:order
+function closeBaseDataCreate(){
+const overlay = document.getElementById("baseDataCreateOverlay");
+overlay?.classList.remove("open");
+overlay?.setAttribute("aria-hidden","true");
+document.body.classList.remove("modal-open");
 }
-});
 
-document.getElementById("newDept").value = "";
-document.getElementById("newDeptOrder").value = "";
-
-alert("新增成功");
-
-await loadDepartments();
-
+async function saveBaseDataCreate(forcedType=""){
+if(blockViewerAction()) return;
+const overlay = document.getElementById("baseDataCreateOverlay");
+const type = forcedType || overlay?.dataset.type || activeBaseDataSection;
+const isSeal = type !== "department";
+const name = document.getElementById("baseDataCreateName")?.value.trim() || "";
+const sortOrder = Number(document.getElementById("baseDataCreateOrder")?.value);
+const list = isSeal ? sealList : departmentList;
+if(!name || !Number.isFinite(sortOrder) || sortOrder < 1) return alert("請完整填寫名稱與有效的顯示順序");
+if(list.some(item=>String(item.name).trim() === name)) return alert(`已有相同${isSeal ? "印鑑" : "部門"}名稱，請使用不同名稱`);
+const collectionName = isSeal ? "seals" : "departments";
+const newRef = await addDoc(collection(db,collectionName),{name,sortOrder,active:true,createdAt:Timestamp.now(),createdByEmail:normalizeEmail(currentUserEmail)});
+await writeAuditLog({action:"create",category:isSeal ? "seal" : "department",targetId:newRef.id,targetLabel:name,after:{name,sortOrder,active:true}});
+closeBaseDataCreate();
+alert(wasEditing ? "變更已儲存" : "新增成功");
+await (isSeal ? loadSeals() : loadDepartments());
 }
+
+async function saveBaseDataEdit(){
+if(blockViewerAction()) return;
+const type = baseDataEditType;
+const id = baseDataEditId;
+const list = type === "seal" ? sealList : departmentList;
+const item = list.find(entry=>entry.id === id);
+const name = document.getElementById("baseDataEditName")?.value.trim() || "";
+const sortOrder = Number(document.getElementById("baseDataEditOrder")?.value);
+if(!item || !name || !Number.isFinite(sortOrder) || sortOrder < 1) return alert("請完整填寫名稱與有效的顯示順序");
+if(list.some(entry=>entry.id !== id && String(entry.name).trim() === name)) return alert("已有相同名稱，請使用不同名稱");
+if(item.name !== name && await isBaseDataReferenced(type,item.name)) return alert("此名稱已有相關紀錄，為保護歷史資料不可直接改名；可改用停用後新增新名稱。");
+const collectionName = type === "seal" ? "seals" : "departments";
+const before = {...item};
+await updateDoc(doc(db,collectionName,id),{name,sortOrder,updatedAt:Timestamp.now(),updatedByEmail:normalizeEmail(currentUserEmail)});
+await writeAuditLog({action:"update",category:type,targetId:id,targetLabel:name,before,after:{...item,name,sortOrder}});
+closeBaseDataEdit();
+await (type === "seal" ? loadSeals() : loadDepartments());
+}
+
+async function toggleBaseDataActive(type,id,currentlyActive){
+if(blockViewerAction()) return;
+const list = type === "seal" ? sealList : departmentList;
+const item = list.find(entry=>entry.id === id);
+if(!item) return;
+const nextActive = !currentlyActive;
+const collectionName = type === "seal" ? "seals" : "departments";
+await updateDoc(doc(db,collectionName,id),{active:nextActive,updatedAt:Timestamp.now(),updatedByEmail:normalizeEmail(currentUserEmail)});
+await writeAuditLog({action:"update",category:type,targetId:id,targetLabel:item.name,before:{active:currentlyActive},after:{active:nextActive}});
+await (type === "seal" ? loadSeals() : loadDepartments());
+}
+
+window.openBaseDataEdit = openBaseDataEdit;
+window.closeBaseDataEdit = closeBaseDataEdit;
+window.saveBaseDataEdit = saveBaseDataEdit;
+window.toggleBaseDataActive = toggleBaseDataActive;
+window.openBaseDataCreate = openBaseDataCreate;
+window.closeBaseDataCreate = closeBaseDataCreate;
+window.saveBaseDataCreate = saveBaseDataCreate;
 
 async function deleteDepartment(id){
 
@@ -2884,7 +3135,14 @@ if(blockViewerAction()) return;
 const department =
 departmentList.find(item=>item.id===id);
 
-if(!confirm(`確定刪除部門「${department?.name || id}」？\n若仍有人員使用此部門，建議先確認人員資料後再刪除。`)) return;
+const referenced = await isBaseDataReferenced("department",department?.name || "");
+if(referenced){
+if(!confirm(`部門「${department?.name || id}」已有使用紀錄，無法直接刪除。\n是否改為停用？既有歷史資料將完整保留。`)) return;
+await toggleBaseDataActive("department",id,true);
+return;
+}
+
+if(!confirm(`確定刪除尚未使用的部門「${department?.name || id}」？`)) return;
 
 await deleteDoc(doc(db,"departments",id));
 
@@ -2919,7 +3177,8 @@ sealList.push({
 
 id:docSnap.id,
 name:data.name,
-sortOrder:Number(data.sortOrder || 999)
+sortOrder:Number(data.sortOrder || 999),
+active:data.active !== false
 
 });
 
@@ -2944,7 +3203,7 @@ document.getElementById("seal");
 select.innerHTML =
 `<option value="">請選擇</option>`;
 
-sealList.forEach(seal=>{
+sealList.filter(seal=>seal.active !== false).forEach(seal=>{
 
 select.innerHTML += `
 <option value="${seal.name}">
@@ -2987,15 +3246,23 @@ area.innerHTML = '<div class="table-empty-cell">尚未建立印鑑</div>';
 return;
 }
 
-area.innerHTML = `<div class="table-wrap"><table class="management-table master-table"><thead><tr><th>印鑑名稱</th><th>顯示順序</th><th>操作</th></tr></thead><tbody>${sealList.map((seal,index)=>`
-<tr>
-<td class="master-name-cell"><strong>${escapeHtml(seal.name || "未命名印鑑")}</strong></td>
+const countBadge = document.getElementById("sealCountBadge");
+if(countBadge) countBadge.textContent = `${sealList.filter(item=>item.active !== false).length} 組啟用`;
+
+area.innerHTML = `<div class="table-wrap"><table class="management-table master-table"><thead><tr><th>印鑑名稱</th><th>狀態</th><th>顯示順序</th><th>調整順序</th><th>操作</th></tr></thead><tbody>${sealList.map((seal,index)=>`
+<tr class="${seal.active === false ? 'is-inactive' : ''}">
+<td><div class="master-name-cell"><strong>${escapeHtml(seal.name || "未命名印鑑")}</strong></div></td>
+<td><span class="status-badge ${seal.active === false ? 'status-inactive' : 'status-active'}">${seal.active === false ? '停用' : '啟用'}</span></td>
 <td><span class="master-order-badge">${escapeHtml(seal.sortOrder ?? index + 1)}</span></td>
-<td class="operation-cell master-actions">
+<td><div class="master-order-actions">
 <button type="button" class="icon-button" title="上移" aria-label="上移 ${escapeHtml(seal.name || "印鑑")}" onclick="moveUp('${seal.id}')" ${index === 0 ? "disabled" : ""}><i data-lucide="arrow-up"></i></button>
 <button type="button" class="icon-button" title="下移" aria-label="下移 ${escapeHtml(seal.name || "印鑑")}" onclick="moveDown('${seal.id}')" ${index === sealList.length - 1 ? "disabled" : ""}><i data-lucide="arrow-down"></i></button>
+</div></td>
+<td><div class="operation-cell master-actions">
+<button type="button" class="btn btn-gray btn-sm" onclick="openBaseDataEdit('seal','${seal.id}')">修改</button>
+<button type="button" class="btn btn-gray btn-sm" onclick="toggleBaseDataActive('seal','${seal.id}',${seal.active !== false})">${seal.active === false ? '啟用' : '停用'}</button>
 <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteSeal('${seal.id}')">刪除</button>
-</td>
+</div></td>
 </tr>`).join("")}</tbody></table></div>`;
 lucide.createIcons();
 
@@ -3093,51 +3360,7 @@ await loadSeals();
 }
 
 async function addSeal(){
-
-if(blockViewerAction()) return;
-
-const name =
-document.getElementById("newSeal")
-.value.trim();
-
-const order =
-parseInt(
-document.getElementById("newOrder").value
-);
-
-if(!name || isNaN(order)){
-
-alert("請完整填寫");
-return;
-
-}
-
-const newSealRef =
-await addDoc(collection(db,"seals"),{
-
-name:name,
-sortOrder:order
-
-});
-
-await writeAuditLog({
-action:"create",
-category:"seal",
-targetId:newSealRef.id,
-targetLabel:name,
-after:{
-name,
-sortOrder:order
-}
-});
-
-document.getElementById("newSeal").value = "";
-document.getElementById("newOrder").value = "";
-
-alert("新增成功");
-
-await loadSeals();
-
+return saveBaseDataCreate("seal");
 }
 
 async function deleteSeal(id){
@@ -3147,7 +3370,14 @@ if(blockViewerAction()) return;
 const seal =
 sealList.find(item=>item.id===id);
 
-if(!confirm(`確定刪除印鑑「${seal?.name || id}」？\n歷史借用紀錄會保留，但後續將無法再選擇此印鑑。`)) return;
+const referenced = await isBaseDataReferenced("seal",seal?.name || "");
+if(referenced){
+if(!confirm(`印鑑「${seal?.name || id}」已有借用紀錄，無法直接刪除。\n是否改為停用？既有歷史資料將完整保留。`)) return;
+await toggleBaseDataActive("seal",id,true);
+return;
+}
+
+if(!confirm(`確定刪除尚未使用的印鑑「${seal?.name || id}」？`)) return;
 
 await deleteDoc(doc(db,"seals",id));
 
@@ -3177,7 +3407,7 @@ borrowPanelMode = "new";
 concurrentBorrowMode = false;
 
 const firstAvailable = sealList.find(seal=>
-!records.some(record=>record.seal===seal.name && !record.returnTime)
+seal.active !== false && !records.some(record=>record.seal===seal.name && !record.returnTime)
 );
 
 selectedBorrowSeal = firstAvailable?.name || "";
@@ -3305,9 +3535,7 @@ renderStatus();
 function renderBorrowPanelState(){
 const title = document.getElementById("borrowPanelTitle");
 const description = document.getElementById("borrowPanelDescription");
-const badge = document.getElementById("borrowModeBadge");
 const meta = document.getElementById("borrowedMeta");
-const summary = document.getElementById("borrowSelectionSummary");
 const confirmButton = document.getElementById("confirmBorrowMainButton");
 const editButton = document.getElementById("editBorrowedButton");
 const saveButton = document.getElementById("saveBorrowedButton");
@@ -3333,10 +3561,6 @@ title.textContent = borrowPanelMode === "edit" ? "編輯借用資料" : "目前�
 description.textContent = borrowPanelMode === "edit"
 ? "修改完成後請儲存變更"
 : "此印鑑目前借出中；如需登記另一位借用人，請使用新增同印鑑借用";
-badge.className = "badge badge-red";
-badge.textContent = "借出中";
-badge.classList.remove("hidden");
-
 let switcherHtml = '';
 if (activeRecords.length > 1) {
     switcherHtml = `<div class="active-record-switcher">
@@ -3349,6 +3573,10 @@ if (activeRecords.length > 1) {
 
 meta.classList.remove("hidden");
 meta.innerHTML = switcherHtml + `
+<div class="borrowed-meta-item">
+<span>印鑑</span>
+<b>${escapeHtml(active.seal || "-")}</b>
+</div>
 <div class="borrowed-meta-item">
 <span>借用時間</span>
 <b>${formatDate(active.borrowTime)}</b>
@@ -3363,7 +3591,6 @@ meta.innerHTML = switcherHtml + `
 </div>`;
 
 setBorrowFormDisabled(borrowPanelMode !== "edit");
-summary.innerHTML = `<strong>印鑑：${active.seal}</strong> ・ 借出中`;
 
 if(borrowPanelMode === "edit"){
 saveButton.classList.remove("hidden");
@@ -3378,6 +3605,7 @@ if(concurrentButton) concurrentButton.classList.remove("hidden");
 }
 
 lucide.createIcons();
+updateBorrowFormProgress();
 return;
 }
 
@@ -3397,22 +3625,37 @@ description.textContent = currentPendingIndex
 meta.classList.add("hidden");
 setBorrowFormDisabled(false);
 confirmButton.classList.remove("hidden");
-confirmButton.disabled = !selectedBorrowSeal;
+confirmButton.disabled = true;
 
 if(selectedBorrowSeal){
-badge.textContent = "可借用";
-badge.className = "badge badge-green";
-summary.innerHTML = `<strong>印鑑：${selectedBorrowSeal}</strong> ・ 可借用`;
 document.getElementById("seal").value = selectedBorrowSeal;
 }else{
-badge.className = "badge badge-green hidden";
-summary.textContent = currentPendingIndex
-? "請從左側選擇本次實際借用的印鑑"
-: "尚未選擇印鑑";
 document.getElementById("seal").value = "";
 }
 
+updateBorrowFormProgress();
 lucide.createIcons();
+}
+
+function updateBorrowFormProgress(){
+const hasSeal = Boolean((document.getElementById("seal")?.value || "").trim());
+const requiredIds = ["borrower","department","projectNo","formNo","purpose"];
+const formComplete = requiredIds.every(id=>Boolean((document.getElementById(id)?.value || "").trim()));
+const stepSeal = document.getElementById("borrowStepSeal");
+const stepForm = document.getElementById("borrowStepForm");
+const stepConfirm = document.getElementById("borrowStepConfirm");
+const confirmButton = document.getElementById("confirmBorrowMainButton");
+
+stepSeal?.classList.toggle("is-active",!hasSeal);
+stepSeal?.classList.toggle("is-complete",hasSeal);
+stepForm?.classList.toggle("is-active",hasSeal && !formComplete);
+stepForm?.classList.toggle("is-complete",hasSeal && formComplete);
+stepConfirm?.classList.toggle("is-active",hasSeal && formComplete);
+stepConfirm?.classList.remove("is-complete");
+
+if(confirmButton && !confirmButton.classList.contains("hidden")){
+confirmButton.disabled = !(hasSeal && formComplete);
+}
 }
 
 function startInlineBorrowEdit(){
@@ -3524,14 +3767,11 @@ r.seal === seal &&
 );
 
 if(exists && !concurrentBorrowMode){
-    const activeSameSeal = records.filter(r => r.seal === seal && !r.returnTime);
-    if (!activeSameSeal.every(r => r.borrower === borrower)) {
 
 alert(`印鑑 ${seal} 目前借出中，無法重複借用`);
 
 return;
 
-    }
 }
 
 pendingBorrowData = {
@@ -3594,13 +3834,10 @@ r.seal === data.seal &&
 );
 
 if(exists && !data.allowConcurrent){
-    const activeSameSeal = records.filter(r => r.seal === data.seal && !r.returnTime);
-    if (!activeSameSeal.every(r => r.borrower === data.borrower)) {
 alert(`印鑑 ${data.seal} 目前借出中，無法重複借用`);
 closeBorrowConfirmModal();
 await loadRecords();
 return;
-    }
 }
 
 const confirmButton =
@@ -3863,7 +4100,6 @@ records = [...combined.values()];
 renderTable();
 renderReturnTable();
 renderStatus();
-updateKPI();
 if(typeof loadCalendarEvents === 'function') loadCalendarEvents();
 
 }
@@ -3897,8 +4133,9 @@ currentPage = 1;
 try{
 
 historyLoading = true;
-renderHistoryLoadMore();
+renderHistoryLoadingStatus();
 
+do{
 const snapshot = await getDocs(buildHistoryQuery());
 const known = new Map(historyRecords.map(record=>[record.id,record]));
 
@@ -3909,11 +4146,14 @@ known.set(docSnap.id,{id:docSnap.id,...docSnap.data()});
 historyRecords = [...known.values()];
 historyLastDoc = snapshot.docs[snapshot.docs.length - 1] || historyLastDoc;
 historyHasMore = snapshot.size === HISTORY_BATCH_SIZE;
-historyLoaded = true;
 
 const activeRecords = records.filter(record=>!record.returnTime);
 records = [...historyRecords,...activeRecords];
 renderTable();
+renderHistoryLoadingStatus();
+}while(historyHasMore);
+
+historyLoaded = true;
 if(typeof loadCalendarEvents === 'function') loadCalendarEvents();
 }catch(error){
 
@@ -3922,43 +4162,17 @@ alert(`歷史借用紀錄讀取失敗：${error.message || "未知錯誤"}`);
 
 }finally{
 historyLoading = false;
-renderHistoryLoadMore();
+renderHistoryLoadingStatus();
 }
 
 }
 
-async function loadMoreHistoryRecords(){
-await loadHistoryRecords(false);
+function renderHistoryLoadingStatus(){
+const status = document.getElementById("historyLoadingStatus");
+if(!status) return;
+status.hidden = !historyLoading;
 }
 
-function renderHistoryLoadMore(){
-const button = document.getElementById("historyLoadMoreButton");
-if(!button) return;
-button.hidden = !historyHasMore && !historyLoading;
-button.disabled = historyLoading;
-button.textContent = historyLoading ? "載入中..." : "再載入 100 筆歷史紀錄";
-}
-
-function updateKPI(){
-
-const borrowed =
-records.filter(
-r=>!r.returnTime
-).length;
-
-const available =
-sealList.length - borrowed;
-
-const borrowedElement =
-document.getElementById('borrowBorrowedCount');
-
-const availableElement =
-document.getElementById('borrowAvailableCount');
-
-if(borrowedElement) borrowedElement.innerText = borrowed;
-if(availableElement) availableElement.innerText = available;
-
-}
 
 
 
@@ -4108,10 +4322,6 @@ function renderStatus(){
 const list = document.getElementById("statusGrid");
 if(!list) return;
 
-const keyword = (
-document.getElementById("borrowSealSearch")?.value || ""
-).trim().toLowerCase();
-
 const activeForSelected = records.find(record=>
 record.seal===selectedBorrowSeal && !record.returnTime
 );
@@ -4138,9 +4348,7 @@ document.getElementById("seal").value = firstAvailable.name;
 }
 }
 
-const visibleSeals = sealList.filter(seal=>
-!keyword || seal.name.toLowerCase().includes(keyword)
-);
+const visibleSeals = sealList.filter(seal=>seal.active !== false);
 
 list.innerHTML = "";
 
@@ -4240,16 +4448,9 @@ tr.innerHTML = `
 <td>${r.purpose}</td>
 <td>${formatDate(r.borrowTime)}</td>
 
-<td>
-<button
-class="action-btn convert-btn tooltip"
-data-tip="歸還"
-onclick="openReturnModal('${r.id}')">
-
-<i data-lucide="rotate-ccw"></i>
-
-</button>
-</td>
+<td><div class="operation-cell return-text-actions">
+<button type="button" class="btn btn-return btn-sm" onclick="openReturnModal('${r.id}')">歸還</button>
+</div></td>
 `;
 
 table.appendChild(tr);
@@ -4445,6 +4646,81 @@ return t2 - t1;
 
 }
 
+function getHistoryFilterState(){
+const read = id=>(document.getElementById(id)?.value || "").trim();
+const sealSelect = document.getElementById("sealFilter");
+const statusSelect = document.getElementById("statusFilter");
+const borrowStart = read("borrowDateStart");
+const borrowEnd = read("borrowDateEnd");
+const returnStart = read("returnDateStart");
+const returnEnd = read("returnDateEnd");
+
+return [
+{key:"search",label:"關鍵字",value:read("searchInput")},
+{key:"seal",label:"印鑑",value:read("sealFilter"),display:sealSelect?.selectedOptions?.[0]?.textContent || ""},
+{key:"status",label:"狀態",value:read("statusFilter"),display:statusSelect?.selectedOptions?.[0]?.textContent || ""},
+{key:"project",label:"計畫編號",value:read("projectFilter")},
+{key:"form",label:"表單編號",value:read("formFilter")},
+{key:"borrowDate",label:"借用日期",value:borrowStart || borrowEnd,display:[borrowStart || "不限",borrowEnd || "不限"].join(" 至 ")},
+{key:"returnDate",label:"歸還日期",value:returnStart || returnEnd,display:[returnStart || "不限",returnEnd || "不限"].join(" 至 ")}
+].filter(item=>item.value);
+}
+
+function clearHistoryFilter(key){
+const targets = {
+search:["searchInput"],
+seal:["sealFilter"],
+status:["statusFilter"],
+project:["projectFilter"],
+form:["formFilter"],
+borrowDate:["borrowDateStart","borrowDateEnd"],
+returnDate:["returnDateStart","returnDateEnd"]
+}[key] || [];
+
+targets.forEach(id=>{
+const element = document.getElementById(id);
+if(element) element.value = "";
+});
+currentPage = 1;
+renderTable();
+}
+
+function updateHistoryFilterSummary(){
+const filters = getHistoryFilterState();
+const container = document.getElementById("historyActiveFilters");
+const clearButton = document.getElementById("clearHistoryFiltersButton");
+const panel = document.getElementById("advancedFilter");
+const toggleText = document.getElementById("filterToggleText");
+const advancedCount = filters.filter(item=>["project","form","borrowDate","returnDate"].includes(item.key)).length;
+
+if(clearButton) clearButton.disabled = filters.length === 0;
+if(toggleText){
+const base = panel?.classList.contains("show") ? "收合篩選" : "進階篩選";
+toggleText.textContent = advancedCount ? `${base} ${advancedCount}` : base;
+}
+
+if(!container) return;
+container.innerHTML = "";
+container.hidden = filters.length === 0;
+
+filters.forEach(item=>{
+const chip = document.createElement("span");
+chip.className = "history-filter-chip";
+
+const text = document.createElement("span");
+text.textContent = `${item.label}：${item.display || item.value}`;
+chip.appendChild(text);
+
+const remove = document.createElement("button");
+remove.type = "button";
+remove.setAttribute("aria-label",`移除${item.label}條件`);
+remove.textContent = "×";
+remove.addEventListener("click",()=>clearHistoryFilter(item.key));
+chip.appendChild(remove);
+container.appendChild(chip);
+});
+}
+
 function renderTable(){
 
 const table =
@@ -4455,15 +4731,7 @@ table.innerHTML = "";
 const filteredRecords =
 getFilteredRecords();
 
-const countEl =
-document.getElementById("recordCount");
-
-if(countEl){
-
-countEl.textContent =
-filteredRecords.length;
-
-}
+updateHistoryFilterSummary();
 
 const totalPages =
 Math.ceil(filteredRecords.length / pageSize);
@@ -4550,25 +4818,10 @@ font-size:16px;
 `
 
 : `
-
-<button
-class="action-btn edit-btn tooltip"
-data-tip="修改"
-onclick="editRecord('${r.id}')">
-
-<i data-lucide="pencil"></i>
-
-</button>
-
-<button
-class="action-btn delete-btn tooltip"
-data-tip="刪除"
-onclick="deleteRecord('${r.id}')">
-
-<i data-lucide="trash-2"></i>
-
-</button>
-
+<div class="operation-cell record-text-actions">
+<button type="button" class="btn btn-gray btn-sm" onclick="editRecord('${r.id}')">編輯</button>
+<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteRecord('${r.id}')">刪除</button>
+</div>
 `
 
 }
@@ -4595,66 +4848,31 @@ document.getElementById("paginationArea");
 
 area.innerHTML = "";
 
-if(totalPages <= 1) return;
+const safeTotalPages = Math.max(totalPages,1);
 
-function createPageButton(label,page,disabled=false,active=false){
-
-const btn =
-document.createElement("button");
-
-btn.className = "btn";
-
-btn.innerText = label;
-
-btn.disabled = disabled;
-
-btn.style.background =
-active
-? "#2563eb"
-: disabled
-? "#f1f5f9"
-: "#e2e8f0";
-
-btn.style.color =
-active
-? "white"
-: disabled
-? "#94a3b8"
-: "black";
-
-btn.style.cursor =
-disabled
-? "not-allowed"
-: "pointer";
-
-btn.onclick = ()=>{
-
+function createPageButton(label,page,disabled=false){
+const button = document.createElement("button");
+button.type = "button";
+button.className = "history-page-button";
+button.textContent = label;
+button.disabled = disabled;
+button.onclick = ()=>{
 if(disabled) return;
-
 currentPage = page;
 renderTable();
-
+document.querySelector("#historyPage .table-wrap")?.scrollIntoView({behavior:"smooth",block:"start"});
 };
-
-return btn;
-
+return button;
 }
 
-area.appendChild(
-createPageButton("上一頁",currentPage - 1,currentPage === 1)
-);
+area.appendChild(createPageButton("上一頁",currentPage - 1,currentPage <= 1));
 
-for(let i=1;i<=totalPages;i++){
+const indicator = document.createElement("span");
+indicator.className = "history-page-indicator";
+indicator.textContent = `第 ${totalPages ? currentPage : 0} / ${totalPages} 頁`;
+area.appendChild(indicator);
 
-area.appendChild(
-createPageButton(i,i,false,i === currentPage)
-);
-
-}
-
-area.appendChild(
-createPageButton("下一頁",currentPage + 1,currentPage === totalPages)
-);
+area.appendChild(createPageButton("下一頁",currentPage + 1,currentPage >= safeTotalPages || totalPages === 0));
 
 }
 
@@ -4874,23 +5092,32 @@ window.deleteDepartment = deleteDepartment;
 window.moveDeptUp = moveDeptUp;
 window.moveDeptDown = moveDeptDown;
 
-document.getElementById("borrowSealSearch")
-.addEventListener("input",renderStatus);
+["borrower","department","projectNo","formNo","purpose","expectedReturnTime"]
+.forEach(id=>{
+const element = document.getElementById(id);
+if(!element) return;
+element.addEventListener(element.tagName === "SELECT" ? "change" : "input",updateBorrowFormProgress);
+});
+
+function handleHistoryFilterChange(){
+currentPage = 1;
+renderTable();
+}
 
 document.getElementById("searchInput")
-.addEventListener("input",renderTable);
+.addEventListener("input",handleHistoryFilterChange);
 
 document.getElementById("sealFilter")
-.addEventListener("change",renderTable);
+.addEventListener("change",handleHistoryFilterChange);
 
 document.getElementById("statusFilter")
-.addEventListener("change",renderTable);
+.addEventListener("change",handleHistoryFilterChange);
 
 document.getElementById("projectFilter")
-.addEventListener("input",renderTable);
+.addEventListener("input",handleHistoryFilterChange);
 
 document.getElementById("formFilter")
-.addEventListener("input",renderTable);
+.addEventListener("input",handleHistoryFilterChange);
 
 [
 "borrowDateStart",
@@ -4900,10 +5127,7 @@ document.getElementById("formFilter")
 ].forEach(id=>{
 
 document.getElementById(id)
-.addEventListener("change",()=>{
-currentPage = 1;
-renderTable();
-});
+.addEventListener("change",handleHistoryFilterChange);
 
 });
 
@@ -5225,6 +5449,84 @@ sidebar.classList.contains("collapsed")
 
 
 let sealCalendar = null;
+let sealCalendarFilter = "all";
+let sealCalendarEvents = [];
+
+const SEAL_CALENDAR_STATUS = {
+    pending:{label:"待借出",className:"calendar-event-pending",background:"#f9edcf",border:"#d4a849",text:"#725014"},
+    borrowed:{label:"借用中",className:"calendar-event-borrowed",background:"#e1edf7",border:"#4b86b6",text:"#1e527d"},
+    due:{label:"今日應還",className:"calendar-event-due",background:"#eee9f6",border:"#8d72ad",text:"#60477c"},
+    overdue:{label:"已逾期",className:"calendar-event-overdue",background:"#f9e7e9",border:"#d26975",text:"#9c3040"},
+    returned:{label:"已歸還",className:"calendar-event-returned",background:"#e8efec",border:"#78998c",text:"#49665b"}
+};
+
+function calendarValueToDate(value){
+    if(!value) return null;
+    if(value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    if(typeof value.toDate === "function"){
+        const converted = value.toDate();
+        return Number.isNaN(converted.getTime()) ? null : converted;
+    }
+    if(value.seconds){
+        const converted = new Date(Number(value.seconds) * 1000);
+        return Number.isNaN(converted.getTime()) ? null : converted;
+    }
+    const converted = new Date(value);
+    return Number.isNaN(converted.getTime()) ? null : converted;
+}
+
+function calendarDateKey(value){
+    const date = calendarValueToDate(value);
+    if(!date) return "";
+    const pad = number => String(number).padStart(2,"0");
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+}
+
+function calendarIsoString(value){
+    const date = calendarValueToDate(value);
+    if(!date) return null;
+    const pad = number => String(number).padStart(2,"0");
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+}
+
+function getCalendarRecordStatus(record){
+    if(record?.returnTime) return "returned";
+    const expected = calendarValueToDate(record?.expectedReturnTime);
+    if(!expected) return "borrowed";
+    const now = new Date();
+    if(expected.getTime() < now.getTime()) return "overdue";
+    if(calendarDateKey(expected) === calendarDateKey(now)) return "due";
+    return "borrowed";
+}
+
+function calendarStatusEvent(status,event){
+    const palette = SEAL_CALENDAR_STATUS[status] || SEAL_CALENDAR_STATUS.borrowed;
+    return {
+        ...event,
+        backgroundColor:palette.background,
+        borderColor:palette.border,
+        textColor:palette.text,
+        classNames:["calendar-event",palette.className],
+        extendedProps:{...event.extendedProps,statusKey:status,status:palette.label}
+    };
+}
+
+function tidyCalendarListDays(calendarElement){
+    window.requestAnimationFrame(()=>{
+        const rows = [...calendarElement.querySelectorAll('.fc-list-table tbody > tr')];
+        rows.forEach((row,index)=>{
+            if(!row.classList.contains('fc-list-day')) return;
+            let hasVisibleEvent = false;
+            for(let cursor=index+1; cursor<rows.length && !rows[cursor].classList.contains('fc-list-day'); cursor+=1){
+                if(rows[cursor].classList.contains('fc-list-event') && getComputedStyle(rows[cursor]).display !== 'none'){
+                    hasVisibleEvent = true;
+                    break;
+                }
+            }
+            row.style.display = hasVisibleEvent ? '' : 'none';
+        });
+    });
+}
 
 window.showCalendarPage = async function(element) {
     if(typeof showPage === 'function') {
@@ -5264,113 +5566,206 @@ function initSealCalendar() {
         return;
     }
     sealCalendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: window.matchMedia('(max-width: 768px)').matches ? 'listMonth' : 'dayGridMonth',
         locale: 'zh-tw',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,dayGridWeek,listWeek'
+            right: 'dayGridMonth,timeGridWeek,listMonth'
         },
-        displayEventTime: false,
+        displayEventTime: true,
+        eventTimeFormat:{hour:'2-digit',minute:'2-digit',hour12:false},
+        titleFormat:{year:'numeric',month:'long'},
         buttonText: {
             today: '今天',
-            month: '月視表',
-            week: '週視表',
-            list: '列表'
+            month: '月曆',
+            week: '週',
+            list: '清單'
         },
         height: 'auto',
+        fixedWeekCount:false,
+        dayMaxEvents:3,
+        moreLinkContent:arg=>`另有 ${arg.num} 筆`,
+        noEventsContent:'目前沒有符合條件的借用行程',
         events: [],
-        eventClick: function(info) {
+        eventDidMount:function(info){
+            if(info.view.type.startsWith('list')){
+                if(!info.isStart){
+                    info.el.style.display = 'none';
+                    tidyCalendarListDays(calendarEl);
+                    return;
+                }
+                const timeCell = info.el.querySelector('.fc-list-event-time');
+                if(timeCell && info.event.start){
+                    timeCell.textContent = info.event.start.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false});
+                }
+                tidyCalendarListDays(calendarEl);
+            }
             const props = info.event.extendedProps;
-            alert(`借用詳情：\n印鑑：${props.seal}\n借用人：${props.borrower}\n狀態：${props.status}\n借出時間：${props.borrowTime || '無'}\n歸還時間：${props.returnTime || '無'}`);
+            const label = `${props.status}｜${props.seal}｜${props.borrower}`;
+            info.el.setAttribute('title',label);
+            info.el.setAttribute('aria-label',label);
+        },
+        eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            openCalendarDetail(info.event);
         }
     });
     sealCalendar.render();
 }
 
 function loadCalendarEvents() {
-    if (!sealCalendar) return;
     const events = [];
-    
-    function toSafeDateString(val) {
-        if(!val) return null;
-        let d;
-        if(val.seconds) d = new Date(val.seconds * 1000);
-        else if (val instanceof Date) d = val;
-        else d = new Date(val);
-        if(isNaN(d.getTime())) return null;
-        const pad = n => String(n).padStart(2, '0');
-        return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':00';
-    }
 
     (typeof records !== 'undefined' ? records : []).forEach(r => {
-        const isReturned = !!r.returnTime;
-
-        let startStr = toSafeDateString(r.borrowTime || r.createdAt);
-        let endStr = isReturned ? toSafeDateString(r.returnTime) : toSafeDateString(r.expectedReturnTime);
+        const status = getCalendarRecordStatus(r);
+        let startStr = calendarIsoString(r.borrowTime || r.createdAt);
+        let endStr = status === 'returned' ? calendarIsoString(r.returnTime) : calendarIsoString(r.expectedReturnTime);
         
         if (startStr) {
             if(!endStr) {
                 let d = new Date(startStr);
                 d.setHours(d.getHours() + 1);
-                endStr = toSafeDateString(d);
+                endStr = calendarIsoString(d);
             }
-            events.push({
+            events.push(calendarStatusEvent(status,{
                 id: 'record_' + r.id,
-                title: '[' + (isReturned ? '已歸還' : '借出中') + '] ' + r.seal + ' - ' + r.borrower,
+                title: `${r.seal || '未命名印鑑'} · ${r.borrower || '未填借用人'}`,
                 start: startStr,
                 end: endStr,
-                backgroundColor: isReturned ? '#e0e7ff' : '#ef4444',
-                borderColor: isReturned ? '#a5b4fc' : '#ef4444',
-                textColor: isReturned ? '#3730a3' : '#ffffff',
-                classNames: isReturned ? ['fc-event-past'] : [],
                 extendedProps: {
                     seal: r.seal,
                     borrower: r.borrower,
-                    status: isReturned ? '已歸還' : '借出中',
+                    department:r.department || '-',
+                    projectNo:r.projectNo || '-',
+                    formNo:r.formNo || '-',
+                    purpose:r.purpose || '-',
                     borrowTime: formatDate(r.borrowTime || r.createdAt),
-                    returnTime: r.returnTime ? formatDate(r.returnTime) : (r.expectedReturnTime ? formatDate(r.expectedReturnTime) + " (預計)" : "未定")
+                    expectedReturnTime:r.expectedReturnTime ? formatDate(r.expectedReturnTime) : '未設定',
+                    returnTime:r.returnTime ? formatDate(r.returnTime) : '尚未歸還'
                 }
-            });
+            }));
         }
     });
 
     (typeof pendingRecords !== 'undefined' ? pendingRecords : []).forEach(p => {
         if(p.status === '已借出' || p.status === '已取消' || p.status === '已拒絕') return;
 
-        let startStr = toSafeDateString(p.expectedBorrowTime);
-        let endStr = toSafeDateString(p.expectedReturnTime);
+        let startStr = calendarIsoString(p.expectedBorrowTime);
+        let endStr = calendarIsoString(p.expectedReturnTime);
         
         if (!startStr && endStr) {
              let d = new Date(endStr);
              d.setHours(d.getHours() - 1);
-             startStr = toSafeDateString(d);
+             startStr = calendarIsoString(d);
         }
         
         if (startStr) {
             if(!endStr) {
                 let d = new Date(startStr);
                 d.setHours(d.getHours() + 1);
-                endStr = toSafeDateString(d);
+                endStr = calendarIsoString(d);
             }
-            events.push({
+            events.push(calendarStatusEvent('pending',{
                 id: 'pending_' + p.id,
-                title: '[預約待借用] ' + p.borrower,
+                title: `待確認印鑑 · ${p.borrower || '未填借用人'}`,
                 start: startStr,
                 end: endStr,
-                color: '#3b82f6',
                 extendedProps: {
-                    seal: '尚未選擇 (預約中)',
+                    seal:'待確認印鑑',
                     borrower: p.borrower,
-                    status: '待借用'
+                    department:p.department || '-',
+                    projectNo:p.projectNo || '-',
+                    formNo:p.formNo || '-',
+                    purpose:p.purpose || '-',
+                    borrowTime:p.expectedBorrowTime ? `${formatDate(p.expectedBorrowTime)}（預計）` : '未設定',
+                    expectedReturnTime:p.expectedReturnTime ? formatDate(p.expectedReturnTime) : '未設定',
+                    returnTime:'尚未借出'
                 }
-            });
+            }));
         }
     });
-    
-    sealCalendar.getEventSources().forEach(source => source.remove());
-    sealCalendar.addEventSource(events);
+
+    sealCalendarEvents = events;
+    updateSealCalendarCounts();
+    applySealCalendarFilter();
 }
+
+function updateSealCalendarCounts(){
+    const counts = {all:sealCalendarEvents.length,pending:0,borrowed:0,due:0,overdue:0,returned:0};
+    sealCalendarEvents.forEach(event=>{
+        const key = event.extendedProps?.statusKey;
+        if(Object.prototype.hasOwnProperty.call(counts,key)) counts[key] += 1;
+    });
+    const targets = {
+        all:'calendarCountAll',pending:'calendarCountPending',borrowed:'calendarCountBorrowed',
+        due:'calendarCountDue',overdue:'calendarCountOverdue',returned:'calendarCountReturned'
+    };
+    Object.entries(targets).forEach(([key,id])=>{
+        const element = document.getElementById(id);
+        if(element) element.textContent = counts[key];
+    });
+}
+
+function applySealCalendarFilter(){
+    if(!sealCalendar) return;
+    const visibleEvents = sealCalendarFilter === 'all'
+        ? sealCalendarEvents
+        : sealCalendarEvents.filter(event=>event.extendedProps?.statusKey === sealCalendarFilter);
+    sealCalendar.getEventSources().forEach(source => source.remove());
+    sealCalendar.addEventSource(visibleEvents);
+}
+
+window.filterSealCalendar = function(status,button){
+    if(status !== 'all' && !Object.prototype.hasOwnProperty.call(SEAL_CALENDAR_STATUS,status)) return;
+    sealCalendarFilter = status;
+    document.querySelectorAll('[data-calendar-filter]').forEach(item=>item.classList.remove('is-active'));
+    const activeButton = button || document.querySelector(`[data-calendar-filter="${status}"]`);
+    if(activeButton) activeButton.classList.add('is-active');
+    applySealCalendarFilter();
+};
+
+function calendarDetailItem(label,value,wide=false){
+    return `<div class="calendar-detail-item${wide ? ' is-wide' : ''}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || '-')}</strong></div>`;
+}
+
+function openCalendarDetail(event){
+    const overlay = document.getElementById('calendarDetailOverlay');
+    if(!overlay) return;
+    const props = event.extendedProps || {};
+    const statusKey = props.statusKey || 'borrowed';
+    document.getElementById('calendarDetailTitle').textContent = props.seal || '借用行程資訊';
+    document.getElementById('calendarDetailCaption').textContent = `${props.borrower || '未填借用人'}｜${props.department || '未設定部門'}`;
+    const status = document.getElementById('calendarDetailStatus');
+    status.textContent = props.status || '借用中';
+    status.className = `calendar-detail-status status-${statusKey}`;
+    document.getElementById('calendarDetailBody').innerHTML = `<div class="calendar-detail-grid">
+        ${calendarDetailItem('借用人',props.borrower)}
+        ${calendarDetailItem('部門',props.department)}
+        ${calendarDetailItem('計畫編號',props.projectNo)}
+        ${calendarDetailItem('表單編號',props.formNo)}
+        ${calendarDetailItem(statusKey === 'pending' ? '預計借用時間' : '借用時間',props.borrowTime)}
+        ${calendarDetailItem('預計歸還時間',props.expectedReturnTime)}
+        ${calendarDetailItem('實際歸還狀態',props.returnTime,true)}
+        ${calendarDetailItem('用印用途',props.purpose,true)}
+    </div>`;
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden','false');
+    document.body.classList.add('modal-open');
+    if(window.lucide) lucide.createIcons();
+}
+
+window.closeCalendarDetail = function(){
+    const overlay = document.getElementById('calendarDetailOverlay');
+    if(!overlay) return;
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden','true');
+    document.body.classList.remove('modal-open');
+};
+
+document.addEventListener('keydown',event=>{
+    if(event.key === 'Escape') window.closeCalendarDetail();
+});
 
 window.switchActiveRecord = function(recordId) {
 selectedBorrowRecordId = recordId;
