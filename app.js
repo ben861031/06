@@ -5568,6 +5568,7 @@ function initSealCalendar() {
     sealCalendar = new FullCalendar.Calendar(calendarEl, {
         initialView: window.matchMedia('(max-width: 768px)').matches ? 'listMonth' : 'dayGridMonth',
         locale: 'zh-tw',
+        firstDay: 0,
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -5576,6 +5577,13 @@ function initSealCalendar() {
         displayEventTime: true,
         eventTimeFormat:{hour:'2-digit',minute:'2-digit',hour12:false},
         titleFormat:{year:'numeric',month:'long'},
+        dayHeaderContent:function(arg){
+            const weekdayNames = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+            const weekday = weekdayNames[arg.date.getDay()];
+            if(arg.view.type === 'dayGridMonth') return weekday;
+            return `${arg.date.getMonth() + 1}/${arg.date.getDate()} ${weekday}`;
+        },
+        dayCellContent:arg=>String(arg.date.getDate()),
         buttonText: {
             today: '今天',
             month: '月曆',

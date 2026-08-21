@@ -4327,18 +4327,17 @@ body.modal-open{
 .seal-calendar .fc-day-other .fc-daygrid-day-number{
     color:#b0bac5;
 }
-.seal-calendar .fc-day-today{
-    background:#f7fbff !important;
+.seal-calendar .fc-daygrid-day.fc-day-today{
+    background:#edf6ff !important;
 }
 .seal-calendar .fc-day-today .fc-daygrid-day-number{
-    display:grid;
-    place-items:center;
-    width:29px;
-    height:29px;
-    margin:4px 5px 0 0;
-    border-radius:50%;
-    background:#226da5;
-    color:#fff;
+    width:auto;
+    height:auto;
+    margin:5px 6px 0 0;
+    border-radius:0;
+    background:transparent;
+    color:#155b91;
+    font-weight:900;
 }
 .seal-calendar .fc-daygrid-day-frame{
     min-height:92px;
