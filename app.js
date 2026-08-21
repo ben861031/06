@@ -676,6 +676,23 @@ return keywordMatch && actionMatch && dateMatch;
 
 }
 
+function getAuditActorDisplay(log){
+
+const actorName = String(log?.actorName || "").trim();
+const departmentMatch = actorName.match(/^(.+?(?:辦公室|分公司|中心|部|處|室|組|科|廠))\s+(.+)$/);
+const department = departmentMatch ? departmentMatch[1] : "";
+const name = departmentMatch ? departmentMatch[2] : actorName || "-";
+const email = String(log?.actorEmail || "").trim();
+
+return {
+department,
+name,
+email,
+secondary:[department,email].filter(Boolean).join(" · ")
+};
+
+}
+
 function renderAuditLogs(){
 
 const table =
@@ -714,13 +731,19 @@ return;
 }
 
 table.innerHTML =
-pageRows.map(log=>`
+pageRows.map(log=>{
+const actor = getAuditActorDisplay(log);
+return `
 <tr>
 <td>${escapeAuditText(formatDate(log.createdAt))}</td>
-<td class="identity-cell">
-<strong>${escapeAuditText(log.actorName || "-")}</strong>
-<small>${escapeAuditText(log.actorEmail || "")}</small>
-<span class="role-badge">${escapeAuditText(getSystemRoleLabel(log.actorRole))}</span>
+<td>
+<div class="identity-cell audit-actor-cell">
+<div class="audit-actor-primary">
+<strong title="${escapeAuditText(log.actorName || "-")}">${escapeAuditText(actor.name)}</strong>
+<span class="role-badge audit-role-badge">${escapeAuditText(getSystemRoleLabel(log.actorRole))}</span>
+</div>
+${actor.secondary ? `<small class="audit-actor-secondary" title="${escapeAuditText(actor.secondary)}">${escapeAuditText(actor.secondary)}</small>` : ""}
+</div>
 </td>
 <td>
 <span class="badge badge-blue audit-action-${escapeAuditText(log.action || "other")}">
@@ -732,7 +755,8 @@ ${escapeAuditText(auditActionLabels[log.action] || log.action || "-")}
 <td class="audit-summary-cell">${escapeAuditText(getAuditSummary(log))}</td>
 <td><button type="button" class="btn btn-gray btn-sm" onclick="openAuditDetail('${escapeAuditText(log.id)}')"><i data-lucide="eye"></i><span>查看詳情</span></button></td>
 </tr>
-`).join("");
+`;
+}).join("");
 
 renderAuditPagination(totalPages);
 lucide.createIcons();

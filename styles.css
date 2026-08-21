@@ -3482,6 +3482,43 @@ width:100%;
     overflow-wrap:anywhere;
 }
 
+.audit-actor-cell{
+    gap:5px;
+    min-width:0;
+    max-width:250px;
+}
+
+.audit-actor-primary{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-width:0;
+}
+
+.audit-actor-primary strong{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.role-badge.audit-role-badge{
+    flex:0 0 auto;
+    min-height:24px;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:11px;
+}
+
+.identity-cell .audit-actor-secondary{
+    display:block;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    overflow-wrap:normal;
+    white-space:nowrap;
+}
+
 .role-badge,
 .action-badge{
     display:inline-flex;
