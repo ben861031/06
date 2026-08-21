@@ -5457,7 +5457,7 @@ const SEAL_CALENDAR_STATUS = {
     borrowed:{label:"借用中",className:"calendar-event-borrowed",background:"#e1edf7",border:"#4b86b6",text:"#1e527d"},
     due:{label:"今日應還",className:"calendar-event-due",background:"#eee9f6",border:"#8d72ad",text:"#60477c"},
     overdue:{label:"已逾期",className:"calendar-event-overdue",background:"#f9e7e9",border:"#d26975",text:"#9c3040"},
-    returned:{label:"已歸還",className:"calendar-event-returned",background:"#e8efec",border:"#78998c",text:"#49665b"}
+    returned:{label:"已歸還",className:"calendar-event-returned",background:"#eaf7f4",border:"#72b8aa",text:"#276b5f"}
 };
 
 function calendarValueToDate(value){
