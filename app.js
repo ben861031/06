@@ -53,6 +53,7 @@ limit,
 startAfter,
 Timestamp,
 writeBatch,
+runTransaction,
 deleteField
 } = await import(
 "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js"
@@ -341,7 +342,7 @@ return result;
 
 }
 
-async function writeAuditLog({
+function buildAuditLog({
 action,
 category,
 targetId = "",
@@ -350,11 +351,7 @@ before = null,
 after = null
 }){
 
-try{
-
-await addDoc(
-collection(db,"auditLogs"),
-{
+return {
 actorName:currentUser || "系統使用者",
 actorEmail:normalizeEmail(currentUserEmail),
 actorRole:currentRole || "",
@@ -365,9 +362,12 @@ targetLabel,
 before:compactAuditData(before),
 after:compactAuditData(after),
 createdAt:new Date()
+};
 }
-);
 
+async function writeAuditLog(entry){
+try{
+await addDoc(collection(db,"auditLogs"),buildAuditLog(entry));
 }catch(error){
 
 console.error("操作紀錄寫入失敗",error);
@@ -407,6 +407,7 @@ enabled:"啟用狀態",
 status:"狀態",
 name:"名稱",
 sortOrder:"排序",
+borrowTime:"借用時間",
 returnTime:"歸還時間"
 };
 
@@ -418,6 +419,7 @@ sealRecord:[
 "projectNo",
 "formNo",
 "purpose",
+"borrowTime",
 "status",
 "returnTime"
 ],
@@ -784,7 +786,7 @@ function renderAuditDataBlock(title,data){
 if(!data || !Object.keys(data).length){
 return `<section class="audit-data-block"><h3>${title}</h3><div class="audit-no-data">無資料</div></section>`;
 }
-return `<section class="audit-data-block"><h3>${title}</h3><dl>${Object.entries(data).map(([key,value])=>`<div class="audit-data-row"><dt>${escapeAuditText(key)}</dt><dd>${escapeAuditText(formatAuditDetailValue(value))}</dd></div>`).join("")}</dl></section>`;
+return `<section class="audit-data-block"><h3>${title}</h3><dl>${Object.entries(data).map(([key,value])=>`<div class="audit-data-row"><dt>${escapeAuditText(key === "borrowTime" ? "借用時間" : key)}</dt><dd>${escapeAuditText(formatAuditDetailValue(value))}</dd></div>`).join("")}</dl></section>`;
 }
 
 function openAuditDetail(id){
@@ -4921,6 +4923,7 @@ document.getElementById('editOverlay').style.display='none';
 
 async function editRecord(id){
 if(blockViewerAction()) return;
+if(document.getElementById('saveEditRecordButton').disabled) return;
 
 const r = records.find(x=>x.id===id);
 if(!r || r.returnTime){ alert('已歸還資料不可編輯'); return; }
@@ -4930,6 +4933,9 @@ document.getElementById('editBorrower').value=r.borrower||'';
 document.getElementById('editDepartment').value=r.department||'';
 document.getElementById('editProjectNo').value=r.projectNo||'';
 document.getElementById('editFormNo').value=r.formNo||'';
+const borrowTimeInput = document.getElementById('editBorrowTime');
+borrowTimeInput.defaultValue = formatDateTimeLocal(r.borrowTime);
+borrowTimeInput.value = borrowTimeInput.defaultValue;
 document.getElementById('editExpectedReturnTime').value=formatDateTimeLocal(r.expectedReturnTime);
 document.getElementById('editPurpose').value=r.purpose||'';
 
@@ -4939,10 +4945,18 @@ document.getElementById('editOverlay').style.display='flex';
 async function saveEditRecord(){
 if(blockViewerAction()) return;
 
+const saveButton = document.getElementById('saveEditRecordButton');
+if(saveButton.disabled) return;
 const id=document.getElementById('editId').value;
 
-const before =
-records.find(item=>item.id===id);
+const borrowTimeInput = document.getElementById('editBorrowTime');
+const originalTime = borrowTimeInput.defaultValue;
+const changedTime = borrowTimeInput.value !== originalTime;
+const borrowTime = changedTime ? parseDateTimeLocal(borrowTimeInput.value) : null;
+if(changedTime && (!borrowTime || formatDateTimeLocal(borrowTime) !== borrowTimeInput.value || getRecordTime(borrowTime) > Date.now())){
+alert('請輸入有效的實際借用時間，時間不可晚於現在');
+return;
+}
 
 const after = {
 borrower:document.getElementById('editBorrower').value,
@@ -4953,29 +4967,53 @@ purpose:document.getElementById('editPurpose').value,
 expectedReturnTime:parseDateTimeLocal(document.getElementById('editExpectedReturnTime').value)
 };
 
-await updateDoc(
-doc(db,"sealRecords",id),
-{
+const recordRef = doc(db,"sealRecords",id);
+const auditRef = doc(collection(db,"auditLogs"));
+saveButton.disabled = true;
+try{
+await runTransaction(db,async transaction=>{
+const snapshot = await transaction.get(recordRef);
+const before = snapshot.data();
+if(!before || before.returnTime) throw new Error('此筆借用已歸還或已移除，無法編輯');
+if(changedTime && formatDateTimeLocal(before.borrowTime) !== originalTime){
+throw new Error('借用時間已由其他人修改，請關閉視窗並重新開啟後再編輯');
+}
+const changes = {
 ...after,
 expectedReturnTime:after.expectedReturnTime || deleteField()
+};
+const auditBefore = {...before};
+const auditAfter = {...before,...after};
+if(changedTime){
+changes.borrowTime = borrowTime;
+auditBefore.borrowTime = formatDate(before.borrowTime);
+auditAfter.borrowTime = formatDate(borrowTime);
 }
-);
-
-await writeAuditLog({
+transaction.update(recordRef,changes);
+transaction.set(auditRef,buildAuditLog({
 action:"update",
 category:"sealRecord",
 targetId:id,
-targetLabel:`${before?.seal || "印鑑"} / ${after.borrower}`,
-before,
-after:{
-...before,
-...after
-}
+targetLabel:`${before.seal || "印鑑"} / ${after.borrower}`,
+before:auditBefore,
+after:auditAfter
+}));
 });
+}catch(error){
+console.error('儲存借用資料失敗',error);
+alert(error.code ? '儲存借用資料失敗，請稍後再試' : error.message);
+await loadRecords().catch(refreshError=>console.error('更新借用紀錄失敗',refreshError));
+return;
+}finally{
+saveButton.disabled = false;
+}
 
 closeEditModal();
 alert('修改成功');
-loadRecords();
+await loadRecords().catch(error=>{
+console.error('更新借用紀錄失敗',error);
+alert('資料已儲存，請重新整理以查看更新後的借用紀錄');
+});
 }
 
 async function deleteRecord(id){
