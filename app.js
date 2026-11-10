@@ -387,12 +387,7 @@ return String(value ?? "")
 
 }
 
-function getAuditSummary(log){
-
-const source =
-log.after || log.before || {};
-
-const labels = {
+const auditFieldLabels = {
 seal:"印鑑",
 borrower:"借用人",
 department:"部門",
@@ -408,10 +403,12 @@ status:"狀態",
 name:"名稱",
 sortOrder:"排序",
 borrowTime:"借用時間",
+expectedBorrowTime:"預計借用時間",
+expectedReturnTime:"預計歸還時間",
 returnTime:"歸還時間"
 };
 
-const categoryFieldOrders = {
+const auditCategoryFieldOrders = {
 sealRecord:[
 "seal",
 "borrower",
@@ -420,8 +417,9 @@ sealRecord:[
 "formNo",
 "purpose",
 "borrowTime",
-"status",
-"returnTime"
+"expectedReturnTime",
+"returnTime",
+"status"
 ],
 pendingRecord:[
 "borrower",
@@ -429,6 +427,8 @@ pendingRecord:[
 "projectNo",
 "formNo",
 "purpose",
+"expectedBorrowTime",
+"expectedReturnTime",
 "status"
 ],
 user:[
@@ -451,7 +451,7 @@ department:[
 ]
 };
 
-const fallbackOrder = [
+const auditFallbackOrder = [
 "seal",
 "borrower",
 "department",
@@ -466,15 +466,24 @@ const fallbackOrder = [
 "status",
 "name",
 "sortOrder",
+"borrowTime",
+"expectedBorrowTime",
+"expectedReturnTime",
 "returnTime"
 ];
 
-const primaryOrder =
-categoryFieldOrders[log.category] || fallbackOrder;
+function getAuditFieldOrder(category){
+return Object.hasOwn(auditCategoryFieldOrders,category) ? auditCategoryFieldOrders[category] : auditFallbackOrder;
+}
+
+function getAuditSummary(log){
+const source = log.after || log.before || {};
+const labels = auditFieldLabels;
+const primaryOrder = getAuditFieldOrder(log.category);
 
 const extraKeys =
 Object.keys(source)
-.filter(key=>labels[key] && !primaryOrder.includes(key))
+.filter(key=>Object.hasOwn(labels,key) && !primaryOrder.includes(key))
 .sort((a,b)=>labels[a].localeCompare(labels[b],"zh-Hant"));
 
 const orderedKeys = [
@@ -782,11 +791,24 @@ if(typeof value === "object") return JSON.stringify(value,null,2);
 return String(value);
 }
 
-function renderAuditDataBlock(title,data){
-if(!data || !Object.keys(data).length){
+function renderAuditDataBlock(title,data,keys){
+if(!keys.length){
 return `<section class="audit-data-block"><h3>${title}</h3><div class="audit-no-data">無資料</div></section>`;
 }
-return `<section class="audit-data-block"><h3>${title}</h3><dl>${Object.entries(data).map(([key,value])=>`<div class="audit-data-row"><dt>${escapeAuditText(key === "borrowTime" ? "借用時間" : key)}</dt><dd>${escapeAuditText(formatAuditDetailValue(value))}</dd></div>`).join("")}</dl></section>`;
+const rows = keys.map(key=>{
+const label = Object.hasOwn(auditFieldLabels,key) ? auditFieldLabels[key] : key;
+const value = data && Object.hasOwn(data,key) ? data[key] : null;
+return `<div class="audit-data-row"><dt>${escapeAuditText(label)}</dt><dd>${escapeAuditText(formatAuditDetailValue(value))}</dd></div>`;
+}).join("");
+return `<section class="audit-data-block"><h3>${title}</h3><dl>${rows}</dl></section>`;
+}
+
+function renderAuditComparison(log){
+const remaining = new Set([...Object.keys(log.before || {}),...Object.keys(log.after || {})]);
+const preferredKeys = getAuditFieldOrder(log.category).filter(key=>remaining.delete(key));
+const keys = [...preferredKeys,...Array.from(remaining).sort()];
+const layout = keys.length ? ` class="audit-data-grid audit-data-comparison" style="--audit-detail-rows:${keys.length + 1}"` : ' class="audit-data-grid"';
+return `<div${layout}>${renderAuditDataBlock("異動前",log.before,keys)}${renderAuditDataBlock("異動後",log.after,keys)}</div>`;
 }
 
 function openAuditDetail(id){
@@ -803,7 +825,7 @@ body.innerHTML = `
 <div><span>對象</span><strong>${escapeAuditText(log.targetLabel || log.targetId || "-")}</strong></div>
 <div><span>角色</span><strong>${escapeAuditText(getSystemRoleLabel(log.actorRole))}</strong></div>
 </div>
-<div class="audit-data-grid">${renderAuditDataBlock("異動前",log.before)}${renderAuditDataBlock("異動後",log.after)}</div>`;
+${renderAuditComparison(log)}`;
 overlay.classList.add("open");
 overlay.setAttribute("aria-hidden","false");
 document.body.classList.add("modal-open");

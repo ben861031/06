@@ -3768,6 +3768,28 @@ width:100%;
     margin:0;
 }
 
+@media(min-width:761px){
+    @supports(grid-template-rows:subgrid){
+        .audit-data-comparison{
+            row-gap:0;
+        }
+
+        .audit-data-comparison .audit-data-block,
+        .audit-data-comparison .audit-data-block dl{
+            display:grid;
+            grid-template-rows:subgrid;
+        }
+
+        .audit-data-comparison .audit-data-block{
+            grid-row:1 / span var(--audit-detail-rows);
+        }
+
+        .audit-data-comparison .audit-data-block dl{
+            grid-row:2 / -1;
+        }
+    }
+}
+
 .audit-no-data{
     padding:24px 16px;
     color:#8593a5;
